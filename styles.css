@@ -1073,8 +1073,9 @@ input:focus {
 .hidden{display:none !important;}
 
 @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(var(--translate))}}
-.song-title-collapsed,.song-title-progress{display:block;overflow:hidden;white-space:nowrap;}
-.song-title-collapsed span,.song-title-progress span{display:inline-block;}
+.song-title-collapsed{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#333;font-size:0.9rem;}
+.song-title-progress{display:block;overflow:hidden;white-space:nowrap;}
+.song-title-collapsed span{display:inline;}
 
 .player-section.collapsed .song-title-collapsed{flex:1 1 auto;margin:0 12px;min-width:0;}
 .player-section.collapsed .player-controls-always-visible{margin-left:auto;} 

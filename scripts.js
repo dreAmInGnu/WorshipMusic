@@ -1003,7 +1003,6 @@ function updateSongTitles() {
     }
     // 应用滚动效果
     applyMarquee(elements.progressSongTitle);
-    applyMarquee(elements.collapsedSongTitle);
 }
 
 // 计算并应用跑马灯动画
@@ -1025,5 +1024,4 @@ function applyMarquee(el){
 // 在窗口改变大小时重新计算
 window.addEventListener('resize',()=>{
     applyMarquee(elements.progressSongTitle);
-    applyMarquee(elements.collapsedSongTitle);
 }); 
