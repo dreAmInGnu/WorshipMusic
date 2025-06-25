@@ -74,9 +74,17 @@ body {
     font-size: 1.4rem;
 }
 
+.songs-section .search-box {
+    display: none;
+}
+
+.app-main.player-collapsed .songs-section .search-box {
+    display: block;
+}
+
 .search-box {
     position: sticky;
-    top: -25px;
+    top: 0;
     z-index: 200;
     background: #ffffff;
     padding-bottom: 10px;

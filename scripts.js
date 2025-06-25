@@ -237,6 +237,7 @@ async function loadSongsData() {
 
         currentPlaylist = [...songsData];
         renderSongsList(currentPlaylist);
+        updatePlaybackControls(true); // 关键修复：加载完成后启用播放控件
         console.log('歌曲列表渲染完成');
         showLoading(false);
     } catch (error) {
@@ -490,18 +491,12 @@ function buildAudioUrl(song, type) {
 
 // 切换播放/暂停
 function togglePlayPause() {
-    if (!currentSong) {
-        showError('请先选择一首歌曲');
-        return;
-    }
-    
     if (elements.audioPlayer.paused) {
-        // 如果没有音频源，先加载当前选择的音频类型
-        if (!elements.audioPlayer.src) {
-            playCurrentSong(currentAudioType);
-        } else {
-            elements.audioPlayer.play().catch(e => handleAudioError(e));
+        if (!currentSong) {
+            playRandomSong();
+            return;
         }
+        elements.audioPlayer.play().catch(e => handleAudioError(e));
     } else {
         elements.audioPlayer.pause();
     }
@@ -603,6 +598,11 @@ function handleSongEnd() {
 
 // 播放下一首歌曲
 function playNextSong() {
+    if (isRandomMode || !currentSong) {
+        playRandomSong();
+        return;
+    }
+    
     if (currentPlaylist.length === 0) {
         showError('歌曲列表为空');
         return;
@@ -615,6 +615,11 @@ function playNextSong() {
 
 // 播放上一首歌曲
 function playPreviousSong() {
+    if (isRandomMode || !currentSong) {
+        playRandomSong();
+        return;
+    }
+
     if (currentPlaylist.length === 0) {
         showError('歌曲列表为空');
         return;
@@ -886,6 +891,7 @@ function hideError() {
 
 // 切换播放器视图（收起/展开）
 function togglePlayerView() {
+    elements.appMain.classList.toggle('player-collapsed'); // 关键修复：恢复主容器的class切换
     elements.playerSection.classList.toggle('collapsed');
     
     const isCollapsed = elements.playerSection.classList.contains('collapsed');
