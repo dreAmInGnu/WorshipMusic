@@ -9,13 +9,12 @@
 <body>
     <div class="container">
         <header class="app-header">
-            <h1>🎵 敬拜歌曲库</h1>
+            <h1>📜有光✨敬拜队歌曲库🎼</h1>
         </header>
         
         <main class="app-main player-collapsed" id="appMain">
             <!-- 歌曲列表区域 -->
             <section class="songs-section">
-                <h2>歌曲列表</h2>
                 <div class="search-box">
                     <div class="search-input-container">
                         <input type="text" id="searchInput" placeholder="搜索歌曲...">
@@ -33,8 +32,23 @@
                     <span id="playerToggleText">折叠</span><span id="playerToggleIcon">🔼</span>
                 </button>
                 
-                <!-- 折叠状态下显示的歌曲标题 -->
-                <span id="collapsedSongTitle" class="song-title-collapsed">&nbsp;</span>
+                <!-- 折叠状态下的播放控制区域 -->
+                <div class="collapsed-player-controls" id="collapsedPlayerControls">
+                    <div class="collapsed-song-info">
+                        <span id="collapsedSongTitle" class="song-title-collapsed">&nbsp;</span>
+                    </div>
+                    <div class="collapsed-navigation-buttons">
+                        <button id="collapsedPrevBtn" class="collapsed-nav-btn" title="上一首">
+                            ⏮️
+                        </button>
+                        <button id="collapsedPlayPauseBtn" class="collapsed-nav-btn collapsed-play-pause" title="播放/暂停">
+                            ▶️
+                        </button>
+                        <button id="collapsedNextBtn" class="collapsed-nav-btn" title="下一首">
+                            ⏭️
+                        </button>
+                    </div>
+                </div>
                 
                 <!-- 始终可见的播放控制区域 -->
                 <div class="player-controls-always-visible">

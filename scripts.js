@@ -97,6 +97,10 @@ function initializeElements() {
     elements.closeSheetModal = document.getElementById('closeSheetModal');
     elements.progressSongTitle = document.getElementById('progressSongTitle');
     elements.collapsedSongTitle = document.getElementById('collapsedSongTitle');
+    elements.collapsedPlayerControls = document.getElementById('collapsedPlayerControls');
+    elements.collapsedPrevBtn = document.getElementById('collapsedPrevBtn');
+    elements.collapsedPlayPauseBtn = document.getElementById('collapsedPlayPauseBtn');
+    elements.collapsedNextBtn = document.getElementById('collapsedNextBtn');
 }
 
 // 设置事件监听器
@@ -126,6 +130,11 @@ function setupEventListeners() {
     
     // 播放器收起/展开
     elements.playerToggleBtn.addEventListener('click', togglePlayerView);
+    
+    // 折叠状态播放控制按钮
+    elements.collapsedPrevBtn.addEventListener('click', playPreviousSong);
+    elements.collapsedPlayPauseBtn.addEventListener('click', togglePlayPause);
+    elements.collapsedNextBtn.addEventListener('click', playNextSong);
     
     // Sheet music modal
     elements.sheetDisplay.addEventListener('click', openSheetModal);
@@ -396,6 +405,11 @@ function updatePlaybackControls(isEnabled) {
     elements.playPauseBtn.disabled = !isEnabled;
     elements.prevBtn.disabled = !isEnabled;
     elements.nextBtn.disabled = !isEnabled;
+    
+    // 同时更新折叠状态的播放控件
+    elements.collapsedPlayPauseBtn.disabled = !isEnabled;
+    elements.collapsedPrevBtn.disabled = !isEnabled;
+    elements.collapsedNextBtn.disabled = !isEnabled;
 }
 
 // 播放当前歌曲
@@ -529,10 +543,20 @@ function updatePlayButtons() {
         elements.playPauseBtn.innerHTML = '⏸️';
         elements.playPauseBtn.classList.add('playing');
         elements.playPauseBtn.title = '暂停';
+        
+        // 同时更新折叠状态的播放按钮
+        elements.collapsedPlayPauseBtn.innerHTML = '⏸️';
+        elements.collapsedPlayPauseBtn.classList.add('playing');
+        elements.collapsedPlayPauseBtn.title = '暂停';
     } else {
         elements.playPauseBtn.innerHTML = '▶️';
         elements.playPauseBtn.classList.remove('playing');
         elements.playPauseBtn.title = '播放';
+        
+        // 同时更新折叠状态的播放按钮
+        elements.collapsedPlayPauseBtn.innerHTML = '▶️';
+        elements.collapsedPlayPauseBtn.classList.remove('playing');
+        elements.collapsedPlayPauseBtn.title = '播放';
     }
 }
 

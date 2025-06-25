@@ -9,7 +9,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.6;
     color: #1d1d1f;
-    background: #000000;
+    background: #000000; /* 保持黑色 */
     min-height: 100vh;
 }
 
@@ -18,17 +18,18 @@ body {
     margin: 0 auto;
     padding: 20px;
     min-height: 100vh;
-    background: #ffffff;
+    background: #000000; /* 确保黑色 */
 }
 
 /* 头部样式 */
 .app-header {
     text-align: center;
     margin-bottom: 20px;
-    background: #000000;
+    background: #000000; /* 确保黑色 */
     color: #ffffff;
     padding: 20px 0;
     border-radius: 18px;
+    /* 移除不必要的阴影 */
 }
 
 .app-header h1 {
@@ -48,7 +49,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 20px;
-    background: #ffffff;
+    background: #000000; /* 确保黑色 */
     border-radius: 18px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     overflow: hidden;
@@ -61,12 +62,13 @@ body {
 
 /* 歌曲列表区域 */
 .songs-section {
-    padding: 25px;
+    padding: 25px 25px 0 25px; /* 移除底部padding */
     border-right: 1px solid #d2d2d7;
     max-height: 80vh;
     position: relative;
     display: flex;
     flex-direction: column;
+    background: #000000; /* 确保黑色 */
 }
 
 .songs-section h2 {
@@ -82,9 +84,10 @@ body {
     top: 0;
     z-index: 100; /* 降低z-index，避免遮挡播放器 */
     background: #ffffff;
-    margin: -25px -25px 15px -25px;
+    margin: -25px 8px 0 8px; /* 减小边距，底部为0与列表连接 */
     padding: 25px 25px 15px 25px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    border-radius: 8px 8px 0 0; /* 只有顶部圆角 */
 }
 
 /* 当播放器展开时，搜索框固定在歌曲列表区域的顶部 */
@@ -149,6 +152,10 @@ body {
     gap: 10px;
     overflow-y: auto;
     flex-grow: 1;
+    background: #ffffff;       /* 列表保持白色 */
+    border-radius: 0 0 8px 8px; /* 只有底部圆角 */
+    padding: 15px 8px 25px 8px; /* 底部padding扩展到容器底部 */
+    margin: 0 8px 0 8px;       /* 左右边距，底部为0 */
 }
 
 .song-item {
@@ -202,13 +209,13 @@ body {
 
 /* 播放器区域 */
 .player-section {
-    padding: 20px 25px; /* 调整内边距 */
+    padding: 20px 25px;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* 减小主要间距 */
+    gap: 10px;
     position: relative;
     transition: all 0.3s ease;
-    background: #000000;
+    background: #000000; /* 确保黑色 */
 }
 
 .player-toggle-btn {
@@ -242,6 +249,8 @@ body {
 .player-collapsible-content {
     display: block;
     transition: all 0.3s ease;
+    background: #000000; /* 确保折叠区域外层为黑色 */
+    border-radius: 12px 12px 0 0; /* 左上角和右上角圆角 */
 }
 
 .player-section.collapsed .player-collapsible-content {
@@ -253,6 +262,10 @@ body {
 }
 
 /* 桌面端折叠状态也只显示基本播放控制 */
+.player-section.collapsed {
+    background: rgb(45,45,45); /* 折叠状态使用深灰色背景 */
+}
+
 .player-section.collapsed .audio-and-mode-buttons,
 .player-section.collapsed .progress-container,
 .player-section.collapsed .volume-control {
@@ -261,6 +274,77 @@ body {
 
 .player-section.collapsed .player-toggle-btn #playerToggleIcon {
     transform: rotate(180deg);
+}
+
+/* 折叠状态下的播放控制区域 */
+.collapsed-player-controls {
+    display: none; /* 默认隐藏 */
+    width: 100%;
+    padding: 6px 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.player-section.collapsed .collapsed-player-controls {
+    display: flex; /* 折叠状态时显示 */
+}
+
+.collapsed-song-info {
+    flex: 1;
+    min-width: 0;
+    padding-right: 10px;
+}
+
+.collapsed-navigation-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.collapsed-nav-btn {
+    background: #e9e9eb;
+    color: #1d1d1f;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collapsed-nav-btn:disabled {
+    background: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.collapsed-nav-btn:not(:disabled):hover {
+    background: #d2d2d7;
+    transform: scale(1.05);
+}
+
+.collapsed-nav-btn.collapsed-play-pause {
+    background: #000000;
+    color: #ffffff;
+}
+
+.collapsed-nav-btn.collapsed-play-pause:not(:disabled):hover {
+    background: #333333;
+}
+
+.collapsed-nav-btn.playing {
+    background: #333;
+}
+
+.collapsed-nav-btn.playing:not(:disabled):hover {
+    background: #c82333;
 }
 
 .current-song-info {
@@ -282,9 +366,10 @@ body {
 
 /* 音频控制器 */
 .audio-controls {
-    background: #f8f9fa;
+    background: #000000; /* 改为黑色 */
     border-radius: 12px;
     padding: 20px;
+    border: 1px solid #333; /* 添加边框以区分 */
 }
 
 .control-buttons {
@@ -557,6 +642,7 @@ body {
 
 .sheet-display {
     border: 2px dashed #e0e0e0;
+    background: #ffffff; /* 恢复白色背景 */
     border-radius: 8px;
     min-height: 300px;
     display: flex;
@@ -720,27 +806,49 @@ body {
     }
     
     .player-section.collapsed {
-        height: 60px;
-        min-height: 60px;
-        max-height: 60px;
-        padding: 0 15px;
-        flex-direction: column;
-        align-items: center;
-        overflow: hidden;
-    }
+    height: 85px;
+    min-height: 85px;
+    max-height: 85px;
+    padding: 6px 15px;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    background: rgb(45,45,45); /* 折叠状态使用深灰色背景 */
+}
     
     .player-section.collapsed .player-toggle-btn {
-        margin-bottom: 6px;
+        margin-bottom: 2px;
         align-self: center;
     }
 
     .player-section.collapsed .player-controls-always-visible {
+        display: none; /* 在移动端折叠状态时隐藏原有控制区域 */
+    }
+
+    /* 移动端折叠状态下的播放控制区域 */
+    .player-section.collapsed .collapsed-player-controls {
         display: flex;
         width: 100%;
-        justify-content: flex-end;
+        justify-content: space-between;
         align-items: center;
-        gap: 16px;
-        margin-left: 0;
+        gap: 12px;
+        padding: 4px 0;
+    }
+
+    .collapsed-song-info {
+        flex: 1;
+        min-width: 0;
+        padding-right: 8px;
+    }
+
+    .collapsed-navigation-buttons {
+        gap: 6px;
+    }
+
+    .collapsed-nav-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 0.85rem;
     }
 
     .player-section.collapsed .player-collapsible-content {
@@ -839,12 +947,13 @@ body {
         top: 0;
         z-index: 200;
         background: #ffffff;
-        margin: -15px -15px 15px -15px;
+        margin: -15px 8px 0 8px; /* 减小边距，底部为0与列表连接 */
         padding-left: 15px;
         padding-right: 15px;
         padding-top: 15px;
         padding-bottom: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 8px 8px 0 0; /* 只有顶部圆角 */
         flex-shrink: 0;
         /* 移动端搜索框始终显示 */
         display: block;
@@ -874,9 +983,26 @@ body {
     }
     
     .player-section.collapsed {
-        padding: 8px 10px;
-        min-height: 50px;
-        max-height: 70px;
+        padding: 4px 10px;
+        min-height: 75px;
+        max-height: 75px;
+        background: rgb(45,45,45); /* 确保480px下也使用深灰色背景 */
+    }
+
+    /* 480px下的折叠控制区域调整 */
+    .player-section.collapsed .collapsed-player-controls {
+        gap: 8px;
+        padding: 3px 0;
+    }
+
+    .collapsed-navigation-buttons {
+        gap: 4px;
+    }
+
+    .collapsed-nav-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
     }
     
     .current-song-info h3 {
@@ -1080,6 +1206,8 @@ input:focus {
 
 @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(var(--translate))}}
 .song-title-collapsed{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#333;font-size:0.9rem;}
+
+.player-section.collapsed .song-title-collapsed{color:#ffffff;}
 .song-title-progress{display:block;overflow:hidden;white-space:nowrap;}
 .song-title-collapsed span{display:inline;}
 
