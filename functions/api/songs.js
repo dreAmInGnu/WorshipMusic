@@ -15,13 +15,23 @@ export async function onRequest(context) {
   const { request, env } = context;
   
   try {
+    // 添加详细的环境诊断
+    const diagnostics = {
+      timestamp: new Date().toISOString(),
+      hasR2Binding: !!env.SONG_BUCKET,
+      environmentKeys: Object.keys(env || {}),
+      requestMethod: request.method,
+      requestUrl: request.url
+    };
+
     // 检查 R2 bucket 绑定是否存在
     if (!env.SONG_BUCKET) {
       console.error('SONG_BUCKET binding not found in environment');
       return new Response(JSON.stringify({ 
         error: 'R2 bucket not configured', 
         message: 'SONG_BUCKET binding is missing. Please configure R2 binding in Cloudflare Pages settings.',
-        troubleshooting: 'Go to Cloudflare Pages dashboard > Your site > Settings > Functions > R2 bucket bindings'
+        troubleshooting: 'Go to Cloudflare Pages dashboard > Your site > Settings > Functions > R2 bucket bindings',
+        diagnostics: diagnostics
       }), {
         status: 500,
         headers: {
@@ -92,9 +102,11 @@ export async function onRequest(context) {
       songs: songList,
       metadata: {
         totalSongs: songList.length,
+        totalFiles: files.length,
         generatedAt: new Date().toISOString(),
         bucketName: 'worship'
-      }
+      },
+      diagnostics: diagnostics
     };
 
     const response = new Response(JSON.stringify(data, null, 2), {
@@ -115,7 +127,11 @@ export async function onRequest(context) {
       error: 'Could not list songs from R2 bucket.', 
       details: e.message,
       stack: e.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      diagnostics: {
+        hasR2Binding: !!context.env.SONG_BUCKET,
+        environmentKeys: Object.keys(context.env || {})
+      }
     }), {
       status: 500,
       headers: {
