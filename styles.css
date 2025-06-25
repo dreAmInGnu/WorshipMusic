@@ -1074,4 +1074,7 @@ input:focus {
 
 @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(var(--translate))}}
 .song-title-collapsed,.song-title-progress{display:block;overflow:hidden;white-space:nowrap;}
-.song-title-collapsed span,.song-title-progress span{display:inline-block;} 
+.song-title-collapsed span,.song-title-progress span{display:inline-block;}
+
+.player-section.collapsed .song-title-collapsed{display:block;margin:0 12px;flex:1 1 0;min-width:0;}
+.player-section.collapsed .player-controls-always-visible{margin-left:auto;} 
