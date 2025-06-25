@@ -316,19 +316,14 @@ function updateActiveSongListItem() {
 
 // 更新活跃播放列表
 function updateActivePlaylist() {
-    // 根据当前搜索结果更新播放列表
-    const searchTerm = elements.searchInput.value.toLowerCase().trim();
-    if (searchTerm) {
-        currentPlaylist = songsData.filter(song => 
-            song.title.toLowerCase().includes(searchTerm) ||
-            song.artist.toLowerCase().includes(searchTerm)
-        );
-    } else {
-        currentPlaylist = [...songsData];
-    }
-    
-    // 更新当前索引
+    if (!currentSong) return;
+    // 列表已在 handleSearch 中更新，这里只负责找到当前索引
     currentIndex = currentPlaylist.findIndex(song => song.id === currentSong.id);
+    if (currentIndex === -1) {
+        // 如果当前歌曲不在播放列表中（例如，清空搜索后），则重置播放列表
+        currentPlaylist = [...songsData];
+        currentIndex = currentPlaylist.findIndex(song => song.id === currentSong.id);
+    }
 }
 
 // 启用/禁用播放和下载控件
@@ -632,9 +627,19 @@ function playPreviousSong() {
 
 // 播放随机歌曲
 function playRandomSong() {
-    if (currentPlaylist.length === 0) return;
+    if (currentPlaylist.length <= 1) {
+        // 如果列表为空或只有一首歌，没必要随机播放
+        if (currentPlaylist.length === 1 && elements.audioPlayer.paused) {
+            selectSong(currentPlaylist[0], 0);
+        }
+        return;
+    }
     
-    const randomIndex = Math.floor(Math.random() * currentPlaylist.length);
+    let randomIndex;
+    do {
+        randomIndex = Math.floor(Math.random() * currentPlaylist.length);
+    } while (randomIndex === currentIndex); // 确保不会连续随机到同一首歌
+
     const randomSong = currentPlaylist[randomIndex];
     currentIndex = randomIndex;
     selectSong(randomSong, currentIndex);
@@ -653,9 +658,10 @@ function handleSearch() {
             song.artist.toLowerCase().includes(searchTerm)
         );
     } else {
-        filteredSongs = songsData;
+        filteredSongs = [...songsData];
     }
     
+    currentPlaylist = filteredSongs; // 关键修复：搜索后立即更新播放列表
     renderSongsList(filteredSongs);
 }
 
@@ -880,9 +886,9 @@ function hideError() {
 
 // 切换播放器视图（收起/展开）
 function togglePlayerView() {
-    elements.playerCollapsibleContent.classList.toggle('collapsed');
+    elements.playerSection.classList.toggle('collapsed');
     
-    const isCollapsed = elements.playerCollapsibleContent.classList.contains('collapsed');
+    const isCollapsed = elements.playerSection.classList.contains('collapsed');
     
     // 根据屏幕宽度决定图标方向
     const isMobile = window.innerWidth <= 768;
@@ -906,7 +912,7 @@ function togglePlayerView() {
 
 // 监听窗口大小变化，调整折叠图标
 window.addEventListener('resize', function() {
-    const isCollapsed = elements.playerCollapsibleContent.classList.contains('collapsed');
+    const isCollapsed = elements.playerSection.classList.contains('collapsed');
     const isMobile = window.innerWidth <= 768;
     
     if (isCollapsed) {

@@ -160,10 +160,10 @@ body {
 
 /* 播放器区域 */
 .player-section {
-    padding: 25px;
+    padding: 20px 25px; /* 调整内边距 */
     display: flex;
     flex-direction: column;
-    gap: 20px; /* Reduced gap */
+    gap: 15px; /* 减小主要间距 */
     position: relative;
     transition: all 0.3s ease;
 }
@@ -183,7 +183,7 @@ body {
     gap: 5px;
     z-index: 10;
     align-self: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* 减小与下方元素的间距 */
 }
 
 .player-toggle-btn:hover {
@@ -247,8 +247,8 @@ body {
 .control-buttons {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 12px; /* 减小间距 */
+    margin-bottom: 15px; /* 减小间距 */
 }
 
 .audio-and-mode-buttons {
@@ -396,7 +396,7 @@ body {
 }
 
 .progress-container {
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* 减小间距 */
 }
 
 .time-display {
@@ -642,7 +642,7 @@ body {
         flex: 1;
         max-height: none;
         padding: 15px;
-        padding-bottom: 200px; /* 为固定播放器留出空间 */
+        padding-bottom: 80px;
         order: 1;
         display: flex;
         flex-direction: column;
@@ -653,70 +653,47 @@ body {
         bottom: 0;
         left: 0;
         right: 0;
-        z-index: 150; /* 低于搜索栏，但仍为固定元素 */
-        padding: 15px;
+        z-index: 150;
+        padding: 10px 15px;
         border-top: 1px solid #e0e0e0;
         background: #f9f9f9;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        max-height: 70vh;
+        transition: all 0.3s ease;
         overflow-y: auto;
+        max-height: 70vh;
     }
     
     .player-section.collapsed {
-        padding: 5px 15px;
-        height: auto; /* 改为自动高度 */
-        min-height: 50px; /* 调整最小高度 */
-        display: flex;
-        flex-direction: row; /* 改为行布局 */
-        justify-content: space-between; /* 两端对齐 */
-        align-items: center; /* 垂直居中 */
-        transition: all 0.3s ease;
-        gap: 15px; /* 增加元素间距 */
+        height: 60px;
+        min-height: 60px;
+        max-height: 60px;
+        padding: 0 15px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        overflow: hidden;
     }
     
     .player-section.collapsed .player-toggle-btn {
         margin: 0;
-        padding: 8px 12px;
-        align-self: center; /* 居中显示 */
         flex-shrink: 0;
     }
-    
-    .player-section.collapsed .playback-controls {
-        padding: 0;
-        margin: 0;
-        flex-grow: 1; /* 占据剩余空间 */
-        justify-content: center; /* 居中按钮 */
-    }
-    
-    .player-section.collapsed .navigation-buttons {
-        gap: 15px; /* 调整按钮间距 */
-    }
-    
+
     .player-section.collapsed .player-controls-always-visible {
-        display: block; /* 始终显示播放控制 */
+       display: block;
     }
-    
+
     .player-section.collapsed .player-collapsible-content {
-        display: none; /* 隐藏可折叠内容 */
+        display: none;
     }
-    
-    .player-section.collapsed .audio-controls {
-        padding: 0;
-        background: transparent;
-    }
-    
+
     .player-section.collapsed .audio-and-mode-buttons,
     .player-section.collapsed .progress-container,
-    .player-section.collapsed .volume-control {
-        display: none; /* 折叠时隐藏这些控件 */
+    .player-section.collapsed .volume-control,
+    .player-section.collapsed .sheet-music {
+        display: none !important;
     }
-    
-    .player-section.collapsed .nav-btn {
-        width: 38px;
-        height: 38px;
-        font-size: 1rem;
-    }
-    
+
     .audio-and-mode-buttons {
         flex-wrap: wrap;
         gap: 8px;
@@ -736,7 +713,7 @@ body {
         gap: 10px;
         align-items: center;
         justify-content: center;
-        flex-wrap: nowrap; /* 防止换行 */
+        flex-wrap: nowrap;
     }
     
     .navigation-buttons {
@@ -781,15 +758,15 @@ body {
     }
     
     .download-controls {
-        display: flex; /* Changed from grid */
+        display: flex;
         gap: 6px;
-        justify-content: space-around; /* Distribute items */
+        justify-content: space-around;
     }
     
     .action-btn {
-        padding: 8px 10px; /* Adjusted padding */
-        font-size: 0.8rem; /* Adjusted font size */
-        flex-grow: 1; /* Allow buttons to grow */
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        flex-grow: 1;
         text-align: center;
     }
     
@@ -800,7 +777,7 @@ body {
     .search-box {
         position: sticky;
         top: 0;
-        z-index: 200; /* 确保在播放器之上 */
+        z-index: 200;
         background: #ffffff;
         margin: -15px -15px 15px -15px;
         padding-left: 15px;
@@ -808,7 +785,7 @@ body {
         padding-top: 15px;
         padding-bottom: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        flex-shrink: 0; /* Prevent search box from shrinking */
+        flex-shrink: 0;
     }
 }
 
