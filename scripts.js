@@ -315,22 +315,41 @@ function updateActivePlaylist() {
 
 // 启用/禁用播放和下载控件
 function updateSongControls() {
-    if (!currentSong) return;
-    
-    elements.originalBtn.disabled = false;
-    elements.accompanimentBtn.disabled = !currentSong.hasAccompaniment;
-    elements.playPauseBtn.disabled = false;
-    elements.prevBtn.disabled = false;
-    elements.nextBtn.disabled = false;
-    
-    // 下载按钮
-    elements.downloadZipBtn.disabled = false;
-    elements.downloadOriginalBtn.disabled = !currentSong.files.original;
-    elements.downloadAccompanimentBtn.disabled = !currentSong.hasAccompaniment || !currentSong.files.accompaniment;
-    elements.downloadSheetBtn.disabled = !currentSong.files.sheet;
-    
-    // 默认选择原唱
-    updateAudioTypeButtons('original');
+    if (currentSong) {
+        // Reset states
+        elements.originalBtn.classList.remove('missing');
+        elements.accompanimentBtn.classList.remove('missing');
+
+        // Check for original track
+        if (!currentSong.files.original) {
+            elements.originalBtn.disabled = true;
+            elements.originalBtn.classList.add('missing');
+        } else {
+            elements.originalBtn.disabled = false;
+        }
+
+        // Check for accompaniment track
+        if (!currentSong.hasAccompaniment || !currentSong.files.accompaniment) {
+            elements.accompanimentBtn.disabled = true;
+            elements.accompanimentBtn.classList.add('missing');
+        } else {
+            elements.accompanimentBtn.disabled = false;
+        }
+
+        elements.downloadZipBtn.disabled = false;
+        elements.downloadOriginalBtn.disabled = !currentSong.files.original;
+        elements.downloadAccompanimentBtn.disabled = !currentSong.files.accompaniment;
+        elements.downloadSheetBtn.disabled = !currentSong.files.sheet;
+
+    } else {
+        // Disable all if no song is selected
+        const allButtons = [
+            elements.originalBtn, elements.accompanimentBtn,
+            elements.downloadZipBtn, elements.downloadOriginalBtn,
+            elements.downloadAccompanimentBtn, elements.downloadSheetBtn
+        ];
+        allButtons.forEach(btn => btn.disabled = true);
+    }
 }
 
 // 播放当前歌曲
@@ -477,17 +496,36 @@ function updatePlayButtons() {
 // 切换音频类型
 function switchToAudioType(type) {
     if (!currentSong) return;
-    
-    // 如果是伴奏但当前歌曲没有伴奏，直接返回
-    if (type === 'accompaniment' && !currentSong.hasAccompaniment) return;
-    
+
+    // Do nothing if trying to switch to a missing track
+    if ((type === 'accompaniment' && !currentSong.files.accompaniment) ||
+        (type === 'original' && !currentSong.files.original)) {
+        return;
+    }
+
+    // Don't switch if it's already the current type
+    if (type === currentAudioType) return;
+
+    const audio = elements.audioPlayer;
+    const currentTime = audio.currentTime;
+    const wasPlaying = !audio.paused;
+
     currentAudioType = type;
     updateAudioTypeButtons(type);
     
-    // 如果当前正在播放，则切换音频源
-    if (!elements.audioPlayer.paused) {
-        playCurrentSong(type);
-    }
+    // Show loading overlay during switch
+    showLoading(true);
+
+    audio.src = buildAudioUrl(currentSong, type);
+
+    // Use a one-time event listener to restore state after the new audio is ready
+    audio.addEventListener('loadeddata', () => {
+        audio.currentTime = currentTime;
+        showLoading(false); // Hide loading overlay
+        if (wasPlaying) {
+            audio.play().catch(e => handleAudioError(e));
+        }
+    }, { once: true });
 }
 
 // 更新音频类型按钮状态

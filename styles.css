@@ -341,6 +341,19 @@ body {
     background: #e9e9eb; /* Slightly darker grey on hover */
 }
 
+.audio-btn.missing {
+    background: #d9534f;
+    color: white;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    cursor: not-allowed;
+    border-color: #d9534f;
+}
+
+.audio-btn.missing:hover {
+    background: #c9302c;
+}
+
 .progress-container {
     margin-bottom: 15px;
 }
