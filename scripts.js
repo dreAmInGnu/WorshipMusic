@@ -361,6 +361,12 @@ function updateSongControls() {
         elements.downloadZipBtn.disabled = false;
         elements.downloadOriginalBtn.disabled = !currentSong.files.original;
         elements.downloadAccompanimentBtn.disabled = !currentSong.files.accompaniment;
+        // 根据伴奏可用性设置样式
+        if (!currentSong.files.accompaniment) {
+            elements.downloadAccompanimentBtn.classList.add('missing');
+        } else {
+            elements.downloadAccompanimentBtn.classList.remove('missing');
+        }
         elements.downloadSheetBtn.disabled = !currentSong.files.sheet;
 
         // 启用核心播放控件
@@ -750,6 +756,14 @@ async function downloadSingleFile(type) {
             if (!song.files.sheet) { showError('该歌曲没有歌谱文件'); return; }
             fileName = song.files.sheet;
             fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
+            // 直接触发浏览器下载，避免跨域问题
+            const linkImg = document.createElement('a');
+            linkImg.href = fileUrl;
+            linkImg.download = fileName;
+            document.body.appendChild(linkImg);
+            linkImg.click();
+            document.body.removeChild(linkImg);
+            return; // 直接返回，不走下面fetch逻辑
             break;
         default:
             return;

@@ -540,6 +540,19 @@ body {
     background: #d2d2d7;
 }
 
+.action-btn.missing {
+    background: #d9534f;
+    color: #ffffff;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    cursor: not-allowed;
+    border-color: #d9534f;
+}
+
+.action-btn.missing:hover {
+    background: #c9302c;
+}
+
 .sheet-display {
     border: 2px dashed #e0e0e0;
     border-radius: 8px;
