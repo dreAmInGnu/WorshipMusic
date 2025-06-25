@@ -75,14 +75,15 @@ body {
 
 .search-box {
     position: sticky;
-    top: -1px;
-    z-index: 50;
+    top: 0;
+    z-index: 200;
     background: #ffffff;
-    padding-top: 25px;
+    margin: -15px -15px 15px -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 15px;
     padding-bottom: 10px;
-    margin: -25px -25px 20px -25px;
-    padding-left: 25px;
-    padding-right: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .search-box input {
@@ -186,15 +187,34 @@ body {
     background: #e9e9eb;
 }
 
-.player-section.collapsed .player-toggle-btn #playerToggleIcon {
-    transform: rotate(180deg);
+/* 播放控制区域始终可见 */
+.player-controls-always-visible {
+    display: block;
 }
 
+/* 可折叠内容区域 */
+.player-collapsible-content {
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.player-section.collapsed .player-collapsible-content {
+    display: none;
+}
+
+.player-collapsible-content.collapsed {
+    display: none;
+}
+
+/* 桌面端折叠状态也只显示基本播放控制 */
 .player-section.collapsed .audio-and-mode-buttons,
 .player-section.collapsed .progress-container,
-.player-section.collapsed .volume-control,
-.player-section.collapsed .sheet-music {
+.player-section.collapsed .volume-control {
     display: none;
+}
+
+.player-section.collapsed .player-toggle-btn #playerToggleIcon {
+    transform: rotate(180deg);
 }
 
 .current-song-info {
@@ -629,7 +649,7 @@ body {
         bottom: 0;
         left: 0;
         right: 0;
-        z-index: 100;
+        z-index: 150; /* 低于搜索栏，但仍为固定元素 */
         padding: 15px;
         border-top: 1px solid #e0e0e0;
         background: #f9f9f9;
@@ -640,19 +660,28 @@ body {
     
     .player-section.collapsed {
         padding: 0 15px;
-        height: 65px; /* Fixed height */
+        height: auto; /* 改为自动高度 */
         min-height: 65px;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column; /* 改为列布局 */
+        justify-content: flex-start;
+        align-items: stretch;
         transition: all 0.3s ease;
         gap: 10px;
     }
     
     .player-section.collapsed .player-toggle-btn {
-        margin: 0;
+        margin: 10px 0 5px 0; /* 调整边距 */
         padding: 8px 12px;
-        flex-shrink: 0; /* Prevent button from shrinking */
+        align-self: center; /* 居中显示 */
+    }
+    
+    .player-section.collapsed .player-controls-always-visible {
+        display: block; /* 始终显示播放控制 */
+    }
+    
+    .player-section.collapsed .player-collapsible-content {
+        display: none; /* 隐藏可折叠内容 */
     }
     
     .player-section.collapsed .audio-controls {
@@ -660,43 +689,22 @@ body {
         background: transparent;
     }
     
+    .player-section.collapsed .audio-and-mode-buttons,
+    .player-section.collapsed .progress-container,
+    .player-section.collapsed .volume-control {
+        display: none; /* 折叠时隐藏这些控件 */
+    }
+    
     .player-section.collapsed .playback-controls {
         display: flex;
         gap: 8px;
+        justify-content: center;
     }
 
     .player-section.collapsed .nav-btn {
         width: 38px;
         height: 38px;
         font-size: 1rem;
-    }
-    
-    .player-section.collapsed .current-song-info,
-    .player-section.collapsed .audio-and-mode-buttons,
-    .player-section.collapsed .progress-container,
-    .player-section.collapsed .sheet-music,
-    .player-section.collapsed .volume-control {
-        display: none;
-    }
-    
-    .player-section.collapsed .current-song-info {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        padding: 0;
-        border: none;
-        gap: 15px;
-    }
-    
-    .player-section.collapsed .current-song-info h3 {
-        font-size: 1rem;
-        margin: 0;
-        flex: 1;
-        text-align: left;
-    }
-    
-    .player-section.collapsed .song-meta {
-        display: none;
     }
     
     .audio-and-mode-buttons {
@@ -780,11 +788,16 @@ body {
     }
     
     .search-box {
+        position: sticky;
+        top: 0;
+        z-index: 200; /* 确保在播放器之上 */
+        background: #ffffff;
         margin: -15px -15px 15px -15px;
         padding-left: 15px;
         padding-right: 15px;
         padding-top: 15px;
-        background: #f5f5f7;
+        padding-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 }
 

@@ -29,72 +29,77 @@
                 <button id="playerToggleBtn" class="player-toggle-btn" title="收起播放器">
                     <span id="playerToggleText">折叠</span><span id="playerToggleIcon">🔼</span>
                 </button>
-                <!-- 音频控制器 -->
-                <div class="audio-controls">
-                    <div class="audio-player">
-                        <audio id="audioPlayer" preload="none">
-                            您的浏览器不支持音频播放。
-                        </audio>
-                        
-                        <div class="control-buttons">
-                            <div class="audio-and-mode-buttons">
-                                <button id="originalBtn" class="audio-btn active" disabled>
-                                    🎤 原唱
-                                </button>
-                                <button id="accompanimentBtn" class="audio-btn" disabled>
-                                    🎹 伴奏
-                                </button>
-                                <button id="playModeBtn" class="mode-btn" title="播放模式">
-                                    🔄 顺序播放
-                                </button>
-                            </div>
-                            <div class="playback-controls">
-                                <div class="navigation-buttons">
-                                    <button id="prevBtn" class="nav-btn" disabled title="上一首">
-                                        ⏮️
+                
+                <!-- 始终可见的播放控制区域 -->
+                <div class="player-controls-always-visible">
+                    <!-- 音频控制器 -->
+                    <div class="audio-controls">
+                        <div class="audio-player">
+                            <audio id="audioPlayer" preload="none">
+                                您的浏览器不支持音频播放。
+                            </audio>
+                            
+                            <div class="control-buttons">
+                                <div class="audio-and-mode-buttons">
+                                    <button id="originalBtn" class="audio-btn active" disabled>
+                                        🎤 原唱
                                     </button>
-                                    <button id="playPauseBtn" class="nav-btn play-pause" disabled title="播放/暂停">
-                                        ▶️
+                                    <button id="accompanimentBtn" class="audio-btn" disabled>
+                                        🎹 伴奏
                                     </button>
-                                    <button id="nextBtn" class="nav-btn" disabled title="下一首">
-                                        ⏭️
+                                    <button id="playModeBtn" class="mode-btn" title="播放模式">
+                                        🔄 顺序播放
                                     </button>
                                 </div>
-                                <div class="volume-control">
-                                    <span>🔊</span>
-                                    <input type="range" id="volumeSlider" min="0" max="100" value="70">
+                                <div class="playback-controls">
+                                    <div class="navigation-buttons">
+                                        <button id="prevBtn" class="nav-btn" disabled title="上一首">
+                                            ⏮️
+                                        </button>
+                                        <button id="playPauseBtn" class="nav-btn play-pause" disabled title="播放/暂停">
+                                            ▶️
+                                        </button>
+                                        <button id="nextBtn" class="nav-btn" disabled title="下一首">
+                                            ⏭️
+                                        </button>
+                                    </div>
+                                    <div class="volume-control">
+                                        <span>🔊</span>
+                                        <input type="range" id="volumeSlider" min="0" max="100" value="100">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="time-display">
+                                    <span id="currentTime">00:00</span>
+                                    <span id="duration">00:00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <input type="range" id="progressSlider" min="0" max="100" value="0">
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="progress-container">
-                            <div class="time-display">
-                                <span id="currentTime">00:00</span>
-                                <span id="duration">00:00</span>
-                            </div>
-                            <div class="progress-bar">
-                                <input type="range" id="progressSlider" min="0" max="100" value="0">
-                            </div>
-                        </div>
-                        
-
                     </div>
                 </div>
                 
-                <!-- 歌谱显示区域 -->
-                <div class="sheet-music">
-                    <div class="sheet-header">
-                        <div class="download-controls">
-                            <button id="downloadZipBtn" class="action-btn" disabled>打包下载</button>
-                            <button id="downloadOriginalBtn" class="action-btn" disabled>🎤 歌曲</button>
-                            <button id="downloadAccompanimentBtn" class="action-btn" disabled>🎹 伴奏</button>
-                            <button id="downloadSheetBtn" class="action-btn" disabled>🎼 歌谱</button>
+                <!-- 可折叠的歌谱和下载区域 -->
+                <div class="player-collapsible-content" id="playerCollapsibleContent">
+                    <!-- 歌谱显示区域 -->
+                    <div class="sheet-music">
+                        <div class="sheet-header">
+                            <div class="download-controls">
+                                <button id="downloadZipBtn" class="action-btn" disabled>打包下载</button>
+                                <button id="downloadOriginalBtn" class="action-btn" disabled>🎤 歌曲</button>
+                                <button id="downloadAccompanimentBtn" class="action-btn" disabled>🎹 伴奏</button>
+                                <button id="downloadSheetBtn" class="action-btn" disabled>🎼 歌谱</button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="sheet-display" id="sheetDisplay">
-                        <div class="sheet-placeholder">
-                            <p>🎼</p>
-                            <p>请选择歌曲查看歌谱</p>
+                        <div class="sheet-display" id="sheetDisplay">
+                            <div class="sheet-placeholder">
+                                <p>🎼</p>
+                                <p>请选择歌曲查看歌谱</p>
+                            </div>
                         </div>
                     </div>
                 </div>

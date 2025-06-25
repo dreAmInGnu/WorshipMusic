@@ -36,6 +36,7 @@ const elements = {
     playerToggleBtn: null,
     playerToggleText: null,
     playerToggleIcon: null,
+    playerCollapsibleContent: null,
     sheetModal: null,
     modalSheetImage: null,
     closeSheetModal: null
@@ -86,6 +87,7 @@ function initializeElements() {
     elements.playerToggleBtn = document.getElementById('playerToggleBtn');
     elements.playerToggleText = document.getElementById('playerToggleText');
     elements.playerToggleIcon = document.getElementById('playerToggleIcon');
+    elements.playerCollapsibleContent = document.getElementById('playerCollapsibleContent');
     elements.sheetModal = document.getElementById('sheetModal');
     elements.modalSheetImage = document.getElementById('modalSheetImage');
     elements.closeSheetModal = document.getElementById('closeSheetModal');
@@ -129,7 +131,7 @@ function setupEventListeners() {
     });
     
     // 设置初始音量
-    elements.audioPlayer.volume = elements.volumeSlider.value / 100;
+    elements.audioPlayer.volume = 1.0; // 默认最大音量
 }
 
 // 设置 Stagewise 工具栏
@@ -479,14 +481,17 @@ function buildAudioUrl(song, type) {
 
 // 切换播放/暂停
 function togglePlayPause() {
-    if (!currentSong) return;
+    if (!currentSong) {
+        showError('请先选择一首歌曲');
+        return;
+    }
     
     if (elements.audioPlayer.paused) {
         // 如果没有音频源，先加载当前选择的音频类型
         if (!elements.audioPlayer.src) {
             playCurrentSong(currentAudioType);
         } else {
-            elements.audioPlayer.play();
+            elements.audioPlayer.play().catch(e => handleAudioError(e));
         }
     } else {
         elements.audioPlayer.pause();
@@ -522,8 +527,11 @@ function switchToAudioType(type) {
     if (type === currentAudioType) return;
 
     const audio = elements.audioPlayer;
-    const currentTime = audio.currentTime;
     const wasPlaying = !audio.paused;
+
+    // 停止当前播放
+    audio.pause();
+    audio.currentTime = 0;
 
     const targetBtn = type === 'original' ? elements.originalBtn : elements.accompanimentBtn;
 
@@ -535,11 +543,10 @@ function switchToAudioType(type) {
     currentAudioType = type;
     updateAudioTypeButtons(type);
     
+    // 直接设置新的音频源并从头播放
     audio.src = buildAudioUrl(currentSong, type);
 
     audio.addEventListener('loadeddata', () => {
-        audio.currentTime = currentTime;
-        
         // Remove loading state and re-enable buttons
         targetBtn.classList.remove('loading');
         updateSongControls(); // Re-evaluates which buttons should be enabled
@@ -587,7 +594,10 @@ function handleSongEnd() {
 
 // 播放下一首歌曲
 function playNextSong() {
-    if (currentPlaylist.length === 0) return;
+    if (currentPlaylist.length === 0) {
+        showError('歌曲列表为空');
+        return;
+    }
     
     currentIndex = (currentIndex + 1) % currentPlaylist.length;
     const nextSong = currentPlaylist[currentIndex];
@@ -596,7 +606,10 @@ function playNextSong() {
 
 // 播放上一首歌曲
 function playPreviousSong() {
-    if (currentPlaylist.length === 0) return;
+    if (currentPlaylist.length === 0) {
+        showError('歌曲列表为空');
+        return;
+    }
     
     currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
     const prevSong = currentPlaylist[currentIndex];
@@ -853,19 +866,24 @@ function hideError() {
 
 // 切换播放器视图（收起/展开）
 function togglePlayerView() {
-    elements.appMain.classList.toggle('player-collapsed');
-    elements.playerSection.classList.toggle('collapsed');
+    elements.playerCollapsibleContent.classList.toggle('collapsed');
     
-    const isCollapsed = elements.playerSection.classList.contains('collapsed');
+    const isCollapsed = elements.playerCollapsibleContent.classList.contains('collapsed');
     
     // 根据屏幕宽度决定图标方向
     const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-        // 移动端：上下布局，使用上下箭头
-        elements.playerToggleIcon.innerHTML = isCollapsed ? '🔼' : '🔽';
+    if (isCollapsed) {
+        if (isMobile) {
+            elements.playerToggleIcon.innerHTML = '🔼';
+        } else {
+            elements.playerToggleIcon.innerHTML = '🔽';
+        }
     } else {
-        // 桌面端：左右布局，使用左右箭头
-        elements.playerToggleIcon.innerHTML = isCollapsed ? '🔽' : '🔼';
+        if (isMobile) {
+            elements.playerToggleIcon.innerHTML = '🔽';
+        } else {
+            elements.playerToggleIcon.innerHTML = '🔼';
+        }
     }
     
     elements.playerToggleText.textContent = isCollapsed ? '展开' : '折叠';
@@ -874,7 +892,7 @@ function togglePlayerView() {
 
 // 监听窗口大小变化，调整折叠图标
 window.addEventListener('resize', function() {
-    const isCollapsed = elements.playerSection.classList.contains('collapsed');
+    const isCollapsed = elements.playerCollapsibleContent.classList.contains('collapsed');
     const isMobile = window.innerWidth <= 768;
     
     if (isCollapsed) {
