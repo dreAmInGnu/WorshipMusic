@@ -337,19 +337,17 @@ function updateSongControls() {
 async function playCurrentSong(type) {
     if (!currentSong) return;
     
+    currentAudioType = type;
+    const audioUrl = buildAudioUrl(currentSong, type);
+    elements.audioPlayer.src = audioUrl;
+
     try {
-        currentAudioType = type;
-        const audioUrl = buildAudioUrl(currentSong, type);
-        
-        showLoading(true);
-        elements.audioPlayer.src = audioUrl;
-        
         await elements.audioPlayer.play();
-        updatePlayButtons();
+        updateAudioTypeButtons(type);
     } catch (error) {
-        console.error('播放失败:', error);
-        showError(`无法播放${type === 'original' ? '原唱' : '伴奏'}，请检查文件是否存在`);
-        showLoading(false);
+        // 将播放错误传递给统一的错误处理器
+        handleAudioError(error);
+        console.error(`播放失败: ${error.name}: ${error.message}`);
     }
 }
 
@@ -729,9 +727,41 @@ function formatTime(seconds) {
 }
 
 // 处理音频错误
-function handleAudioError() {
-    console.error('音频播放错误');
-    showError('音频文件无法播放，请检查文件是否存在');
+function handleAudioError(e) {
+    const audio = elements.audioPlayer;
+    let errorMessage = '音频文件无法播放。';
+    
+    if (audio.error) {
+        console.error('音频播放错误对象:', audio.error);
+        switch (audio.error.code) {
+            case audio.error.MEDIA_ERR_ABORTED:
+                errorMessage = '音频加载被用户中止。';
+                break;
+            case audio.error.MEDIA_ERR_NETWORK:
+                errorMessage = '网络错误，无法加载音频文件。';
+                break;
+            case audio.error.MEDIA_ERR_DECODE:
+                errorMessage = '音频文件解码失败，可能已损坏。';
+                break;
+            case audio.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                errorMessage = '音频格式不支持或跨域访问被拒绝 (CORS)。请确认R2存储桶配置。';
+                break;
+
+            default:
+                errorMessage = `发生未知音频错误。代码: ${audio.error.code}`;
+        }
+    } else if (e && e.name) {
+        // 处理来自 play() promise 的拒绝
+        console.error('播放Promise错误:', e);
+        if (e.name === 'NotSupportedError') {
+             errorMessage = '音频格式不支持或跨域访问被拒绝 (CORS)。请确认R2存储桶配置。';
+        } else {
+            errorMessage = `播放时发生错误: ${e.name}`;
+        }
+    }
+    
+    console.error('最终错误信息:', errorMessage, 'URL:', audio.src);
+    showError(errorMessage);
     showLoading(false);
 }
 
