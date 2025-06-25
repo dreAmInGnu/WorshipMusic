@@ -596,8 +596,16 @@ function switchToAudioType(type) {
 
 // 更新音频类型按钮状态
 function updateAudioTypeButtons(type) {
-    elements.originalBtn.classList.toggle('active', type === 'original');
-    elements.accompanimentBtn.classList.toggle('active', type === 'accompaniment');
+    // 先移除所有active类，确保状态清洁
+    elements.originalBtn.classList.remove('active');
+    elements.accompanimentBtn.classList.remove('active');
+    
+    // 然后添加对应的active类
+    if (type === 'original') {
+        elements.originalBtn.classList.add('active');
+    } else if (type === 'accompaniment') {
+        elements.accompanimentBtn.classList.add('active');
+    }
 }
 
 // 切换播放模式

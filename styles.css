@@ -498,15 +498,24 @@ body {
 }
 
 .audio-btn.active {
-    background: #555555;
-    color: #ffffff;
-    border-color: #555555;
+    background: #555555 !important; /* 强制优先级 */
+    color: #ffffff !important;
+    border-color: #555555 !important;
     transform: scale(1.05); /* Enlarge when active */
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.audio-btn:not(:disabled):hover {
+/* active状态的hover效果 */
+.audio-btn.active:hover {
+    background: #666666 !important; /* 更深一点的灰色 */
+    color: #ffffff !important;
+    border-color: #666666 !important;
+}
+
+/* 非active状态的hover效果 */
+.audio-btn:not(.active):not(:disabled):hover {
     background: #e9e9eb; /* Slightly darker grey on hover */
+    color: #1d1d1f;
 }
 
 .audio-btn.missing {
