@@ -150,6 +150,7 @@ body {
     flex-direction: column;
     gap: 25px;
     position: relative;
+    transition: all 0.3s ease;
 }
 
 .player-toggle-btn {
@@ -565,6 +566,13 @@ body {
 @media (max-width: 768px) {
     .container {
         padding: 10px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .app-header {
+        margin-bottom: 15px;
     }
     
     .app-header h1 {
@@ -572,71 +580,236 @@ body {
     }
     
     .app-main {
-        grid-template-columns: 1fr;
-        gap: 0;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: calc(100vh - 120px);
+        transition: none;
+    }
+    
+    .app-main.player-collapsed {
+        display: flex;
+        flex-direction: column;
     }
     
     .songs-section {
         border-right: none;
         border-bottom: 1px solid #e0e0e0;
-        max-height: 40vh;
-        padding: 20px;
+        flex: 1;
+        max-height: none;
+        overflow-y: auto;
+        padding: 15px;
+        order: 1;
     }
     
     .player-section {
-        padding: 20px;
+        padding: 15px;
+        border-top: 1px solid #e0e0e0;
+        background: #f9f9f9;
+        order: 2;
+        flex-shrink: 0;
+        position: relative;
+    }
+    
+    .player-section.collapsed {
+        padding: 10px 15px;
+        min-height: 60px;
+    }
+    
+    .player-section.collapsed .current-song-info {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 0;
+        border: none;
+        gap: 15px;
+    }
+    
+    .player-section.collapsed .current-song-info h3 {
+        font-size: 1rem;
+        margin: 0;
+        flex: 1;
+        text-align: left;
+    }
+    
+    .player-section.collapsed .song-meta {
+        display: none;
     }
     
     .audio-and-mode-buttons {
         flex-wrap: wrap;
-        justify-content: center;
+        gap: 8px;
+        justify-content: space-between;
+    }
+    
+    .audio-btn, .mode-btn {
+        flex: 1;
+        min-width: calc(33% - 6px);
+        padding: 8px 10px;
+        font-size: 0.9rem;
     }
     
     .playback-controls {
+        flex-direction: row;
+        gap: 15px;
+        align-items: center;
+        justify-content: center;
         flex-wrap: wrap;
-        gap: 10px;
-    }
-    
-    .volume-control {
-        margin-left: 0;
-        margin-top: 5px;
     }
     
     .navigation-buttons {
-        justify-content: center;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .nav-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+    
+    .volume-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 0;
+        margin-top: 0;
+    }
+    
+    .volume-control input[type="range"] {
+        max-width: 100px;
+        width: 80px;
     }
     
     .sheet-header {
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
         align-items: stretch;
     }
     
     .download-controls {
-        justify-content: center;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        justify-content: stretch;
+    }
+    
+    .action-btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
     }
     
     .sheet-display {
-        min-height: 250px;
+        min-height: 150px;
     }
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding: 8px;
+    }
+    
     .app-header h1 {
         font-size: 1.8rem;
     }
     
-    .songs-section,
+    .app-header {
+        margin-bottom: 10px;
+    }
+    
+    .songs-section {
+        padding: 12px;
+    }
+    
     .player-section {
-        padding: 15px;
+        padding: 12px;
+    }
+    
+    .player-section.collapsed {
+        padding: 8px 12px;
+        min-height: 50px;
     }
     
     .current-song-info h3 {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
+    }
+    
+    .current-song-info {
+        padding-bottom: 15px;
+    }
+    
+    .audio-and-mode-buttons {
+        gap: 6px;
+    }
+    
+    .audio-btn, .mode-btn {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+        min-width: calc(33% - 4px);
+    }
+    
+    .nav-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    .navigation-buttons {
+        gap: 12px;
+    }
+    
+    .playback-controls {
+        gap: 12px;
+    }
+    
+    .progress-container {
+        gap: 8px;
+    }
+    
+    .time-display {
+        font-size: 0.9rem;
+        gap: 8px;
+    }
+    
+    .volume-control input[type="range"] {
+        max-width: 80px;
+        width: 60px;
+    }
+    
+    .download-controls {
+        gap: 6px;
+    }
+    
+    .action-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
     }
     
     .sheet-display {
-        min-height: 200px;
+        min-height: 120px;
+    }
+    
+    .song-item {
+        padding: 12px;
+    }
+    
+    .song-title {
+        font-size: 1rem;
+    }
+    
+    .song-artist {
+        font-size: 0.85rem;
+    }
+    
+    .song-index-letter {
+        font-size: 1.1rem;
+        margin-left: 10px;
+    }
+    
+    .search-box input {
+        padding: 10px 12px;
+        font-size: 0.95rem;
     }
 }
 
