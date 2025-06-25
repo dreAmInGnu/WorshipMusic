@@ -354,6 +354,24 @@ body {
     background: #c9302c;
 }
 
+.audio-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.audio-btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: calc(50% - 8px);
+    right: 12px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
 .progress-container {
     margin-bottom: 15px;
 }
@@ -484,6 +502,7 @@ body {
     max-height: 100%;
     object-fit: contain;
     border-radius: 4px;
+    cursor: pointer; /* Add pointer cursor */
 }
 
 /* 加载状态 */
@@ -620,17 +639,36 @@ body {
     }
     
     .player-section.collapsed {
-        padding: 8px 15px;
-        min-height: 70px;
+        padding: 0 15px;
+        height: 65px; /* Fixed height */
+        min-height: 65px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         transition: all 0.3s ease;
+        gap: 10px;
     }
     
     .player-section.collapsed .player-toggle-btn {
-        margin-bottom: 0; /* Remove margin in flex layout */
+        margin: 0;
         padding: 8px 12px;
+        flex-shrink: 0; /* Prevent button from shrinking */
+    }
+    
+    .player-section.collapsed .audio-controls {
+        padding: 0;
+        background: transparent;
+    }
+    
+    .player-section.collapsed .playback-controls {
+        display: flex;
+        gap: 8px;
+    }
+
+    .player-section.collapsed .nav-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
     }
     
     .player-section.collapsed .current-song-info,
@@ -639,14 +677,6 @@ body {
     .player-section.collapsed .sheet-music,
     .player-section.collapsed .volume-control {
         display: none;
-    }
-    
-    .player-section.collapsed .playback-controls {
-        display: flex; /* Ensure it is visible */
-    }
-    
-    .app-main.player-collapsed .songs-section {
-        padding-bottom: 100px; /* 折叠时减少底部空间 */
     }
     
     .player-section.collapsed .current-song-info {
@@ -923,4 +953,54 @@ input:focus {
     .sheet-header {
         display: none;
     }
+}
+
+/* Fullscreen Sheet Music Modal */
+.sheet-modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.85);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+.sheet-modal-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.close-modal {
+    position: absolute;
+    top: 25px;
+    right: 45px;
+    color: #f1f1f1;
+    font-size: 50px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: #bbb;
+    text-decoration: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
 } 

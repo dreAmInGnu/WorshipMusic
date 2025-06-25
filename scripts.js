@@ -35,7 +35,10 @@ const elements = {
     playerSection: null,
     playerToggleBtn: null,
     playerToggleText: null,
-    playerToggleIcon: null
+    playerToggleIcon: null,
+    sheetModal: null,
+    modalSheetImage: null,
+    closeSheetModal: null
 };
 
 // 初始化应用
@@ -83,6 +86,9 @@ function initializeElements() {
     elements.playerToggleBtn = document.getElementById('playerToggleBtn');
     elements.playerToggleText = document.getElementById('playerToggleText');
     elements.playerToggleIcon = document.getElementById('playerToggleIcon');
+    elements.sheetModal = document.getElementById('sheetModal');
+    elements.modalSheetImage = document.getElementById('modalSheetImage');
+    elements.closeSheetModal = document.getElementById('closeSheetModal');
 }
 
 // 设置事件监听器
@@ -112,6 +118,15 @@ function setupEventListeners() {
     
     // 播放器收起/展开
     elements.playerToggleBtn.addEventListener('click', togglePlayerView);
+    
+    // Sheet music modal
+    elements.sheetDisplay.addEventListener('click', openSheetModal);
+    elements.closeSheetModal.addEventListener('click', closeSheetModal);
+    elements.sheetModal.addEventListener('click', (e) => {
+        if (e.target === elements.sheetModal) {
+            closeSheetModal();
+        }
+    });
     
     // 设置初始音量
     elements.audioPlayer.volume = elements.volumeSlider.value / 100;
@@ -510,21 +525,33 @@ function switchToAudioType(type) {
     const currentTime = audio.currentTime;
     const wasPlaying = !audio.paused;
 
+    const targetBtn = type === 'original' ? elements.originalBtn : elements.accompanimentBtn;
+
+    // Add loading state
+    targetBtn.classList.add('loading');
+    elements.originalBtn.disabled = true;
+    elements.accompanimentBtn.disabled = true;
+
     currentAudioType = type;
     updateAudioTypeButtons(type);
     
-    // Show loading overlay during switch
-    showLoading(true);
-
     audio.src = buildAudioUrl(currentSong, type);
 
-    // Use a one-time event listener to restore state after the new audio is ready
     audio.addEventListener('loadeddata', () => {
         audio.currentTime = currentTime;
-        showLoading(false); // Hide loading overlay
+        
+        // Remove loading state and re-enable buttons
+        targetBtn.classList.remove('loading');
+        updateSongControls(); // Re-evaluates which buttons should be enabled
+
         if (wasPlaying) {
             audio.play().catch(e => handleAudioError(e));
         }
+    }, { once: true });
+
+    audio.addEventListener('error', () => {
+        targetBtn.classList.remove('loading');
+        updateSongControls();
     }, { once: true });
 }
 
@@ -863,4 +890,21 @@ window.addEventListener('resize', function() {
             elements.playerToggleIcon.innerHTML = '🔼';
         }
     }
-}); 
+});
+
+// --- Sheet Music Modal Functions ---
+function openSheetModal(event) {
+    // Only open if an actual image is clicked
+    if (event.target.tagName === 'IMG') {
+        elements.modalSheetImage.src = event.target.src;
+        elements.sheetModal.style.display = 'flex';
+    }
+}
+
+function closeSheetModal() {
+    elements.sheetModal.style.animation = 'fadeOut 0.3s ease';
+    setTimeout(() => {
+        elements.sheetModal.style.display = 'none';
+        elements.sheetModal.style.animation = 'fadeIn 0.3s ease'; // Reset for next time
+    }, 280);
+} 
