@@ -173,11 +173,14 @@ async function loadSongsData() {
         try {
             // 检查 pinyin-pro 库是否已加载
             if (typeof pinyinPro === 'undefined') {
-                console.warn('pinyin-pro 库未加载，跳过拼音排序');
-                // 如果库未加载，使用简单的字符排序
+                console.warn('pinyin-pro 库未加载，使用简单排序');
+                // 如果库未加载，使用简单的拼音映射
                 songsData.forEach((song, index) => {
-                    song.sortKey = song.title.toLowerCase();
-                    song.indexLetter = song.title.charAt(0).toUpperCase();
+                    const firstChar = song.title.charAt(0);
+                    // 简单的中文字符到拼音字母映射
+                    let indexLetter = getSimplePinyinLetter(firstChar);
+                    song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
+                    song.indexLetter = indexLetter;
                 });
             } else {
                 console.log('使用拼音排序...');
@@ -199,8 +202,10 @@ async function loadSongsData() {
             console.error('排序处理失败:', sortError);
             // 排序失败时使用原始顺序，但仍然设置基本属性
             songsData.forEach((song, index) => {
-                song.sortKey = song.title.toLowerCase();
-                song.indexLetter = song.title.charAt(0).toUpperCase();
+                const firstChar = song.title.charAt(0);
+                let indexLetter = getSimplePinyinLetter(firstChar);
+                song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
+                song.indexLetter = indexLetter;
             });
         }
         // --- 排序结束 ---
@@ -340,10 +345,56 @@ async function playCurrentSong(type) {
     }
 }
 
+// 简单的中文字符到拼音字母映射
+function getSimplePinyinLetter(char) {
+    // 常见中文字符的拼音首字母映射
+    const pinyinMap = {
+        '阿': 'A', '爱': 'A', '安': 'A',
+        '不': 'B', '白': 'B', '宝': 'B', '贝': 'B',
+        '超': 'C', '出': 'C', '充': 'C', '除': 'C',
+        '大': 'D', '打': 'D', '的': 'D',
+        '恩': 'E', '而': 'E',
+        '复': 'F', '付': 'F', '父': 'F',
+        '光': 'G', '感': 'G', '歌': 'G', '给': 'G',
+        '和': 'H', '何': 'H', '活': 'H', '荣': 'H',
+        '基': 'J', '寄': 'J', '进': 'J', '君': 'J',
+        '可': 'K', '看': 'K',
+        '来': 'L', '立': 'L', '灵': 'L', '力': 'L',
+        '美': 'M', '满': 'M', '名': 'M',
+        '你': 'N', '那': 'N', '能': 'N',
+        '平': 'P', '朋': 'P',
+        '奇': 'Q', '全': 'Q', '求': 'Q',
+        '人': 'R', '如': 'R',
+        '神': 'S', '圣': 'S', '生': 'S', '是': 'S', '什': 'S', '诗': 'S', '十': 'S', '时': 'S', '世': 'S', '手': 'S', '寻': 'S',
+        '天': 'T', '太': 'T', '听': 'T', '他': 'T', '她': 'T', '它': 'T', '同': 'T', '团': 'T', '这': 'T',
+        '我': 'W', '为': 'W', '万': 'W', '王': 'W', '无': 'W', '唯': 'W',
+        '新': 'X', '心': 'X', '行': 'X', '信': 'X', '喜': 'X', '想': 'X', '希': 'X', '幸': 'X', '献': 'X',
+        '一': 'Y', '义': 'Y', '有': 'Y', '要': 'Y', '耶': 'Y', '与': 'Y', '以': 'Y', '因': 'Y', '永': 'Y', '用': 'Y', '又': 'Y', '医': 'Y', '应': 'Y', '牺': 'Y',
+        '在': 'Z', '主': 'Z', '真': 'Z', '只': 'Z', '知': 'Z', '中': 'Z', '住': 'Z', '最': 'Z', '自': 'Z', '尊': 'Z'
+    };
+    
+    // 如果是英文字符，直接返回大写
+    if (/^[a-zA-Z]/.test(char)) {
+        return char.toUpperCase();
+    }
+    
+    // 查找中文字符映射
+    return pinyinMap[char] || '#';
+}
+
 // 构建音频URL
 function buildAudioUrl(song, type) {
     const fileName = type === 'original' ? song.files.original : song.files.accompaniment;
-    return `${R2_BASE_URL}/${song.folder}/${fileName}`;
+    const audioUrl = `${R2_BASE_URL}/${song.folder}/${fileName}`;
+    console.log(`构建音频URL: ${audioUrl}`);
+    console.log(`歌曲信息:`, {
+        title: song.title,
+        folder: song.folder,
+        fileName: fileName,
+        type: type,
+        files: song.files
+    });
+    return audioUrl;
 }
 
 // 切换播放/暂停
