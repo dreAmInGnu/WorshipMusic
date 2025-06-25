@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # This is a configuration file for Cloudflare's command-line tool, Wrangler.
 # It helps you develop, test, and deploy your Worker projects.
 
@@ -20,4 +21,28 @@ compatibility_date = "2024-06-25"
 # `bucket_name`: The exact name of your R2 bucket in the Cloudflare dashboard.
 [[r2_buckets]]
 binding = "SONG_BUCKET"
+=======
+# This is a configuration file for Cloudflare's command-line tool, Wrangler.
+# It helps you develop, test, and deploy your Worker projects.
+
+# Name of your Worker. This will be the name of the service in the Cloudflare dashboard.
+name = "worship-songs-api"
+
+# The entry point for your Worker.
+main = "functions/api/songs.js"
+
+# Compatibility date for the Worker runtime.
+# This ensures that your Worker continues to work as the runtime evolves.
+compatibility_date = "2024-06-25"
+
+# R2 Bucket binding.
+# This section allows your Worker to interact with a specific R2 bucket.
+# You MUST create this binding in the Cloudflare dashboard under your Worker's settings
+# for the deployment to work correctly.
+#
+# `binding`: The name of the variable to access the bucket in your Worker code (e.g., `env.SONG_BUCKET`).
+# `bucket_name`: The exact name of your R2 bucket in the Cloudflare dashboard.
+[[r2_buckets]]
+binding = "SONG_BUCKET"
+>>>>>>> d2bffa7e018efbef8d2f9e49f696c21be25b9c68
 bucket_name = "worship" 
