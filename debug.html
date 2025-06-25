@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-    <h1>API 调试</h1>
+    <h1>API 调试页面</h1>
     <button onclick="testAPI()">测试 /api/songs</button>
     <div id="result"></div>
 
@@ -28,14 +28,31 @@
                 resultDiv.innerHTML = `
                     <div class="result ${response.ok ? 'success' : 'error'}">
                         <h3>状态: ${response.status} ${response.statusText}</h3>
-                        <h4>响应内容:</h4>
-                        <pre>${text}</pre>
+                        <h4>响应内容 (原始文本):</h4>
+                        <pre>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
                     </div>
                 `;
+
+                try {
+                    const jsonData = JSON.parse(text);
+                    resultDiv.innerHTML += `
+                    <div class="result success">
+                        <h4>JSON 解析成功:</h4>
+                        <pre>${JSON.stringify(jsonData, null, 2)}</pre>
+                    </div>`
+                } catch (e) {
+                     resultDiv.innerHTML += `
+                    <div class="result error">
+                        <h4>JSON 解析失败:</h4>
+                        <p>${e.message}</p>
+                        <p>这通常意味着 API 返回的是 HTML 页面而不是 JSON 数据。</p>
+                    </div>`
+                }
+
             } catch (error) {
                 resultDiv.innerHTML = `
                     <div class="result error">
-                        <h3>错误: ${error.message}</h3>
+                        <h3>网络请求错误: ${error.message}</h3>
                     </div>
                 `;
             }
