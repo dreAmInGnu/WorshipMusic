@@ -537,7 +537,7 @@ function switchToAudioType(type) {
     const audio = elements.audioPlayer;
     const wasPlaying = !audio.paused;
 
-    // 暂停当前音频，准备切换
+    // 暂停当前音频
     audio.pause();
     showLoading(true);
 
@@ -545,50 +545,30 @@ function switchToAudioType(type) {
     currentAudioType = type;
     updateAudioTypeButtons(type);
     
+    // 清理可能存在的旧监听器
+    const oldCanPlay = audio.oncanplay;
+    const oldError = audio.onerror;
+    
+    // 设置一次性事件监听器
+    audio.oncanplay = function() {
+        audio.oncanplay = oldCanPlay; // 恢复原监听器
+        audio.onerror = oldError;
+        showLoading(false);
+        
+        if (wasPlaying) {
+            audio.play().catch(e => handleAudioError(e));
+        }
+    };
+    
+    audio.onerror = function() {
+        audio.oncanplay = oldCanPlay; // 恢复原监听器  
+        audio.onerror = oldError;
+        showLoading(false);
+        handleAudioError(audio.error || new Error('音频加载失败'));
+    };
+    
     // 设置新的音频源
     audio.src = buildAudioUrl(currentSong, type);
-
-    // 使用Promise方式处理音频加载，避免重复事件监听器
-    loadAudioAndPlay(audio, wasPlaying);
-}
-
-// 独立的音频加载和播放函数
-async function loadAudioAndPlay(audio, shouldPlay) {
-    try {
-        // 等待音频可以播放
-        await new Promise((resolve, reject) => {
-            const handleCanPlay = () => {
-                audio.removeEventListener('canplay', handleCanPlay);
-                audio.removeEventListener('error', handleError);
-                resolve();
-            };
-            
-            const handleError = () => {
-                audio.removeEventListener('canplay', handleCanPlay);
-                audio.removeEventListener('error', handleError);
-                reject(audio.error || new Error('音频加载失败'));
-            };
-            
-            // 如果音频已经可以播放，直接resolve
-            if (audio.readyState >= 3) { // HAVE_FUTURE_DATA
-                resolve();
-                return;
-            }
-            
-            audio.addEventListener('canplay', handleCanPlay, { once: true });
-            audio.addEventListener('error', handleError, { once: true });
-        });
-        
-        showLoading(false);
-        
-        if (shouldPlay) {
-            await audio.play();
-        }
-    } catch (error) {
-        showLoading(false);
-        handleAudioError(error);
-        console.error('音频切换失败:', error);
-    }
 }
 
 // 更新音频类型按钮状态
@@ -623,6 +603,12 @@ function handleSongEnd() {
 
 // 播放下一首歌曲
 function playNextSong() {
+    // 在随机模式下，下一首应该是随机选择
+    if (isRandomMode) {
+        playRandomSong();
+        return;
+    }
+    
     if (!currentSong || currentPlaylist.length === 0) {
         if (currentPlaylist.length > 0) {
             selectSong(currentPlaylist[0], 0);
@@ -639,6 +625,12 @@ function playNextSong() {
 
 // 播放上一首歌曲
 function playPreviousSong() {
+    // 在随机模式下，上一首应该是随机选择
+    if (isRandomMode) {
+        playRandomSong();
+        return;
+    }
+    
     if (!currentSong || currentPlaylist.length === 0) {
         if (currentPlaylist.length > 0) {
             selectSong(currentPlaylist[0], 0);

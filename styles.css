@@ -74,26 +74,32 @@ body {
     font-size: 1.4rem;
 }
 
-/* 搜索框始终显示，但根据播放器状态调整样式 */
+/* 搜索框始终显示，根据播放器状态调整位置 */
 .songs-section .search-box {
     display: block;
     position: sticky;
     top: 0;
-    z-index: 200;
+    z-index: 100; /* 降低z-index，避免遮挡播放器 */
     background: #ffffff;
     margin: -25px -25px 15px -25px;
     padding: 25px 25px 15px 25px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
-/* 当播放器展开时，搜索框样式保持不变 */
+/* 当播放器展开时，搜索框固定在歌曲列表区域的顶部 */
 .app-main:not(.player-collapsed) .songs-section .search-box {
     display: block;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-/* 当播放器折叠时，确保搜索框仍然显示 */
+/* 当播放器折叠时，搜索框固定在整个视口的顶部 */
 .app-main.player-collapsed .songs-section .search-box {
     display: block;
+    position: sticky;
+    top: 0;
+    z-index: 200; /* 折叠时提高z-index */
 }
 
 /* 搜索输入容器样式 */
