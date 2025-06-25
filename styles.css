@@ -263,7 +263,9 @@ body {
 
 /* 桌面端折叠状态也只显示基本播放控制 */
 .player-section.collapsed {
-    background: rgb(45,45,45); /* 折叠状态使用深灰色背景 */
+    background: rgb(120,120,120); /* 折叠状态使用灰色背景 */
+    padding: 8px 20px 12px 20px;
+    min-height: 85px;
 }
 
 .player-section.collapsed .audio-and-mode-buttons,
@@ -280,7 +282,7 @@ body {
 .collapsed-player-controls {
     display: none; /* 默认隐藏 */
     width: 100%;
-    padding: 6px 0;
+    padding: 4px 0 0 0;
     align-items: center;
     justify-content: space-between;
     gap: 15px;
@@ -304,13 +306,13 @@ body {
 }
 
 .collapsed-nav-btn {
-    background: #e9e9eb;
+    background: transparent;
     color: #1d1d1f;
-    padding: 6px 10px;
+    padding: 0;
     border: none;
-    border-radius: 50%;
+    border-radius: 0;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1.8rem;
     transition: all 0.3s ease;
     width: 36px;
     height: 36px;
@@ -320,31 +322,35 @@ body {
 }
 
 .collapsed-nav-btn:disabled {
-    background: #e0e0e0;
+    background: transparent;
     color: #999;
     cursor: not-allowed;
 }
 
 .collapsed-nav-btn:not(:disabled):hover {
-    background: #d2d2d7;
-    transform: scale(1.05);
+    background: transparent;
+    color: #007aff;
+    transform: scale(1.1);
 }
 
 .collapsed-nav-btn.collapsed-play-pause {
-    background: #000000;
-    color: #ffffff;
+    background: transparent;
+    color: #000000;
 }
 
 .collapsed-nav-btn.collapsed-play-pause:not(:disabled):hover {
-    background: #333333;
+    background: transparent;
+    color: #007aff;
 }
 
 .collapsed-nav-btn.playing {
-    background: #333;
+    background: transparent;
+    color: #ff3b30;
 }
 
 .collapsed-nav-btn.playing:not(:disabled):hover {
-    background: #c82333;
+    background: transparent;
+    color: #ff6b60;
 }
 
 .current-song-info {
@@ -401,13 +407,13 @@ body {
 }
 
 .nav-btn {
-    background: #e9e9eb;
+    background: transparent;
     color: #1d1d1f;
-    padding: 8px 12px;
+    padding: 0;
     border: none;
-    border-radius: 50%;
+    border-radius: 0;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 2rem;
     transition: all 0.3s ease;
     width: 40px;
     height: 40px;
@@ -417,31 +423,35 @@ body {
 }
 
 .nav-btn:disabled {
-    background: #e0e0e0;
+    background: transparent;
     color: #999;
     cursor: not-allowed;
 }
 
 .nav-btn:not(:disabled):hover {
-    background: #d2d2d7;
-    transform: scale(1.05);
+    background: transparent;
+    color: #007aff;
+    transform: scale(1.1);
 }
 
 .nav-btn.play-pause {
-    background: #000000;
-    color: #ffffff;
+    background: transparent;
+    color: #000000;
 }
 
 .nav-btn.play-pause:not(:disabled):hover {
-    background: #333333;
+    background: transparent;
+    color: #007aff;
 }
 
 .nav-btn.playing {
-    background: #333;
+    background: transparent;
+    color: #ff3b30;
 }
 
 .nav-btn.playing:not(:disabled):hover {
-    background: #c82333;
+    background: transparent;
+    color: #ff6b60;
 }
 
 .mode-btn {
@@ -806,14 +816,11 @@ body {
     }
     
     .player-section.collapsed {
-    height: 85px;
-    min-height: 85px;
-    max-height: 85px;
-    padding: 6px 15px;
+    min-height: 80px;
+    padding: 8px 15px 12px 15px;
     flex-direction: column;
     align-items: center;
-    overflow: hidden;
-    background: rgb(45,45,45); /* 折叠状态使用深灰色背景 */
+    background: rgb(120,120,120); /* 折叠状态使用灰色背景 */
 }
     
     .player-section.collapsed .player-toggle-btn {
@@ -832,7 +839,7 @@ body {
         justify-content: space-between;
         align-items: center;
         gap: 12px;
-        padding: 4px 0;
+        padding: 8px 0;
     }
 
     .collapsed-song-info {
@@ -842,13 +849,16 @@ body {
     }
 
     .collapsed-navigation-buttons {
-        gap: 6px;
+        gap: 10px;
     }
 
     .collapsed-nav-btn {
         width: 34px;
         height: 34px;
-        font-size: 0.85rem;
+        font-size: 1.6rem;
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
     }
 
     .player-section.collapsed .player-collapsible-content {
@@ -894,8 +904,11 @@ body {
     .nav-btn {
         width: 42px;
         height: 42px;
-        font-size: 1.1rem;
+        font-size: 2.2rem;
         flex-shrink: 0;
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
     }
     
     .volume-control {
@@ -983,26 +996,28 @@ body {
     }
     
     .player-section.collapsed {
-        padding: 4px 10px;
+        padding: 6px 10px 10px 10px;
         min-height: 75px;
-        max-height: 75px;
-        background: rgb(45,45,45); /* 确保480px下也使用深灰色背景 */
+        background: rgb(120,120,120); /* 确保480px下也使用灰色背景 */
     }
 
     /* 480px下的折叠控制区域调整 */
     .player-section.collapsed .collapsed-player-controls {
         gap: 8px;
-        padding: 3px 0;
+        padding: 8px 0;
     }
 
     .collapsed-navigation-buttons {
-        gap: 4px;
+        gap: 8px;
     }
 
     .collapsed-nav-btn {
         width: 32px;
         height: 32px;
-        font-size: 0.8rem;
+        font-size: 1.4rem;
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
     }
     
     .current-song-info h3 {
@@ -1026,8 +1041,11 @@ body {
     .nav-btn {
         width: 38px;
         height: 38px;
-        font-size: 1rem;
+        font-size: 1.8rem;
         flex-shrink: 0;
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
     }
     
     .navigation-buttons {
@@ -1212,4 +1230,3 @@ input:focus {
 .song-title-collapsed span{display:inline;}
 
 .player-section.collapsed .song-title-collapsed{flex:0 1 auto;margin-right:auto;margin-left:12px;min-width:0;text-align:left;}
-.player-section.collapsed .player-controls-always-visible{display:flex;width:100%;justify-content:flex-end;align-items:center;gap:16px;margin-left:0;} 
