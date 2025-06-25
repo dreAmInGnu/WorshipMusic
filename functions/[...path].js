@@ -73,8 +73,9 @@ export async function onRequest({ request, env }) {
       headers.set('Content-Range', obj.range);
     }
     
-    // ⑤ 缓存控制
-    headers.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
+    // ⑤ 缓存控制 - 针对不同文件类型设置不同缓存时间
+    const cacheControl = getCacheControl(key);
+    headers.set('Cache-Control', cacheControl);
     
     // ⑥ 可选：文件下载时的文件名
     if (url.searchParams.get('download') === 'true') {
@@ -116,4 +117,24 @@ function getContentType(filename) {
   };
   
   return mimeTypes[ext] || 'application/octet-stream';
+}
+
+/**
+ * 根据文件类型确定缓存策略
+ */
+function getCacheControl(filename) {
+  const ext = filename.toLowerCase().split('.').pop();
+  
+  // 音频文件：24小时缓存（移动端友好，避免网络问题时缓存过久）
+  if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(ext)) {
+    return 'public, max-age=86400'; // 24小时
+  }
+  
+  // 图片文件：7天缓存（歌谱可能会更新）
+  if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+    return 'public, max-age=604800'; // 7天
+  }
+  
+  // 其他文件：1年缓存（静态资源）
+  return 'public, max-age=31536000'; // 1年
 } 

@@ -1,0 +1,28 @@
+# Cloudflare Pages 静态资源缓存配置
+# 参考：https://developers.cloudflare.com/pages/configuration/headers/
+
+# HTML文件：1小时缓存（允许快速更新）
+/*.html
+  Cache-Control: public, max-age=3600
+
+# CSS和JS文件：7天缓存（可能会更新）  
+/*.css
+  Cache-Control: public, max-age=604800
+/*.js
+  Cache-Control: public, max-age=604800
+
+# 图标文件：30天缓存（很少更改）
+/icons/*
+  Cache-Control: public, max-age=2592000
+
+# 库文件：1年缓存（第三方库很少更改）
+/libs/*
+  Cache-Control: public, max-age=31536000
+
+# API响应：5分钟缓存
+/api/*
+  Cache-Control: public, max-age=300
+
+# 根目录文件：默认1小时缓存
+/*
+  Cache-Control: public, max-age=3600 
