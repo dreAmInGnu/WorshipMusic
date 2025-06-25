@@ -154,37 +154,75 @@ function setupAudioEventListeners() {
 async function loadSongsData() {
     try {
         showLoading(true);
+        console.log('开始加载歌曲数据...');
+        
         // The new API endpoint. This path works when deploying to Cloudflare Pages.
         // For local development, you might need to run the worker and adjust the URL.
         const response = await fetch('/api/songs');
         if (!response.ok) {
-            throw new Error(`无法加载歌曲数据: ${response.status} ${response.statusText}`);
+            throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
         }
         
+        console.log('API 响应成功，开始解析数据...');
         const dynamicData = await response.json();
         songsData = dynamicData.songs; // The API returns an object with a "songs" property
         
+        console.log(`成功加载 ${songsData.length} 首歌曲`);
+        
         // --- 拼音排序逻辑 ---
-        const { pinyin } = pinyinPro;
-        songsData.forEach(song => {
-            const firstChar = song.title.charAt(0);
-            let sortKey = pinyin(firstChar, { toneType: 'none', nonZh: 'consecutive' }).toLowerCase();
-            if (!/^[a-z]/.test(sortKey)) {
-                sortKey = '~' + sortKey;
+        try {
+            // 检查 pinyin-pro 库是否已加载
+            if (typeof pinyinPro === 'undefined') {
+                console.warn('pinyin-pro 库未加载，跳过拼音排序');
+                // 如果库未加载，使用简单的字符排序
+                songsData.forEach((song, index) => {
+                    song.sortKey = song.title.toLowerCase();
+                    song.indexLetter = song.title.charAt(0).toUpperCase();
+                });
+            } else {
+                console.log('使用拼音排序...');
+                const { pinyin } = pinyinPro;
+                songsData.forEach(song => {
+                    const firstChar = song.title.charAt(0);
+                    let sortKey = pinyin(firstChar, { toneType: 'none', nonZh: 'consecutive' }).toLowerCase();
+                    if (!/^[a-z]/.test(sortKey)) {
+                        sortKey = '~' + sortKey;
+                    }
+                    song.sortKey = sortKey;
+                    song.indexLetter = sortKey.charAt(0).toUpperCase();
+                });
             }
-            song.sortKey = sortKey;
-            song.indexLetter = sortKey.charAt(0).toUpperCase();
-        });
-
-        songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+            
+            songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+            console.log('歌曲排序完成');
+        } catch (sortError) {
+            console.error('排序处理失败:', sortError);
+            // 排序失败时使用原始顺序，但仍然设置基本属性
+            songsData.forEach((song, index) => {
+                song.sortKey = song.title.toLowerCase();
+                song.indexLetter = song.title.charAt(0).toUpperCase();
+            });
+        }
         // --- 排序结束 ---
 
         currentPlaylist = [...songsData];
         renderSongsList(currentPlaylist);
+        console.log('歌曲列表渲染完成');
         showLoading(false);
     } catch (error) {
         console.error('加载歌曲数据失败:', error);
-        showError('无法加载歌曲列表，请检查网络连接');
+        
+        // 更精确的错误信息
+        let errorMessage = '加载失败';
+        if (error.message.includes('API请求失败')) {
+            errorMessage = 'API服务器连接失败，请稍后重试';
+        } else if (error.message.includes('fetch')) {
+            errorMessage = '网络连接错误，请检查网络连接';
+        } else {
+            errorMessage = '数据处理错误：' + error.message;
+        }
+        
+        showError(errorMessage);
         showLoading(false);
     }
 }
