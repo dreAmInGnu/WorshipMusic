@@ -756,13 +756,32 @@ async function downloadSingleFile(type) {
             if (!song.files.sheet) { showError('该歌曲没有歌谱文件'); return; }
             fileName = song.files.sheet;
             fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
-            // 直接触发浏览器下载，避免fetch引发的CORS
-            const a = document.createElement('a');
-            a.href = fileUrl;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+
+            try {
+                showLoading(true);
+                const resp = await fetch(fileUrl, { mode: 'cors' });
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showLoading(false);
+            } catch (err) {
+                console.warn('歌谱fetch失败，回退到直接打开', err);
+                showLoading(false);
+                const a = document.createElement('a');
+                a.href = fileUrl;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
             return;
             break;
         default:
