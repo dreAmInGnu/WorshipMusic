@@ -756,6 +756,14 @@ async function downloadSingleFile(type) {
             if (!song.files.sheet) { showError('该歌曲没有歌谱文件'); return; }
             fileName = song.files.sheet;
             fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
+            // 直接触发浏览器下载，避免fetch引发的CORS
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            return;
             break;
         default:
             return;
