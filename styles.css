@@ -734,7 +734,7 @@ body {
     }
 
     .player-section.collapsed .player-controls-always-visible {
-        margin-left: 12px;
+        margin-left: auto;
     }
 
     .player-section.collapsed .player-collapsible-content {
@@ -1076,5 +1076,5 @@ input:focus {
 .song-title-collapsed,.song-title-progress{display:block;overflow:hidden;white-space:nowrap;}
 .song-title-collapsed span,.song-title-progress span{display:inline-block;}
 
-.player-section.collapsed .song-title-collapsed{display:block;margin:0 12px;flex:1 1 0;min-width:0;}
-.player-section.collapsed .player-controls-always-visible{margin-left:12px;} 
+.player-section.collapsed .song-title-collapsed{flex:1 1 auto;margin:0 12px;min-width:0;}
+.player-section.collapsed .player-controls-always-visible{margin-left:auto;} 
