@@ -61,9 +61,10 @@ body {
 /* 歌曲列表区域 */
 .songs-section {
     padding: 25px;
-    border-right: 1px solid #e0e0e0;
+    border-right: 1px solid #d2d2d7;
     max-height: 80vh;
     overflow-y: auto;
+    position: relative;
 }
 
 .songs-section h2 {
@@ -73,7 +74,15 @@ body {
 }
 
 .search-box {
-    margin-bottom: 20px;
+    position: sticky;
+    top: -1px;
+    z-index: 50;
+    background: #ffffff;
+    padding-top: 25px;
+    padding-bottom: 10px;
+    margin: -25px -25px 20px -25px;
+    padding-left: 25px;
+    padding-right: 25px;
 }
 
 .search-box input {
@@ -156,15 +165,12 @@ body {
 }
 
 .player-toggle-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
+    position: relative;
     width: auto;
-    height: 30px;
-    padding: 0 10px;
-    border-radius: 15px;
-    border: 1px solid #ccc;
-    background: #fff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid #d2d2d7;
+    background: #f5f5f7;
     cursor: pointer;
     font-size: 0.9rem;
     display: flex;
@@ -172,14 +178,12 @@ body {
     justify-content: center;
     gap: 5px;
     z-index: 10;
-}
-
-.player-toggle-btn #playerToggleIcon {
-    transition: transform 0.3s ease;
+    align-self: center;
+    margin-bottom: 15px;
 }
 
 .player-toggle-btn:hover {
-    background: #f0f0f0;
+    background: #e9e9eb;
 }
 
 .player-section.collapsed .player-toggle-btn #playerToggleIcon {
@@ -717,6 +721,14 @@ body {
     
     .sheet-display {
         min-height: 150px;
+    }
+    
+    .search-box {
+        margin: -15px -15px 15px -15px;
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-top: 15px;
+        background: #f5f5f7;
     }
 }
 
