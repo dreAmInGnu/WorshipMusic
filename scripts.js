@@ -254,6 +254,7 @@ async function loadSongsData() {
         
         showError(errorMessage);
         showLoading(false);
+        updatePlaybackControls(false); // 确保在加载失败时禁用控件
     }
 }
 
@@ -358,6 +359,9 @@ function updateSongControls() {
         elements.downloadAccompanimentBtn.disabled = !currentSong.files.accompaniment;
         elements.downloadSheetBtn.disabled = !currentSong.files.sheet;
 
+        // 启用核心播放控件
+        updatePlaybackControls(true);
+
     } else {
         // Disable all if no song is selected
         const allButtons = [
@@ -366,7 +370,17 @@ function updateSongControls() {
             elements.downloadAccompanimentBtn, elements.downloadSheetBtn
         ];
         allButtons.forEach(btn => btn.disabled = true);
+        
+        // 禁用核心播放控件
+        updatePlaybackControls(false);
     }
+}
+
+// 统一更新核心播放控件的状态
+function updatePlaybackControls(isEnabled) {
+    elements.playPauseBtn.disabled = !isEnabled;
+    elements.prevBtn.disabled = !isEnabled;
+    elements.nextBtn.disabled = !isEnabled;
 }
 
 // 播放当前歌曲

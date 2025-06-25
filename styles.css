@@ -63,8 +63,9 @@ body {
     padding: 25px;
     border-right: 1px solid #d2d2d7;
     max-height: 80vh;
-    overflow-y: auto;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .songs-section h2 {
@@ -75,15 +76,15 @@ body {
 
 .search-box {
     position: sticky;
-    top: 0;
+    top: -25px;
     z-index: 200;
     background: #ffffff;
-    margin: -15px -15px 15px -15px;
-    padding-left: 15px;
-    padding-right: 15px;
-    padding-top: 15px;
     padding-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 0 -25px;
+    padding-left: 25px;
+    padding-right: 25px;
+    padding-top: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
 .search-box input {
@@ -104,6 +105,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    overflow-y: auto;
+    flex-grow: 1;
 }
 
 .song-item {
@@ -638,10 +641,11 @@ body {
         border-bottom: none;
         flex: 1;
         max-height: none;
-        overflow-y: auto;
         padding: 15px;
         padding-bottom: 200px; /* 为固定播放器留出空间 */
         order: 1;
+        display: flex;
+        flex-direction: column;
     }
     
     .player-section {
@@ -659,21 +663,33 @@ body {
     }
     
     .player-section.collapsed {
-        padding: 0 15px;
+        padding: 5px 15px;
         height: auto; /* 改为自动高度 */
-        min-height: 65px;
+        min-height: 50px; /* 调整最小高度 */
         display: flex;
-        flex-direction: column; /* 改为列布局 */
-        justify-content: flex-start;
-        align-items: stretch;
+        flex-direction: row; /* 改为行布局 */
+        justify-content: space-between; /* 两端对齐 */
+        align-items: center; /* 垂直居中 */
         transition: all 0.3s ease;
-        gap: 10px;
+        gap: 15px; /* 增加元素间距 */
     }
     
     .player-section.collapsed .player-toggle-btn {
-        margin: 10px 0 5px 0; /* 调整边距 */
+        margin: 0;
         padding: 8px 12px;
         align-self: center; /* 居中显示 */
+        flex-shrink: 0;
+    }
+    
+    .player-section.collapsed .playback-controls {
+        padding: 0;
+        margin: 0;
+        flex-grow: 1; /* 占据剩余空间 */
+        justify-content: center; /* 居中按钮 */
+    }
+    
+    .player-section.collapsed .navigation-buttons {
+        gap: 15px; /* 调整按钮间距 */
     }
     
     .player-section.collapsed .player-controls-always-visible {
@@ -695,12 +711,6 @@ body {
         display: none; /* 折叠时隐藏这些控件 */
     }
     
-    .player-section.collapsed .playback-controls {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-    }
-
     .player-section.collapsed .nav-btn {
         width: 38px;
         height: 38px;
@@ -798,6 +808,7 @@ body {
         padding-top: 15px;
         padding-bottom: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        flex-shrink: 0; /* Prevent search box from shrinking */
     }
 }
 
