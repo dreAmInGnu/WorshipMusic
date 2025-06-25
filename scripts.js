@@ -527,48 +527,21 @@ function updatePlayButtons() {
 
 // 切换音频类型
 function switchToAudioType(type) {
+    // 如果没有选择歌曲或重复点击当前类型，直接返回
     if (!currentSong || type === currentAudioType) return;
 
+    // 当所需音频文件不存在时，直接返回
     if ((type === 'accompaniment' && !currentSong.files.accompaniment) ||
         (type === 'original' && !currentSong.files.original)) {
         return;
     }
 
-    const audio = elements.audioPlayer;
-    const wasPlaying = !audio.paused;
-
-    // 暂停当前音频
-    audio.pause();
-    showLoading(true);
-
-    // 更新按钮状态
+    // 更新当前音频类型并刷新按钮状态
     currentAudioType = type;
     updateAudioTypeButtons(type);
-    
-    // 清理可能存在的旧监听器
-    const oldCanPlay = audio.oncanplay;
-    const oldError = audio.onerror;
-    
-    // 设置一次性事件监听器
-    audio.oncanplay = function() {
-        audio.oncanplay = oldCanPlay; // 恢复原监听器
-        audio.onerror = oldError;
-        showLoading(false);
-        
-        if (wasPlaying) {
-            audio.play().catch(e => handleAudioError(e));
-        }
-    };
-    
-    audio.onerror = function() {
-        audio.oncanplay = oldCanPlay; // 恢复原监听器  
-        audio.onerror = oldError;
-        showLoading(false);
-        handleAudioError(audio.error || new Error('音频加载失败'));
-    };
-    
-    // 设置新的音频源
-    audio.src = buildAudioUrl(currentSong, type);
+
+    // 直接调用统一的播放函数，与原唱使用相同逻辑
+    playCurrentSong(type);
 }
 
 // 更新音频类型按钮状态
