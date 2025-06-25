@@ -4,7 +4,8 @@ const R2_BASE_URL = "https://pub-6cbcd0cfdd0646f1af28394522f92bcf.r2.dev";
 let currentSong = null;
 let currentPlaylist = [];
 let currentIndex = 0;
-let isRandomMode = false;
+// 播放模式：0=顺序播放, 1=随机播放, 2=单曲循环
+let playMode = 0;
 let isPlaying = false;
 let currentAudioType = 'original'; // 'original' 或 'accompaniment'
 
@@ -54,12 +55,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupStagewiseToolbar();
     
     // 初始化折叠图标
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-        elements.playerToggleIcon.innerHTML = '🔽';
-    } else {
-        elements.playerToggleIcon.innerHTML = '🔼';
-    }
+    updateToggleIcon();
 });
 
 // 初始化DOM元素引用
@@ -539,22 +535,29 @@ function togglePlayPause() {
 function updatePlayButtons() {
     const isCurrentlyPlaying = !elements.audioPlayer.paused;
     
+    const playIcon = elements.playPauseBtn.querySelector('.nav-icon');
+    const collapsedPlayIcon = elements.collapsedPlayPauseBtn.querySelector('.nav-icon');
+    
     if (isCurrentlyPlaying) {
-        elements.playPauseBtn.innerHTML = '⏸️';
+        playIcon.src = 'icons/pause.png';
+        playIcon.alt = '暂停';
         elements.playPauseBtn.classList.add('playing');
         elements.playPauseBtn.title = '暂停';
         
         // 同时更新折叠状态的播放按钮
-        elements.collapsedPlayPauseBtn.innerHTML = '⏸️';
+        collapsedPlayIcon.src = 'icons/pause.png';
+        collapsedPlayIcon.alt = '暂停';
         elements.collapsedPlayPauseBtn.classList.add('playing');
         elements.collapsedPlayPauseBtn.title = '暂停';
     } else {
-        elements.playPauseBtn.innerHTML = '▶️';
+        playIcon.src = 'icons/play.png';
+        playIcon.alt = '播放';
         elements.playPauseBtn.classList.remove('playing');
         elements.playPauseBtn.title = '播放';
         
         // 同时更新折叠状态的播放按钮
-        elements.collapsedPlayPauseBtn.innerHTML = '▶️';
+        collapsedPlayIcon.src = 'icons/play.png';
+        collapsedPlayIcon.alt = '播放';
         elements.collapsedPlayPauseBtn.classList.remove('playing');
         elements.collapsedPlayPauseBtn.title = '播放';
     }
@@ -599,32 +602,59 @@ function updateAudioTypeButtons(type) {
 
 // 切换播放模式
 function togglePlayMode() {
-    isRandomMode = !isRandomMode;
+    playMode = (playMode + 1) % 3; // 循环：0->1->2->0
     
-    if (isRandomMode) {
-        elements.playModeBtn.innerHTML = '🔀 随机播放';
-        elements.playModeBtn.classList.add('random');
-        elements.playModeBtn.title = '当前为随机播放模式';
-    } else {
-        elements.playModeBtn.innerHTML = '🔄 顺序播放';
-        elements.playModeBtn.classList.remove('random');
-        elements.playModeBtn.title = '当前为顺序播放模式';
+    const modeIcon = elements.playModeBtn.querySelector('.mode-icon');
+    const modeText = elements.playModeBtn.querySelector('span');
+    
+    // 移除所有模式类
+    elements.playModeBtn.classList.remove('random', 'repeat-one');
+    
+    switch(playMode) {
+        case 0: // 顺序播放
+            modeIcon.src = 'icons/mode-sequence.png';
+            modeIcon.alt = '顺序播放';
+            modeText.textContent = '顺序播放';
+            elements.playModeBtn.title = '当前为顺序播放模式';
+            break;
+        case 1: // 随机播放
+            modeIcon.src = 'icons/mode-random.png';
+            modeIcon.alt = '随机播放';
+            modeText.textContent = '随机播放';
+            elements.playModeBtn.classList.add('random');
+            elements.playModeBtn.title = '当前为随机播放模式';
+            break;
+        case 2: // 单曲循环
+            modeIcon.src = 'icons/mode-repeat-one.png';
+            modeIcon.alt = '单曲循环';
+            modeText.textContent = '单曲循环';
+            elements.playModeBtn.classList.add('repeat-one');
+            elements.playModeBtn.title = '当前为单曲循环模式';
+            break;
     }
 }
 
 // 处理歌曲结束
 function handleSongEnd() {
-    if (isRandomMode) {
-        playRandomSong();
-    } else {
-        playNextSong();
+    switch(playMode) {
+        case 0: // 顺序播放
+            playNextSong();
+            break;
+        case 1: // 随机播放
+            playRandomSong();
+            break;
+        case 2: // 单曲循环
+            // 重新播放当前歌曲
+            elements.audioPlayer.currentTime = 0;
+            elements.audioPlayer.play();
+            break;
     }
 }
 
 // 播放下一首歌曲
 function playNextSong() {
     // 在随机模式下，下一首应该是随机选择
-    if (isRandomMode) {
+    if (playMode === 1) {
         playRandomSong();
         return;
     }
@@ -646,7 +676,7 @@ function playNextSong() {
 // 播放上一首歌曲
 function playPreviousSong() {
     // 在随机模式下，上一首应该是随机选择
-    if (isRandomMode) {
+    if (playMode === 1) {
         playRandomSong();
         return;
     }
@@ -951,6 +981,30 @@ function hideError() {
     elements.errorToast.style.display = 'none';
 }
 
+// 更新折叠/展开图标
+function updateToggleIcon() {
+    const isCollapsed = elements.playerSection.classList.contains('collapsed');
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isCollapsed) {
+        if (isMobile) {
+            elements.playerToggleIcon.src = 'icons/expand.png';
+            elements.playerToggleIcon.alt = '展开';
+        } else {
+            elements.playerToggleIcon.src = 'icons/expand.png';
+            elements.playerToggleIcon.alt = '展开';
+        }
+    } else {
+        if (isMobile) {
+            elements.playerToggleIcon.src = 'icons/collapse.png';
+            elements.playerToggleIcon.alt = '折叠';
+        } else {
+            elements.playerToggleIcon.src = 'icons/collapse.png';
+            elements.playerToggleIcon.alt = '折叠';
+        }
+    }
+}
+
 // 切换播放器视图（收起/展开）
 function togglePlayerView() {
     elements.appMain.classList.toggle('player-collapsed'); // 关键修复：恢复主容器的class切换
@@ -958,21 +1012,7 @@ function togglePlayerView() {
     
     const isCollapsed = elements.playerSection.classList.contains('collapsed');
     
-    // 根据屏幕宽度决定图标方向
-    const isMobile = window.innerWidth <= 768;
-    if (isCollapsed) {
-        if (isMobile) {
-            elements.playerToggleIcon.innerHTML = '🔼';
-        } else {
-            elements.playerToggleIcon.innerHTML = '🔽';
-        }
-    } else {
-        if (isMobile) {
-            elements.playerToggleIcon.innerHTML = '🔽';
-        } else {
-            elements.playerToggleIcon.innerHTML = '🔼';
-        }
-    }
+    updateToggleIcon();
     
     elements.playerToggleText.textContent = isCollapsed ? '展开' : '折叠';
     elements.playerToggleBtn.title = isCollapsed ? '展开播放器' : '收起播放器';
@@ -981,22 +1021,7 @@ function togglePlayerView() {
 
 // 监听窗口大小变化，调整折叠图标
 window.addEventListener('resize', function() {
-    const isCollapsed = elements.playerSection.classList.contains('collapsed');
-    const isMobile = window.innerWidth <= 768;
-    
-    if (isCollapsed) {
-        if (isMobile) {
-            elements.playerToggleIcon.innerHTML = '🔼';
-        } else {
-            elements.playerToggleIcon.innerHTML = '🔽';
-        }
-    } else {
-        if (isMobile) {
-            elements.playerToggleIcon.innerHTML = '🔽';
-        } else {
-            elements.playerToggleIcon.innerHTML = '🔼';
-        }
-    }
+    updateToggleIcon();
 });
 
 // --- Sheet Music Modal Functions ---
