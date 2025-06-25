@@ -519,50 +519,40 @@ function updatePlayButtons() {
 
 // 切换音频类型
 function switchToAudioType(type) {
-    if (!currentSong) return;
+    if (!currentSong || type === currentAudioType) return;
 
-    // Do nothing if trying to switch to a missing track
     if ((type === 'accompaniment' && !currentSong.files.accompaniment) ||
         (type === 'original' && !currentSong.files.original)) {
         return;
     }
 
-    // Don't switch if it's already the current type
-    if (type === currentAudioType) return;
-
     const audio = elements.audioPlayer;
     const wasPlaying = !audio.paused;
 
-    // 停止当前播放
+    // 暂停当前音频，准备切换
     audio.pause();
-    audio.currentTime = 0;
+    showLoading(true);
 
-    const targetBtn = type === 'original' ? elements.originalBtn : elements.accompanimentBtn;
-
-    // Add loading state
-    targetBtn.classList.add('loading');
-    elements.originalBtn.disabled = true;
-    elements.accompanimentBtn.disabled = true;
-
+    // 更新按钮状态
     currentAudioType = type;
     updateAudioTypeButtons(type);
     
-    // 直接设置新的音频源并从头播放
+    // 设置新的音频源
     audio.src = buildAudioUrl(currentSong, type);
 
-    audio.addEventListener('loadeddata', () => {
-        // Remove loading state and re-enable buttons
-        targetBtn.classList.remove('loading');
-        updateSongControls(); // Re-evaluates which buttons should be enabled
-
+    // 使用 canplay 事件确保音频可以播放时再继续
+    audio.addEventListener('canplay', () => {
+        showLoading(false);
         if (wasPlaying) {
             audio.play().catch(e => handleAudioError(e));
         }
     }, { once: true });
 
+    // 添加错误处理
     audio.addEventListener('error', () => {
-        targetBtn.classList.remove('loading');
-        updateSongControls();
+        showLoading(false);
+        // 可以在这里选择是否将音频类型切换回去
+        // 例如: updateAudioTypeButtons(type === 'original' ? 'accompaniment' : 'original');
     }, { once: true });
 }
 

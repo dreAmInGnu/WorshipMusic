@@ -74,24 +74,21 @@ body {
     font-size: 1.4rem;
 }
 
+/* 默认隐藏搜索框 */
 .songs-section .search-box {
     display: none;
 }
 
+/* 当播放器折叠时，显示搜索框 */
 .app-main.player-collapsed .songs-section .search-box {
     display: block;
-}
-
-.search-box {
-    position: sticky;
+    position: sticky; /* 确保它在父容器内粘性定位 */
     top: 0;
     z-index: 200;
     background: #ffffff;
-    padding-bottom: 10px;
-    margin: 0 -25px;
-    padding-left: 25px;
-    padding-right: 25px;
-    padding-top: 25px;
+    /* 调整内外边距以获得更好的外观 */
+    margin: -25px -25px 15px -25px;
+    padding: 25px 25px 15px 25px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
@@ -171,7 +168,7 @@ body {
     padding: 20px 25px; /* 调整内边距 */
     display: flex;
     flex-direction: column;
-    gap: 15px; /* 减小主要间距 */
+    gap: 10px; /* 减小主要间距 */
     position: relative;
     transition: all 0.3s ease;
 }
@@ -191,7 +188,7 @@ body {
     gap: 5px;
     z-index: 10;
     align-self: center;
-    margin-bottom: 10px; /* 减小与下方元素的间距 */
+    /* margin-bottom: 10px; */ /* 移除与下方元素的间距 */
 }
 
 .player-toggle-btn:hover {
@@ -255,8 +252,8 @@ body {
 .control-buttons {
     display: flex;
     flex-direction: column;
-    gap: 12px; /* 减小间距 */
-    margin-bottom: 15px; /* 减小间距 */
+    gap: 10px; /* 减小间距 */
+    margin-bottom: 12px; /* 减小间距 */
 }
 
 .audio-and-mode-buttons {
@@ -404,7 +401,7 @@ body {
 }
 
 .progress-container {
-    margin-bottom: 10px; /* 减小间距 */
+    /* margin-bottom: 10px; */ /* 移除间距 */
 }
 
 .time-display {
@@ -471,7 +468,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px; /* Reduced margin */
+    /* margin-bottom: 10px; */ /* 移除间距 */
 }
 
 .sheet-header h4 {
@@ -794,6 +791,8 @@ body {
         padding-bottom: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         flex-shrink: 0;
+        /* 确保在移动端也遵循显示/隐藏逻辑 */
+        display: none;
     }
 }
 
