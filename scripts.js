@@ -40,7 +40,9 @@ const elements = {
     playerCollapsibleContent: null,
     sheetModal: null,
     modalSheetImage: null,
-    closeSheetModal: null
+    closeSheetModal: null,
+    progressSongTitle: null,
+    collapsedSongTitle: null
 };
 
 // 初始化应用
@@ -93,6 +95,8 @@ function initializeElements() {
     elements.sheetModal = document.getElementById('sheetModal');
     elements.modalSheetImage = document.getElementById('modalSheetImage');
     elements.closeSheetModal = document.getElementById('closeSheetModal');
+    elements.progressSongTitle = document.getElementById('progressSongTitle');
+    elements.collapsedSongTitle = document.getElementById('collapsedSongTitle');
 }
 
 // 设置事件监听器
@@ -300,6 +304,7 @@ function selectSong(song, index) {
     updateActiveSongListItem();
     loadSheetMusic();
     updateSongControls();
+    updateSongTitles();
     
     // 自动开始播放
     setTimeout(() => {
@@ -947,6 +952,7 @@ function togglePlayerView() {
     
     elements.playerToggleText.textContent = isCollapsed ? '展开' : '折叠';
     elements.playerToggleBtn.title = isCollapsed ? '展开播放器' : '收起播放器';
+    updateSongTitles();
 }
 
 // 监听窗口大小变化，调整折叠图标
@@ -984,4 +990,15 @@ function closeSheetModal() {
         elements.sheetModal.style.display = 'none';
         elements.sheetModal.style.animation = 'fadeIn 0.3s ease'; // Reset for next time
     }, 280);
+}
+
+function updateSongTitles() {
+    if (!elements.progressSongTitle || !elements.collapsedSongTitle) return;
+    if (currentSong) {
+        elements.progressSongTitle.textContent = currentSong.title;
+        elements.collapsedSongTitle.textContent = currentSong.title;
+    } else {
+        elements.progressSongTitle.textContent = '';
+        elements.collapsedSongTitle.textContent = '';
+    }
 } 
