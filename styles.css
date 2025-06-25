@@ -18,7 +18,7 @@ body {
     margin: 0 auto;
     padding: 20px;
     min-height: 100vh;
-    background: #000000;
+    background: #ffffff;
 }
 
 /* 头部样式 */
@@ -737,8 +737,9 @@ body {
     .player-section.collapsed .player-controls-always-visible {
         display: flex;
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
+        gap: 16px;
         margin-left: 0;
     }
 
@@ -1082,5 +1083,5 @@ input:focus {
 .song-title-progress{display:block;overflow:hidden;white-space:nowrap;}
 .song-title-collapsed span{display:inline;}
 
-.player-section.collapsed .song-title-collapsed{flex:1 1 auto;margin:0 12px;min-width:0;text-align:left;}
-.player-section.collapsed .player-controls-always-visible{margin-left:auto;} 
+.player-section.collapsed .song-title-collapsed{flex:0 1 auto;margin-right:auto;margin-left:12px;min-width:0;text-align:left;}
+.player-section.collapsed .player-controls-always-visible{display:flex;width:100%;justify-content:flex-end;align-items:center;gap:16px;margin-left:0;} 
