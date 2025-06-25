@@ -17,7 +17,10 @@
             <section class="songs-section">
                 <h2>歌曲列表</h2>
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="搜索歌曲...">
+                    <div class="search-input-container">
+                        <input type="text" id="searchInput" placeholder="搜索歌曲...">
+                        <button id="clearSearchBtn" class="clear-search-btn" title="清除搜索">×</button>
+                    </div>
                 </div>
                 <div class="songs-list" id="songsList">
                     <!-- 歌曲项目将通过JavaScript动态加载 -->

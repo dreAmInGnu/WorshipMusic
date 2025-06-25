@@ -13,6 +13,7 @@ const elements = {
     appMain: null,
     songsList: null,
     searchInput: null,
+    clearSearchBtn: null,
     audioPlayer: null,
     originalBtn: null,
     accompanimentBtn: null,
@@ -64,6 +65,7 @@ function initializeElements() {
     elements.appMain = document.getElementById('appMain');
     elements.songsList = document.getElementById('songsList');
     elements.searchInput = document.getElementById('searchInput');
+    elements.clearSearchBtn = document.getElementById('clearSearchBtn');
     elements.audioPlayer = document.getElementById('audioPlayer');
     elements.originalBtn = document.getElementById('originalBtn');
     elements.accompanimentBtn = document.getElementById('accompanimentBtn');
@@ -132,6 +134,12 @@ function setupEventListeners() {
     
     // 设置初始音量
     elements.audioPlayer.volume = 1.0; // 默认最大音量
+
+    // 清除搜索按钮
+    elements.clearSearchBtn.addEventListener('click', () => {
+        elements.searchInput.value = '';
+        handleSearch();
+    });
 }
 
 // 设置 Stagewise 工具栏
@@ -540,20 +548,47 @@ function switchToAudioType(type) {
     // 设置新的音频源
     audio.src = buildAudioUrl(currentSong, type);
 
-    // 使用 canplay 事件确保音频可以播放时再继续
-    audio.addEventListener('canplay', () => {
-        showLoading(false);
-        if (wasPlaying) {
-            audio.play().catch(e => handleAudioError(e));
-        }
-    }, { once: true });
+    // 使用Promise方式处理音频加载，避免重复事件监听器
+    loadAudioAndPlay(audio, wasPlaying);
+}
 
-    // 添加错误处理
-    audio.addEventListener('error', () => {
+// 独立的音频加载和播放函数
+async function loadAudioAndPlay(audio, shouldPlay) {
+    try {
+        // 等待音频可以播放
+        await new Promise((resolve, reject) => {
+            const handleCanPlay = () => {
+                audio.removeEventListener('canplay', handleCanPlay);
+                audio.removeEventListener('error', handleError);
+                resolve();
+            };
+            
+            const handleError = () => {
+                audio.removeEventListener('canplay', handleCanPlay);
+                audio.removeEventListener('error', handleError);
+                reject(audio.error || new Error('音频加载失败'));
+            };
+            
+            // 如果音频已经可以播放，直接resolve
+            if (audio.readyState >= 3) { // HAVE_FUTURE_DATA
+                resolve();
+                return;
+            }
+            
+            audio.addEventListener('canplay', handleCanPlay, { once: true });
+            audio.addEventListener('error', handleError, { once: true });
+        });
+        
         showLoading(false);
-        // 可以在这里选择是否将音频类型切换回去
-        // 例如: updateAudioTypeButtons(type === 'original' ? 'accompaniment' : 'original');
-    }, { once: true });
+        
+        if (shouldPlay) {
+            await audio.play();
+        }
+    } catch (error) {
+        showLoading(false);
+        handleAudioError(error);
+        console.error('音频切换失败:', error);
+    }
 }
 
 // 更新音频类型按钮状态
@@ -588,13 +623,12 @@ function handleSongEnd() {
 
 // 播放下一首歌曲
 function playNextSong() {
-    if (isRandomMode || !currentSong) {
-        playRandomSong();
-        return;
-    }
-    
-    if (currentPlaylist.length === 0) {
-        showError('歌曲列表为空');
+    if (!currentSong || currentPlaylist.length === 0) {
+        if (currentPlaylist.length > 0) {
+            selectSong(currentPlaylist[0], 0);
+        } else {
+            showError('歌曲列表为空');
+        }
         return;
     }
     
@@ -605,13 +639,12 @@ function playNextSong() {
 
 // 播放上一首歌曲
 function playPreviousSong() {
-    if (isRandomMode || !currentSong) {
-        playRandomSong();
-        return;
-    }
-
-    if (currentPlaylist.length === 0) {
-        showError('歌曲列表为空');
+    if (!currentSong || currentPlaylist.length === 0) {
+        if (currentPlaylist.length > 0) {
+            selectSong(currentPlaylist[0], 0);
+        } else {
+            showError('歌曲列表为空');
+        }
         return;
     }
     

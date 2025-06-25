@@ -74,27 +74,38 @@ body {
     font-size: 1.4rem;
 }
 
-/* 默认隐藏搜索框 */
+/* 搜索框始终显示，但根据播放器状态调整样式 */
 .songs-section .search-box {
-    display: none;
-}
-
-/* 当播放器折叠时，显示搜索框 */
-.app-main.player-collapsed .songs-section .search-box {
     display: block;
-    position: sticky; /* 确保它在父容器内粘性定位 */
+    position: sticky;
     top: 0;
     z-index: 200;
     background: #ffffff;
-    /* 调整内外边距以获得更好的外观 */
     margin: -25px -25px 15px -25px;
     padding: 25px 25px 15px 25px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
+/* 当播放器展开时，搜索框样式保持不变 */
+.app-main:not(.player-collapsed) .songs-section .search-box {
+    display: block;
+}
+
+/* 当播放器折叠时，确保搜索框仍然显示 */
+.app-main.player-collapsed .songs-section .search-box {
+    display: block;
+}
+
+/* 搜索输入容器样式 */
+.search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
 .search-box input {
     width: 100%;
-    padding: 12px 15px;
+    padding: 12px 40px 12px 15px; /* 为清除按钮留出空间 */
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
@@ -104,6 +115,25 @@ body {
 .search-box input:focus {
     outline: none;
     border-color: #000000; /* Black focus border */
+}
+
+/* 清除按钮样式 */
+.clear-search-btn {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.clear-search-btn:hover {
+    background: #f0f0f0;
+    color: #000;
 }
 
 .songs-list {
@@ -791,8 +821,8 @@ body {
         padding-bottom: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         flex-shrink: 0;
-        /* 确保在移动端也遵循显示/隐藏逻辑 */
-        display: none;
+        /* 移动端搜索框始终显示 */
+        display: block;
     }
 }
 
