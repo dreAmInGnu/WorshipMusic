@@ -542,6 +542,18 @@ function switchToAudioType(type) {
 
     // 直接调用统一的播放函数，与原唱使用相同逻辑
     playCurrentSong(type);
+
+    // 如果是伴奏，添加一次性错误监听器，失败时自动回退
+    if (type === 'accompaniment') {
+        const audio = elements.audioPlayer;
+        const fallbackHandler = () => {
+            audio.removeEventListener('error', fallbackHandler);
+            showError('缺少伴奏，已为你播放原唱');
+            // 自动切换到原唱
+            switchToAudioType('original');
+        };
+        audio.addEventListener('error', fallbackHandler, { once: true });
+    }
 }
 
 // 更新音频类型按钮状态
