@@ -995,10 +995,35 @@ function closeSheetModal() {
 function updateSongTitles() {
     if (!elements.progressSongTitle || !elements.collapsedSongTitle) return;
     if (currentSong) {
-        elements.progressSongTitle.textContent = currentSong.title;
-        elements.collapsedSongTitle.textContent = currentSong.title;
+        elements.progressSongTitle.innerHTML = `<span>${currentSong.title}</span>`;
+        elements.collapsedSongTitle.innerHTML = `<span>${currentSong.title}</span>`;
     } else {
         elements.progressSongTitle.textContent = '';
         elements.collapsedSongTitle.textContent = '';
     }
-} 
+    // 应用滚动效果
+    applyMarquee(elements.progressSongTitle);
+    applyMarquee(elements.collapsedSongTitle);
+}
+
+// 计算并应用跑马灯动画
+function applyMarquee(el){
+    if(!el) return;
+    const containerWidth = el.offsetWidth;
+    const textWidth = el.scrollWidth;
+    if(textWidth<=containerWidth){
+        el.style.animation='none';
+        return;
+    }
+    const distance = textWidth - containerWidth;
+    const speed = 40; // px per second
+    const duration = (distance+containerWidth)/speed;
+    el.style.setProperty('--translate',`${-distance}px`);
+    el.style.animation = `marquee ${duration}s linear infinite`;    
+}
+
+// 在窗口改变大小时重新计算
+window.addEventListener('resize',()=>{
+    applyMarquee(elements.progressSongTitle);
+    applyMarquee(elements.collapsedSongTitle);
+}); 

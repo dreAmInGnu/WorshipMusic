@@ -1072,32 +1072,6 @@ input:focus {
 
 .hidden{display:none !important;}
 
-@keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
-}
-
-.song-title-collapsed {
-  flex: 1 1 auto;
-  overflow: hidden;
-  white-space: nowrap;
-  color: #333;
-  font-size: 0.9rem;
-  animation: marquee 10s linear infinite;
-  display:none;
-}
-
-.player-section.collapsed .song-title-collapsed { display:block; margin:0 8px; }
-
-.song-title-progress {
-  flex: 1 1 auto;
-  overflow:hidden;
-  white-space:nowrap;
-  text-align:center;
-  animation: marquee 10s linear infinite;
-  color:#333;
-}
-
-.time-display { display:flex; align-items:center; gap:8px; }
-.time-display span{ flex-shrink:0; }
-.time-display .song-title-progress{ flex-grow:1; } 
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(var(--translate))}}
+.song-title-collapsed,.song-title-progress{display:block;overflow:hidden;white-space:nowrap;}
+.song-title-collapsed span,.song-title-progress span{display:inline-block;} 
