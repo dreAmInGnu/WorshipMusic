@@ -13,11 +13,11 @@ export async function onRequest({ request, env, next }) {
   const url = new URL(request.url);
   const key = url.pathname.slice(1); // 移除开头的 '/'
   
-  // 如果是API请求、根路径或本地静态文件（HTML、CSS、JS），继续处理
-  // 图片和其他资源文件需要通过R2代理
+  // 如果是API请求、根路径或本地静态文件（HTML、CSS、JS、图标），继续处理
+  // 只有音频等媒体文件需要通过R2代理
   if (key.startsWith('api/') || key === '' || key === 'index.html' || 
       key.endsWith('.html') || key.endsWith('.css') || key.endsWith('.js') ||
-      key.startsWith('libs/')) {
+      key.startsWith('libs/') || key.startsWith('icons/')) {
     return next();
   }
   
