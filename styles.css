@@ -660,10 +660,9 @@ body {
     cursor: pointer;
 }
 
-/* 歌谱显示区域 */
+/* 歌谱显示区域 - 完全隐藏 */
 .sheet-music {
-    flex: 1;
-    background: transparent; /* 透明背景，融入毛玻璃效果 */
+    display: none !important; /* 完全隐藏歌谱和下载区域 */
 }
 
 .sheet-header {
