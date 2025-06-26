@@ -27,28 +27,28 @@ body {
     margin-bottom: 20px;
     background: #000000; /* 确保黑色 */
     color: #ffffff;
-    padding: 20px 0;
+    padding: 0 0 20px 0; /* 顶部无padding，让图片贴边 */
     border-radius: 18px;
     /* 移除不必要的阴影 */
+    overflow: hidden; /* 确保圆角效果 */
 }
 
 /* 头部封面图片 */
 .header-cover {
     margin-bottom: 15px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 100%;
+    display: block; /* 改为block让图片占满宽度 */
 }
 
 .cover-image {
-    max-width: 300px;
-    max-height: 180px;
-    width: 100%;
+    width: 100%; /* 占满整个容器宽度 */
+    max-height: 240px; /* 设置合适的最大高度 */
     height: auto;
-    border-radius: 12px;
+    border-radius: 18px 18px 0 0; /* 只有上方圆角，与容器保持一致 */
     box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
-    object-fit: cover;
+    object-fit: cover; /* 保持比例，裁剪多余部分 */
+    display: block;
 }
 
 .cover-image:hover {
@@ -67,9 +67,9 @@ body {
     color: #cccccc;
     font-size: 0.9rem;
     text-align: center;
-    width: 300px;
-    height: 180px;
-    border-radius: 12px;
+    width: 100%; /* 占满容器宽度 */
+    height: 240px; /* 与图片高度保持一致 */
+    border-radius: 18px 18px 0 0; /* 与容器圆角一致 */
 }
 
 .app-header h1 {
@@ -845,14 +845,13 @@ body {
     
     /* 移动端封面图片调整 */
     .cover-image {
-        max-width: 220px;
-        max-height: 130px;
-        width: 100%;
+        width: 100%; /* 保持全宽 */
+        max-height: 200px; /* 调整移动端高度 */
     }
     
     .cover-placeholder {
-        width: 220px;
-        height: 130px;
+        width: 100%; /* 保持全宽 */
+        height: 200px; /* 与图片高度保持一致 */
         font-size: 0.8rem;
     }
     
@@ -1070,14 +1069,13 @@ body {
     
     /* 小屏幕封面图片进一步调整 */
     .cover-image {
-        max-width: 180px;
-        max-height: 110px;
-        width: 100%;
+        width: 100%; /* 保持全宽 */
+        max-height: 160px; /* 调整小屏幕高度 */
     }
     
     .cover-placeholder {
-        width: 180px;
-        height: 110px;
+        width: 100%; /* 保持全宽 */
+        height: 160px; /* 与图片高度保持一致 */
         font-size: 0.75rem;
     }
     
