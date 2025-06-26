@@ -4,7 +4,7 @@
   "description": "在线敬拜歌曲库播放器",
   "main": "index.html",
   "scripts": {
-    "build": "echo 'No build step needed for static site'",
+    "build": "bash build.sh",
     "dev": "wrangler pages dev .",
     "deploy": "wrangler pages publish ."
   },
