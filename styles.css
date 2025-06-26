@@ -255,10 +255,10 @@ body {
     gap: 10px;
     position: relative;
     transition: all 0.3s ease;
-    background: rgba(0, 0, 0, 0.85); /* 半透明黑色背景 */
-    backdrop-filter: blur(10px); /* 毛玻璃效果 */
-    -webkit-backdrop-filter: blur(10px); /* Safari支持 */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* 微妙的边框 */
+    background: rgba(0, 0, 0, 0.65); /* 更透明的黑色背景 */
+    backdrop-filter: blur(12px); /* 增强毛玻璃效果 */
+    -webkit-backdrop-filter: blur(12px); /* Safari支持 */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* 稍微增强边框 */
 }
 
 .player-toggle-btn {
@@ -292,11 +292,11 @@ body {
 .player-collapsible-content {
     display: block;
     transition: all 0.3s ease;
-    background: rgba(245, 245, 245, 0.9); /* 半透明浅灰色背景 */
-    backdrop-filter: blur(8px); /* 毛玻璃效果 */
-    -webkit-backdrop-filter: blur(8px); /* Safari支持 */
+    background: rgba(245, 245, 245, 0.65); /* 更透明的浅灰色背景 */
+    backdrop-filter: blur(10px); /* 增强毛玻璃效果 */
+    -webkit-backdrop-filter: blur(10px); /* Safari支持 */
     border-radius: 12px 12px 0 0; /* 左上角和右上角圆角 */
-    border: 1px solid rgba(255, 255, 255, 0.2); /* 微妙的边框 */
+    border: 1px solid rgba(255, 255, 255, 0.25); /* 增强边框可见性 */
 }
 
 .player-section.collapsed .player-collapsible-content {
@@ -309,12 +309,12 @@ body {
 
 /* 桌面端折叠状态也只显示基本播放控制 */
 .player-section.collapsed {
-    background: rgba(248, 249, 250, 0.9); /* 折叠状态使用半透明浅灰色背景 */
-    backdrop-filter: blur(12px); /* 加强毛玻璃效果 */
-    -webkit-backdrop-filter: blur(12px); /* Safari支持 */
+    background: rgba(248, 249, 250, 0.55); /* 更透明的折叠状态背景 */
+    backdrop-filter: blur(15px); /* 强化毛玻璃效果以保持清晰度 */
+    -webkit-backdrop-filter: blur(15px); /* Safari支持 */
     padding: 8px 20px 12px 20px;
     min-height: 85px;
-    border: 1px solid rgba(255, 255, 255, 0.3); /* 增强边框可见性 */
+    border: 1px solid rgba(255, 255, 255, 0.35); /* 增强边框可见性 */
 }
 
 .player-section.collapsed .player-controls-always-visible,
@@ -422,12 +422,12 @@ body {
 
 /* 音频控制器 */
 .audio-controls {
-    background: rgba(245, 245, 245, 0.8); /* 半透明浅灰色背景 */
-    backdrop-filter: blur(6px); /* 毛玻璃效果 */
-    -webkit-backdrop-filter: blur(6px); /* Safari支持 */
+    background: rgba(245, 245, 245, 0.6); /* 更透明的浅灰色背景 */
+    backdrop-filter: blur(8px); /* 增强毛玻璃效果 */
+    -webkit-backdrop-filter: blur(8px); /* Safari支持 */
     border-radius: 12px;
     padding: 20px;
-    border: 1px solid rgba(221, 221, 221, 0.5); /* 半透明边框 */
+    border: 1px solid rgba(221, 221, 221, 0.6); /* 增强半透明边框 */
 }
 
 .control-buttons {
