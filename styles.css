@@ -723,8 +723,8 @@ body {
 }
 
 .sheet-display {
-    border: 2px dashed rgba(224, 224, 224, 0.6); /* 半透明虚线边框 */
-    background: transparent; /* 透明背景，融入毛玻璃效果 */
+    border: 2px dashed #e0e0e0; /* 恢复正常虚线边框 */
+    background: #ffffff; /* 恢复白色背景，提供清晰的歌谱阅读体验 */
     border-radius: 8px;
     min-height: 300px;
     display: flex;
