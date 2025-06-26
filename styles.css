@@ -102,7 +102,7 @@ body {
 
 /* 歌曲列表区域 */
 .songs-section {
-    padding: 25px 25px 0 25px; /* 移除底部padding */
+    padding: 25px 0 0 0; /* 移除左右padding，与封面图对齐 */
     border-right: 1px solid #d2d2d7;
     max-height: 80vh;
     position: relative;
@@ -124,7 +124,7 @@ body {
     top: 0;
     z-index: 100; /* 降低z-index，避免遮挡播放器 */
     background: #ffffff;
-    margin: -25px 8px 0 8px; /* 减小边距，底部为0与列表连接 */
+    margin: -25px 0 0 0; /* 去掉左右margin，与封面图对齐 */
     padding: 25px 25px 15px 25px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     border-radius: 8px 8px 0 0; /* 只有顶部圆角 */
@@ -194,8 +194,8 @@ body {
     flex-grow: 1;
     background: #ffffff;       /* 列表保持白色 */
     border-radius: 0 0 8px 8px; /* 只有底部圆角 */
-    padding: 15px 8px 25px 8px; /* 底部padding扩展到容器底部 */
-    margin: 0 8px 0 8px;       /* 左右边距，底部为0 */
+    padding: 15px 25px 25px 25px; /* 调整padding保持内容间距 */
+    margin: 0;                  /* 去掉margin，与封面图对齐 */
 }
 
 .song-item {
@@ -877,8 +877,7 @@ body {
         border-bottom: none;
         flex: 1;
         max-height: none;
-        padding: 15px;
-        padding-bottom: 80px;
+        padding: 15px 0 80px 0; /* 去掉左右padding，与封面图对齐 */
         order: 1;
         display: flex;
         flex-direction: column;
@@ -1048,7 +1047,7 @@ body {
         top: 0;
         z-index: 200;
         background: #ffffff;
-        margin: -15px 8px 0 8px; /* 减小边距，底部为0与列表连接 */
+        margin: -15px 0 0 0; /* 去掉左右margin，与封面图对齐 */
         padding-left: 15px;
         padding-right: 15px;
         padding-top: 15px;
@@ -1058,6 +1057,11 @@ body {
         flex-shrink: 0;
         /* 移动端搜索框始终显示 */
         display: block;
+    }
+
+    .songs-list {
+        padding: 15px; /* 移动端保持内容间距 */
+        margin: 0; /* 去掉margin，与封面图对齐 */
     }
 }
 
@@ -1091,8 +1095,7 @@ body {
     }
     
     .songs-section {
-        padding: 12px;
-        padding-bottom: 180px; /* 480px以下减少底部空间 */
+        padding: 12px 0 180px 0; /* 去掉左右padding，与封面图对齐 */
     }
     
     .player-section {
@@ -1219,6 +1222,11 @@ body {
     .search-box input {
         padding: 10px 12px;
         font-size: 0.95rem;
+    }
+
+    .songs-list {
+        padding: 12px; /* 480px以下保持内容间距 */
+        margin: 0; /* 去掉margin，与封面图对齐 */
     }
 }
 
