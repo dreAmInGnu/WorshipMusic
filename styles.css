@@ -308,7 +308,7 @@ body {
     -webkit-backdrop-filter: none; /* 移除Safari毛玻璃效果 */
     border-radius: 0; /* 移除圆角 */
     border: none; /* 移除边框 */
-    padding: 0 20px 20px; /* 统一左右内边距，与上方对齐，并保留底部间距 */
+    padding: 20px 0; /* 左右与上方控件对齐，保留上下间距 */
     display: flex; /* 使用Flex来帮助子元素填充空间 */
     flex: 1;
 }
@@ -703,15 +703,15 @@ body {
     background: none; /* 移除背景，继承父容器的毛玻璃效果 */
     border: none; /* 移除边框 */
     padding: 0; /* 移除内边距，实现左右对齐 */
-    margin: 0; /* 移除外边距 */
+    margin: 0; /* 无外边距，保持与左右对齐 */
     display: flex; /* 使用flex布局 */
     flex-direction: column; /* 垂直方向排列 */
-    justify-content: space-around; /* 自动分配垂直间距，使下载按钮居中 */
+    gap: 20px; /* 上下间距 20px，使下载按钮与歌谱区域等距 */
 }
 
 .sheet-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     background: none; /* 完全移除背景 */
     margin: 0; /* 移除margin，让flex自动处理间距 */
@@ -730,7 +730,7 @@ body {
     flex-wrap: nowrap; /* Ensure no wrapping */
     justify-content: center;
     background: none; /* 完全移除背景，继承父容器的毛玻璃效果 */
-    margin: 0; /* 移除固定的margin，由flexbox处理 */
+    margin: 0 auto; /* 通过 auto 水平居中 */
     padding: 0; /* 移除内边距 */
     border: none; /* 移除边框 */
     flex-shrink: 0; /* 防止下载按钮区域被压缩 */
