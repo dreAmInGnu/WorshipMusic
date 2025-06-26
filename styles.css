@@ -438,12 +438,11 @@ body {
 
 /* 音频控制器 */
 .audio-controls {
-    background: rgba(245, 245, 245, 0.25); /* 非常透明的浅灰色背景 */
-    backdrop-filter: blur(10px); /* 增强毛玻璃效果保持层次 */
-    -webkit-backdrop-filter: blur(10px); /* Safari支持 */
+    background: #f6f6f6; /* 浅灰实体背景 */
+    border: 1px solid #d0d0d0;
     border-radius: 12px;
     padding: 20px;
-    border: 1px solid rgba(221, 221, 221, 0.7); /* 增强半透明边框 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
 .control-buttons {
@@ -465,13 +464,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-    padding: 8px 12px; /* 移动端缩小内边距 */
-    background: #f6f6f6; /* 拟物化浅灰背景 */
-    border: 1px solid #d0d0d0;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    gap: 15px;
+    /* 背景与阴影已移至 audio-controls */
+    padding: 0;
 }
 
 .navigation-buttons {
