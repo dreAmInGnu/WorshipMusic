@@ -24,10 +24,10 @@ body {
 /* 头部样式 */
 .app-header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px; /* 减少到10px */
     background: #000000; /* 确保黑色 */
     color: #ffffff;
-    padding: 0 0 20px 0; /* 标题到底部20px，与封面图到标题距离匹配 */
+    padding: 0 0 20px 0; /* 保持20px，总共30px与封面图间距匹配 */
     border-radius: 18px;
     /* 移除不必要的阴影 */
     overflow: hidden; /* 确保圆角效果 */
@@ -35,7 +35,7 @@ body {
 
 /* 头部封面图片 */
 .header-cover {
-    margin-bottom: 20px; /* 增加到20px，与底部距离匹配 */
+    margin-bottom: 30px; /* 调整为30px，与总的底部距离匹配 */
     width: 100%;
     display: block; /* 改为block让图片占满宽度 */
 }
