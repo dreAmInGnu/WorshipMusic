@@ -8,14 +8,15 @@
  * 4. 必要响应头的暴露
  */
 
-export async function onRequest({ request, env }) {
+export async function onRequest({ request, env, next }) {
   // 从URL路径中提取文件键（移除开头的斜杠）
   const url = new URL(request.url);
   const key = url.pathname.slice(1); // 移除开头的 '/'
   
-  // 如果是API请求，跳过处理
-  if (key.startsWith('api/')) {
-    return new Response('Not Found', { status: 404 });
+  // 如果是API请求或根路径，继续处理
+  if (key.startsWith('api/') || key === '' || key === 'index.html' || 
+      key.endsWith('.html') || key.endsWith('.css') || key.endsWith('.js')) {
+    return next();
   }
   
   // 处理CORS预检请求
