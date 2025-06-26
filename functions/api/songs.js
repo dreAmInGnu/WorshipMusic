@@ -15,6 +15,21 @@ export async function onRequest(context) {
   const { request, env } = context;
   
   try {
+    // 确保 env 对象存在
+    if (!env) {
+      console.error('Environment context is missing');
+      return new Response(JSON.stringify({ 
+        error: 'Environment context missing',
+        message: 'Cloudflare Pages environment is not properly configured'
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+
     // 添加详细的环境诊断
     const diagnostics = {
       timestamp: new Date().toISOString(),

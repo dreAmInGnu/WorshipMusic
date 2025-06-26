@@ -1,0 +1,25 @@
+# Cloudflare Pages Site Configuration
+# This file configures build and deployment settings for Cloudflare Pages
+
+[build]
+  # Build command (not needed for static sites)
+  command = ""
+  
+  # Directory to publish (current directory)
+  publish = "."
+  
+  # Functions directory
+  functions = "functions"
+
+[build.environment]
+  # Node.js version
+  NODE_VERSION = "18"
+
+# Environment variables (configure these in Cloudflare Pages dashboard)
+# [env]
+# SONG_BUCKET = "worship"
+
+# R2 Bucket Bindings (configure in dashboard)
+# [[r2_buckets]]
+# binding = "SONG_BUCKET"
+# bucket_name = "worship" 

@@ -1,0 +1,21 @@
+{
+  "name": "worship-music-player",
+  "version": "1.0.0",
+  "description": "在线敬拜歌曲库播放器",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build step needed for static site'",
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages publish ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dreAmInGnu/WorshipMusic.git"
+  },
+  "keywords": ["worship", "music", "player", "cloudflare"],
+  "author": "dreAmInGnu",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+} 
