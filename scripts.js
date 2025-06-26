@@ -997,18 +997,18 @@ function updateToggleIcon() {
     
     if (isCollapsed) {
         if (isMobile) {
-            elements.playerToggleIcon.src = 'icons/collapse.png';
+            elements.playerToggleIcon.src = 'icons/expand.png';
             elements.playerToggleIcon.alt = '展开';
         } else {
-            elements.playerToggleIcon.src = 'icons/collapse.png';
+            elements.playerToggleIcon.src = 'icons/expand.png';
             elements.playerToggleIcon.alt = '展开';
         }
     } else {
         if (isMobile) {
-            elements.playerToggleIcon.src = 'icons/expand.png';
+            elements.playerToggleIcon.src = 'icons/collapse.png';
             elements.playerToggleIcon.alt = '折叠';
         } else {
-            elements.playerToggleIcon.src = 'icons/expand.png';
+            elements.playerToggleIcon.src = 'icons/collapse.png';
             elements.playerToggleIcon.alt = '折叠';
         }
     }

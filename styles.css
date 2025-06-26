@@ -339,9 +339,7 @@ body {
     display: none;
 }
 
-.player-section.collapsed .player-toggle-btn #playerToggleIcon {
-    transform: rotate(180deg);
-}
+/* 移除图标旋转，直接使用图标文件的原始方向 */
 
 /* 折叠状态下的播放控制区域 */
 .collapsed-player-controls {
@@ -425,10 +423,11 @@ body {
 }
 
 .current-song-info h3 {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     color: #000000; /* 展开状态加黑 */
-    font-weight: 700; /* 加粗 */
+    font-weight: 900; /* 最粗字体重量 */
     margin-bottom: 10px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1); /* 轻微阴影增强对比度 */
 }
 
 .song-meta span {
@@ -1224,9 +1223,10 @@ body {
     }
     
     .current-song-info h3 {
-        font-size: 1.2rem;
+        font-size: 1.5rem;
         color: #000000;
-        font-weight: 700;
+        font-weight: 900; /* 最粗字体重量 */
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1); /* 轻微阴影增强对比度 */
     }
     
     .current-song-info {
