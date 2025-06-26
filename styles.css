@@ -670,8 +670,10 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: transparent; /* 透明背景 */
-    /* margin-bottom: 10px; */ /* 移除间距 */
+    background: none; /* 完全移除背景 */
+    margin: 0; /* 移除所有外边距 */
+    padding: 0; /* 移除所有内边距 */
+    border: none; /* 移除边框 */
 }
 
 .sheet-header h4 {
@@ -684,7 +686,10 @@ body {
     gap: 8px;
     flex-wrap: nowrap; /* Ensure no wrapping */
     justify-content: center;
-    background: transparent; /* 透明背景 */
+    background: none; /* 完全移除背景 */
+    margin: 0; /* 移除所有外边距 */
+    padding: 0; /* 移除所有内边距 */
+    border: none; /* 移除边框 */
 }
 
 .action-btn {
@@ -1023,12 +1028,20 @@ body {
         flex-direction: column;
         gap: 12px;
         align-items: stretch;
+        background: none; /* 移动端也移除背景 */
+        margin: 0; /* 移除外边距 */
+        padding: 0; /* 移除内边距 */
+        border: none; /* 移除边框 */
     }
     
     .download-controls {
         display: flex;
         gap: 6px;
         justify-content: space-around;
+        background: none; /* 移动端也移除背景 */
+        margin: 0; /* 移除外边距 */
+        padding: 0; /* 移除内边距 */
+        border: none; /* 移除边框 */
     }
     
     .action-btn {
@@ -1191,6 +1204,10 @@ body {
     
     .download-controls {
         gap: 6px;
+        background: none; /* 480px下也移除背景 */
+        margin: 0; /* 移除外边距 */
+        padding: 0; /* 移除内边距 */
+        border: none; /* 移除边框 */
     }
     
     .action-btn {
