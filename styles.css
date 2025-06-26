@@ -27,7 +27,7 @@ body {
     margin-bottom: 20px;
     background: #000000; /* 确保黑色 */
     color: #ffffff;
-    padding: 0 0 20px 0; /* 顶部无padding，让图片贴边 */
+    padding: 0 0 20px 0; /* 标题到底部20px，与封面图到标题距离匹配 */
     border-radius: 18px;
     /* 移除不必要的阴影 */
     overflow: hidden; /* 确保圆角效果 */
@@ -35,7 +35,7 @@ body {
 
 /* 头部封面图片 */
 .header-cover {
-    margin-bottom: 15px;
+    margin-bottom: 20px; /* 增加到20px，与底部距离匹配 */
     width: 100%;
     display: block; /* 改为block让图片占满宽度 */
 }
@@ -155,7 +155,7 @@ body {
 
 .search-box input {
     width: 100%;
-    padding: 12px 40px 12px 15px; /* 为清除按钮留出空间 */
+    padding: 12px 40px 12px 15px; /* 与歌曲项目内边距对齐 */
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
@@ -862,6 +862,10 @@ body {
         height: 200px; /* 与图片高度保持一致 */
         font-size: 0.8rem;
     }
+
+    .header-cover {
+        margin-bottom: 15px; /* 移动端768px下的封面图下边距 */
+    }
     
     .app-main {
         display: flex;
@@ -1104,7 +1108,7 @@ body {
     }
     
     .header-cover {
-        margin-bottom: 12px;
+        margin-bottom: 10px; /* 480px下的封面图下边距，与header margin-bottom匹配 */
     }
     
     .songs-section {
