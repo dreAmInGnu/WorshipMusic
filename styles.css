@@ -308,7 +308,9 @@ body {
     -webkit-backdrop-filter: none; /* 移除Safari毛玻璃效果 */
     border-radius: 0; /* 移除圆角 */
     border: none; /* 移除边框 */
-    padding: 20px 0; /* 左右0px边距，让内容与音频控制器内容对齐 */
+    padding: 0 20px 20px; /* 统一左右内边距，与上方对齐，并保留底部间距 */
+    display: flex; /* 使用Flex来帮助子元素填充空间 */
+    flex: 1;
 }
 
 .player-section.collapsed .player-collapsible-content {
@@ -632,6 +634,7 @@ body {
     background: #e0e0e0;
     outline: none;
     cursor: pointer;
+    accent-color: rgb(163, 183, 203); /* 设置强调色 */
 }
 
 .progress-bar input[type="range"]::-webkit-slider-thumb {
@@ -639,8 +642,17 @@ body {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #000000;
+    background: rgb(163, 183, 203); /* 修改颜色 */
     cursor: pointer;
+}
+
+.progress-bar input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgb(163, 183, 203); /* 修改颜色 */
+    cursor: pointer;
+    border: none;
 }
 
 .volume-control {
@@ -656,20 +668,33 @@ body {
 }
 
 .volume-control input[type="range"] {
+    max-width: 80px;
     width: 80px;
-    height: 4px;
-    border-radius: 2px;
+    height: 6px;
+    border-radius: 3px;
     background: #e0e0e0;
     outline: none;
+    accent-color: rgb(163, 183, 203); /* 设置强调色 */
 }
 
 .volume-control input[type="range"]::-webkit-slider-thumb {
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    background: #000000;
+    background: rgb(163, 183, 203); /* 修改颜色 */
+    border: 3px solid #ffffff; /* 保持白色边框以突出 */
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+.volume-control input[type="range"]::-moz-range-thumb {
+    width: 10px; /* 调整尺寸以匹配webkit */
+    height: 10px;
+    border-radius: 50%;
+    background: rgb(163, 183, 203); /* 修改颜色 */
     cursor: pointer;
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
 }
 
 /* 歌谱显示区域 */
@@ -705,7 +730,7 @@ body {
     flex-wrap: nowrap; /* Ensure no wrapping */
     justify-content: center;
     background: none; /* 完全移除背景，继承父容器的毛玻璃效果 */
-    margin: 0 0 15px; /* 仅在底部添加 15px 间距 */
+    margin: 0; /* 移除固定的margin，由flexbox处理 */
     padding: 0; /* 移除内边距 */
     border: none; /* 移除边框 */
     flex-shrink: 0; /* 防止下载按钮区域被压缩 */
@@ -1064,7 +1089,7 @@ body {
         gap: 6px;
         justify-content: center;
         background: none; /* 移动端也移除背景 */
-        margin: 0 0 15px; /* 仅在底部添加 15px 间距 */
+        margin: 0; /* 移除外边距 */
         padding: 0; /* 移除内边距 */
         border: none; /* 移除边框 */
     }
@@ -1228,10 +1253,9 @@ body {
     }
     
     .download-controls {
-        display: flex;
         gap: 6px;
         background: none; /* 480px下也移除背景 */
-        margin: 0 0 12px; /* 仅在底部添加 12px 间距 */
+        margin: 0; /* 移除外边距 */
         padding: 0; /* 移除内边距 */
         border: none; /* 移除边框 */
     }
