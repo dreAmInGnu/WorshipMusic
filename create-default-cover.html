@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>生成默认封面图片</title>
+    <style>
+        .cover-generator {
+            width: 400px;
+            height: 240px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            margin: 20px auto;
+        }
+        .cover-title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .cover-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .instructions {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <h2>📸 封面图片说明</h2>
+        <p><strong>临时方案：</strong>如果您暂时没有准备封面图片，系统会自动显示一个文字占位符。</p>
+        <p><strong>自定义封面：</strong>您可以将您的封面图片命名为 <code>worship-cover.jpg</code> 并放在 <code>icons/</code> 目录下。</p>
+        <p><strong>推荐尺寸：</strong>400x240像素，长宽比 5:3，格式 JPG 或 PNG</p>
+        <p><strong>建议内容：</strong>教会logo、敬拜主题图像、或者相关的宗教符号</p>
+    </div>
+    
+    <div class="cover-generator">
+        <div class="cover-title">🎼</div>
+        <div class="cover-subtitle">有光敬拜队歌曲库</div>
+    </div>
+    
+    <div class="instructions">
+        <h3>如何使用这个默认设计：</h3>
+        <ol>
+            <li>右键点击上方的蓝色封面区域</li>
+            <li>选择"另存为图片"或使用截图工具</li>
+            <li>保存为 <code>worship-cover.jpg</code></li>
+            <li>放入项目的 <code>icons/</code> 目录</li>
+        </ol>
+        <p><em>注意：这只是一个临时的设计方案，您可以随时替换为您自己的封面图片。</em></p>
+    </div>
+</body>
+</html> 

@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadSongsData();
     setupAudioEventListeners();
     setupStagewiseToolbar();
+    setupCoverImage();
     
     // 初始化折叠图标
     updateToggleIcon();
@@ -1031,6 +1032,39 @@ function togglePlayerView() {
 window.addEventListener('resize', function() {
     updateToggleIcon();
 });
+
+// 设置封面图片
+function setupCoverImage() {
+    const coverImage = document.getElementById('coverImage');
+    if (!coverImage) return;
+    
+    // 处理图片加载失败
+    coverImage.addEventListener('error', function() {
+        console.log('封面图片加载失败，显示占位符');
+        this.style.display = 'none';
+        
+        // 创建占位符
+        const placeholder = document.createElement('div');
+        placeholder.className = 'cover-placeholder';
+        placeholder.innerHTML = '🎼<br>敬拜歌曲库';
+        
+        // 替换图片
+        this.parentNode.appendChild(placeholder);
+    });
+    
+    // 图片成功加载时的处理
+    coverImage.addEventListener('load', function() {
+        console.log('封面图片加载成功');
+        this.style.opacity = '0';
+        this.style.display = 'block';
+        
+        // 淡入效果
+        setTimeout(() => {
+            this.style.transition = 'opacity 0.5s ease';
+            this.style.opacity = '1';
+        }, 100);
+    });
+}
 
 // --- Sheet Music Modal Functions ---
 function openSheetModal(event) {

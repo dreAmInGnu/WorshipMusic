@@ -32,6 +32,46 @@ body {
     /* 移除不必要的阴影 */
 }
 
+/* 头部封面图片 */
+.header-cover {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cover-image {
+    max-width: 200px;
+    max-height: 120px;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    object-fit: cover;
+}
+
+.cover-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+}
+
+/* 封面图片加载失败时的占位符 */
+.cover-image:error,
+.cover-placeholder {
+    background: linear-gradient(135deg, #333333, #555555);
+    border: 2px dashed #777777;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cccccc;
+    font-size: 0.9rem;
+    text-align: center;
+    width: 200px;
+    height: 120px;
+    border-radius: 12px;
+}
+
 .app-header h1 {
     font-size: 2.2rem;
     margin-bottom: 0;
@@ -792,6 +832,18 @@ body {
         font-size: 2rem;
     }
     
+    /* 移动端封面图片调整 */
+    .cover-image {
+        max-width: 160px;
+        max-height: 100px;
+    }
+    
+    .cover-placeholder {
+        width: 160px;
+        height: 100px;
+        font-size: 0.8rem;
+    }
+    
     .app-main {
         display: flex;
         flex-direction: column;
@@ -1002,6 +1054,22 @@ body {
     
     .app-header {
         margin-bottom: 10px;
+    }
+    
+    /* 小屏幕封面图片进一步调整 */
+    .cover-image {
+        max-width: 140px;
+        max-height: 85px;
+    }
+    
+    .cover-placeholder {
+        width: 140px;
+        height: 85px;
+        font-size: 0.75rem;
+    }
+    
+    .header-cover {
+        margin-bottom: 12px;
     }
     
     .songs-section {
