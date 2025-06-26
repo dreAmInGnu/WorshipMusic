@@ -125,7 +125,7 @@ body {
     z-index: 100; /* 降低z-index，避免遮挡播放器 */
     background: #ffffff;
     margin: -25px 0 0 0; /* 去掉左右margin，与封面图对齐 */
-    padding: 25px 40px 15px 40px; /* 左右padding调整为40px，与歌曲列表+歌曲项目padding之和对齐 */
+    padding: 25px 25px 15px 25px; /* 左右padding调整为25px，与歌曲列表container保持一致 */
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     border-radius: 8px 8px 0 0; /* 只有顶部圆角 */
 }
@@ -155,7 +155,7 @@ body {
 
 .search-box input {
     width: 100%;
-    padding: 12px 40px 12px 15px; /* 与歌曲项目内边距对齐 */
+    padding: 12px 40px 12px 15px; /* 搜索输入框内边距：左15px + 右40px，与歌曲项目15px内边距对齐 */
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
@@ -219,6 +219,15 @@ body {
     background: #000000;
     color: white;
     border-color: #000000;
+}
+
+/* active状态下的歌名和歌手名样式 */
+.song-item.active .song-title {
+    color: #ffffff !important; /* 白色歌名 */
+}
+
+.song-item.active .song-artist {
+    color: rgba(255, 255, 255, 0.8) !important; /* 半透明白色歌手名 */
 }
 
 .song-info {
@@ -293,12 +302,12 @@ body {
 .player-collapsible-content {
     display: block;
     transition: all 0.3s ease;
-    background: rgba(245, 245, 245, 0.25); /* 非常透明的浅灰色背景 */
-    backdrop-filter: blur(12px); /* 增强毛玻璃效果保持层次 */
-    -webkit-backdrop-filter: blur(12px); /* Safari支持 */
-    border-radius: 12px 12px 0 0; /* 左上角和右上角圆角 */
-    border: 1px solid rgba(255, 255, 255, 0.3); /* 调整边框可见性 */
-    padding: 0 0 20px 0; /* 上边距0贴顶，下边距20px，左右0完全贴边 */
+    background: none; /* 移除背景 */
+    backdrop-filter: none; /* 移除毛玻璃效果 */
+    -webkit-backdrop-filter: none; /* 移除Safari毛玻璃效果 */
+    border-radius: 0; /* 移除圆角 */
+    border: none; /* 移除边框 */
+    padding: 20px 0; /* 左右0px边距，让内容与音频控制器内容对齐 */
 }
 
 .player-section.collapsed .player-collapsible-content {
@@ -675,9 +684,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: none; /* 完全移除背景，继承父容器的毛玻璃效果 */
+    background: none; /* 完全移除背景 */
     margin: 0 0 15px 0; /* 下方添加间距 */
-    padding: 0; /* 完全无内边距，贴着容器顶边 */
+    padding: 0; /* 移除内边距，依赖父容器的边距 */
     border: none; /* 移除边框 */
 }
 
@@ -733,10 +742,8 @@ body {
 }
 
 .sheet-display {
-    border: 2px dashed rgba(224, 224, 224, 0.6); /* 半透明虚线边框 */
-    background: rgba(255, 255, 255, 0.7); /* 半透明白色背景，提供清晰的歌谱阅读体验 */
-    backdrop-filter: blur(5px); /* 轻微毛玻璃效果，保持歌谱清晰度 */
-    -webkit-backdrop-filter: blur(5px); /* Safari支持 */
+    border: 2px dashed #e0e0e0; /* 恢复正常虚线边框 */
+    background: #ffffff; /* 恢复白色背景，提供清晰的歌谱阅读体验 */
     border-radius: 8px;
     min-height: 300px;
     display: flex;
@@ -744,7 +751,7 @@ body {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    margin-top: 15px; /* 只有上边距，左右贴边 */
+    margin-top: 15px; /* 只保留上边距，依赖父容器的左右边距 */
 }
 
 .sheet-placeholder {
