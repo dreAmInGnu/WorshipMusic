@@ -125,7 +125,7 @@ body {
     z-index: 100; /* 降低z-index，避免遮挡播放器 */
     background: #ffffff;
     margin: -25px 0 0 0; /* 去掉左右margin，与封面图对齐 */
-    padding: 25px 25px 15px 25px; /* 左右padding调整为25px，与歌曲列表container保持一致 */
+    padding: 25px 0 15px 0; /* 左右padding调整为0px，与歌曲项目外框对齐 */
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     border-radius: 8px 8px 0 0; /* 只有顶部圆角 */
 }
@@ -156,6 +156,7 @@ body {
 .search-box input {
     width: 100%;
     padding: 12px 40px 12px 15px; /* 搜索输入框内边距：左15px + 右40px，与歌曲项目15px内边距对齐 */
+    margin: 0 25px; /* 左右margin 25px，与歌曲列表保持内容间距 */
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
@@ -170,7 +171,7 @@ body {
 /* 清除按钮样式 */
 .clear-search-btn {
     position: absolute;
-    right: 8px;
+    right: 33px; /* 8px + 25px margin = 33px */
     background: none;
     border: none;
     font-size: 1.2rem;
@@ -678,6 +679,9 @@ body {
     border: none; /* 移除边框 */
     padding: 0; /* 移除内边距，实现左右对齐 */
     margin: 0; /* 移除外边距 */
+    display: flex; /* 使用flex布局 */
+    flex-direction: column; /* 垂直方向排列 */
+    justify-content: space-around; /* 自动分配垂直间距，使下载按钮居中 */
 }
 
 .sheet-header {
@@ -685,7 +689,7 @@ body {
     justify-content: space-between;
     align-items: center;
     background: none; /* 完全移除背景 */
-    margin: 0 0 15px 0; /* 下方添加间距 */
+    margin: 0; /* 移除margin，让flex自动处理间距 */
     padding: 0; /* 移除内边距，依赖父容器的边距 */
     border: none; /* 移除边框 */
 }
@@ -701,9 +705,10 @@ body {
     flex-wrap: nowrap; /* Ensure no wrapping */
     justify-content: center;
     background: none; /* 完全移除背景，继承父容器的毛玻璃效果 */
-    margin: 0; /* 移除外边距 */
+    margin: 0 0 15px; /* 仅在底部添加 15px 间距 */
     padding: 0; /* 移除内边距 */
     border: none; /* 移除边框 */
+    flex-shrink: 0; /* 防止下载按钮区域被压缩 */
 }
 
 .action-btn {
@@ -751,7 +756,8 @@ body {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    margin-top: 15px; /* 只保留上边距，依赖父容器的左右边距 */
+    margin: 0; /* 移除margin，让flex自动处理间距 */
+    flex: 1; /* 让歌谱区域占据剩余空间 */
 }
 
 .sheet-placeholder {
@@ -1056,9 +1062,9 @@ body {
     .download-controls {
         display: flex;
         gap: 6px;
-        justify-content: space-around;
+        justify-content: center;
         background: none; /* 移动端也移除背景 */
-        margin: 0; /* 移除外边距 */
+        margin: 0 0 15px; /* 仅在底部添加 15px 间距 */
         padding: 0; /* 移除内边距 */
         border: none; /* 移除边框 */
     }
@@ -1066,7 +1072,6 @@ body {
     .action-btn {
         padding: 8px 10px;
         font-size: 0.8rem;
-        flex-grow: 1;
         text-align: center;
     }
     
@@ -1108,6 +1113,7 @@ body {
     
     .app-header {
         margin-bottom: 10px;
+        padding: 15px 0 15px 0; /* 移动端H1标题上下居中 */
     }
     
     /* 小屏幕封面图片进一步调整 */
@@ -1222,9 +1228,10 @@ body {
     }
     
     .download-controls {
+        display: flex;
         gap: 6px;
         background: none; /* 480px下也移除背景 */
-        margin: 0; /* 移除外边距 */
+        margin: 0 0 12px; /* 仅在底部添加 12px 间距 */
         padding: 0; /* 移除内边距 */
         border: none; /* 移除边框 */
     }
@@ -1258,6 +1265,11 @@ body {
     .search-box input {
         padding: 10px 12px;
         font-size: 0.95rem;
+        margin: 0 12px; /* 移动端搜索框边距调整 */
+    }
+
+    .clear-search-btn {
+        right: 20px; /* 8px + 12px margin = 20px */
     }
 
     .songs-list {
