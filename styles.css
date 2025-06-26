@@ -226,8 +226,9 @@ body {
 }
 
 .song-title {
-    font-weight: 600;
+    font-weight: 700; /* 加强加粗 */
     font-size: 1.1rem;
+    color: #000000; /* 黑色 */
 }
 
 .song-artist {
@@ -297,6 +298,7 @@ body {
     -webkit-backdrop-filter: blur(12px); /* Safari支持 */
     border-radius: 12px 12px 0 0; /* 左上角和右上角圆角 */
     border: 1px solid rgba(255, 255, 255, 0.3); /* 调整边框可见性 */
+    padding: 0 0 20px 0; /* 上边距0贴顶，下边距20px，左右0完全贴边 */
 }
 
 .player-section.collapsed .player-collapsible-content {
@@ -660,18 +662,22 @@ body {
     cursor: pointer;
 }
 
-/* 歌谱显示区域 - 完全隐藏 */
+/* 歌谱显示区域 */
 .sheet-music {
-    display: none !important; /* 完全隐藏歌谱和下载区域 */
+    flex: 1;
+    background: none; /* 移除背景，继承父容器的毛玻璃效果 */
+    border: none; /* 移除边框 */
+    padding: 0; /* 移除内边距，实现左右对齐 */
+    margin: 0; /* 移除外边距 */
 }
 
 .sheet-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: none; /* 完全移除背景 */
-    margin: 0; /* 移除所有外边距 */
-    padding: 0; /* 移除所有内边距 */
+    background: none; /* 完全移除背景，继承父容器的毛玻璃效果 */
+    margin: 0 0 15px 0; /* 下方添加间距 */
+    padding: 0; /* 完全无内边距，贴着容器顶边 */
     border: none; /* 移除边框 */
 }
 
@@ -685,9 +691,9 @@ body {
     gap: 8px;
     flex-wrap: nowrap; /* Ensure no wrapping */
     justify-content: center;
-    background: none; /* 完全移除背景 */
-    margin: 0; /* 移除所有外边距 */
-    padding: 0; /* 移除所有内边距 */
+    background: none; /* 完全移除背景，继承父容器的毛玻璃效果 */
+    margin: 0; /* 移除外边距 */
+    padding: 0; /* 移除内边距 */
     border: none; /* 移除边框 */
 }
 
@@ -727,8 +733,10 @@ body {
 }
 
 .sheet-display {
-    border: 2px dashed #e0e0e0; /* 恢复正常虚线边框 */
-    background: #ffffff; /* 恢复白色背景，提供清晰的歌谱阅读体验 */
+    border: 2px dashed rgba(224, 224, 224, 0.6); /* 半透明虚线边框 */
+    background: rgba(255, 255, 255, 0.7); /* 半透明白色背景，提供清晰的歌谱阅读体验 */
+    backdrop-filter: blur(5px); /* 轻微毛玻璃效果，保持歌谱清晰度 */
+    -webkit-backdrop-filter: blur(5px); /* Safari支持 */
     border-radius: 8px;
     min-height: 300px;
     display: flex;
@@ -736,6 +744,7 @@ body {
     justify-content: center;
     position: relative;
     overflow: hidden;
+    margin-top: 15px; /* 只有上边距，左右贴边 */
 }
 
 .sheet-placeholder {
@@ -1357,7 +1366,7 @@ input:focus {
 .hidden{display:none !important;}
 
 @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(var(--translate))}}
-.song-title-collapsed{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#333;font-size:0.9rem;}
+.song-title-collapsed{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#000000;font-size:0.9rem;font-weight:700;}
 
 .player-section.collapsed .song-title-collapsed{color:#000000;}
 .song-title-progress{display:block;overflow:hidden;white-space:nowrap;}
