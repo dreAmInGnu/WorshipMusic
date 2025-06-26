@@ -1152,6 +1152,7 @@ body {
         justify-content: center;
         align-items: center;
         min-height: 100px;
+        overflow: visible; /* 允许封面图完整显示 */
     }
     
     /* 小屏幕封面图片进一步调整 */
@@ -1207,6 +1208,8 @@ body {
     
     .current-song-info h3 {
         font-size: 1.2rem;
+        color: #000000;
+        font-weight: 700;
     }
     
     .current-song-info {
@@ -1486,4 +1489,11 @@ input:focus {
         width: 10px;
         height: 10px;
     }
+}
+
+/* 确保按钮内的图标在浅灰背景下清晰显示 */
+.nav-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
