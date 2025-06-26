@@ -469,6 +469,17 @@ body {
     padding: 0;
 }
 
+.playback-controls .nav-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 2.4rem;
+}
+
+.playback-controls .nav-btn img {
+    width: 28px;
+    height: 28px;
+}
+
 .navigation-buttons {
     display: flex;
     gap: 8px;
@@ -1037,6 +1048,17 @@ body {
         align-items: center;
         justify-content: center;
         flex-wrap: nowrap;
+    }
+    
+    .playback-controls .nav-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 2.2rem;
+    }
+    
+    .playback-controls .nav-btn img {
+        width: 24px;
+        height: 24px;
     }
     
     .navigation-buttons {
