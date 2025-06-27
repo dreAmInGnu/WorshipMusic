@@ -564,7 +564,7 @@ function buildAudioUrl(song, type) {
 function togglePlayPause() {
     if (elements.audioPlayer.paused) {
         if (!currentSong) {
-            playRandomSong();
+            showError('请先选择一首歌曲');
             return;
         }
         elements.audioPlayer.play().catch(e => handleAudioError(e));
@@ -1245,21 +1245,20 @@ async function checkUrlParameters() {
             // 设置当前播放列表为完整列表（如果有搜索过滤，需要重置）
             currentPlaylist = [...songsData];
             
-            // 检查是否为移动端或是否支持自动播放
+            // 检查是否为移动端
             const isMobile = isMobileDevice();
-            const autoplaySupported = !isMobile && await canAutoplay();
             
-            if (autoplaySupported) {
-                // 桌面端且支持自动播放：正常播放
-                selectSong(targetSong, targetIndex);
-            } else {
-                // 移动端或不支持自动播放：只选择歌曲不自动播放
+            if (isMobile) {
+                // 移动端：只选择歌曲，不自动播放，显示播放提示
                 selectSongWithoutAutoplay(targetSong, targetIndex);
-                // 显示播放提示
                 showMobilePlayPrompt(targetSong.title);
+            } else {
+                // 桌面端：直接播放（按用户要求）
+                selectSong(targetSong, targetIndex);
             }
         } else {
             console.log(`未找到URL指定的歌曲: ${songParam}`);
+            showError(`未找到歌曲: ${songParam}`);
         }
     }
 }
