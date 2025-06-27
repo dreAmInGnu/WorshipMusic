@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 初始化折叠图标
     updateToggleIcon();
+    
+    // 检查URL参数，自动播放指定歌曲
+    checkUrlParameters();
 });
 
 // 初始化DOM元素引用
@@ -302,10 +305,18 @@ function renderSongsList(songs) {
             <div class="song-info">
                 <div class="song-title">${song.title}</div>
             </div>
-            <div class="song-index-letter">${song.indexLetter}</div>
+            <div class="song-actions">
+                <button class="share-btn" onclick="copyShareLink(${JSON.stringify(song).replace(/"/g, '&quot;')});" title="分享歌曲链接">
+                    🔗
+                </button>
+                <div class="song-index-letter">${song.indexLetter}</div>
+            </div>
         `;
         
-        songItem.addEventListener('click', () => selectSong(song, index));
+        // 为歌曲信息区域添加点击事件（排除分享按钮）
+        const songInfo = songItem.querySelector('.song-info');
+        songInfo.addEventListener('click', () => selectSong(song, index));
+        
         elements.songsList.appendChild(songItem);
     });
 }
@@ -320,6 +331,9 @@ function selectSong(song, index) {
     loadSheetMusic();
     updateSongControls();
     updateSongTitles();
+    
+    // 更新URL以包含当前歌曲
+    updateUrlWithSong(song);
     
     // 自动开始播放
     setTimeout(() => {
@@ -1150,3 +1164,101 @@ function applyMarquee(el){
 window.addEventListener('resize',()=>{
     applyMarquee(elements.progressSongTitle);
 }); 
+
+// URL参数处理相关函数
+
+// 检查URL参数并自动播放指定歌曲
+function checkUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const songParam = urlParams.get('song');
+    
+    if (songParam && songsData) {
+        // 尝试通过ID或标题查找歌曲
+        let targetSong = null;
+        let targetIndex = -1;
+        
+        // 首先尝试通过ID查找
+        targetIndex = songsData.findIndex(song => song.id === songParam);
+        
+        if (targetIndex === -1) {
+            // 如果ID查找失败，尝试通过标题查找（支持模糊匹配）
+            targetIndex = songsData.findIndex(song => 
+                song.title.toLowerCase().includes(songParam.toLowerCase()) ||
+                songParam.toLowerCase().includes(song.title.toLowerCase())
+            );
+        }
+        
+        if (targetIndex !== -1) {
+            targetSong = songsData[targetIndex];
+            console.log(`找到URL指定的歌曲: ${targetSong.title}`);
+            
+            // 设置当前播放列表为完整列表（如果有搜索过滤，需要重置）
+            currentPlaylist = [...songsData];
+            
+            // 选择并播放歌曲
+            selectSong(targetSong, targetIndex);
+        } else {
+            console.log(`未找到URL指定的歌曲: ${songParam}`);
+        }
+    }
+}
+
+// 更新URL以包含当前播放的歌曲
+function updateUrlWithSong(song) {
+    if (song && song.id) {
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('song', song.id);
+        
+        // 使用pushState更新URL，不会刷新页面
+        window.history.pushState({songId: song.id}, '', newUrl);
+    }
+}
+
+// 生成歌曲分享链接
+function generateShareLink(song) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}?song=${encodeURIComponent(song.id)}`;
+}
+
+// 复制分享链接到剪贴板
+async function copyShareLink(song) {
+    try {
+        const shareLink = generateShareLink(song);
+        await navigator.clipboard.writeText(shareLink);
+        
+        // 显示成功提示
+        showShareSuccess(song.title);
+    } catch (error) {
+        console.error('复制链接失败:', error);
+        
+        // 降级处理：创建临时输入框
+        const tempInput = document.createElement('input');
+        tempInput.value = generateShareLink(song);
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        
+        showShareSuccess(song.title);
+    }
+}
+
+// 显示分享成功提示
+function showShareSuccess(songTitle) {
+    // 创建提示元素
+    const toast = document.createElement('div');
+    toast.className = 'share-success-toast';
+    toast.innerHTML = `
+        <span>✅ 已复制《${songTitle}》的分享链接</span>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(toast);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+} 
