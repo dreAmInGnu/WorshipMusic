@@ -359,7 +359,7 @@ body {
 .collapsed-search-box {
     display: none; /* 默认隐藏 */
     width: 100%;
-    margin-top: 10px;
+    margin: 10px 20px 0 20px; /* 增加左右边距，与播放器控制区域对齐 */
     padding: 0;
 }
 
@@ -773,9 +773,10 @@ body {
     gap: 8px; /* 减少间距到8px，实现上下视觉统一 */
 }
 
+/* 桌面端sheet-header垂直布局 - 确保优先级 */
 .sheet-header {
     display: flex;
-    flex-direction: column; /* 垂直排列，让下载按钮和外部链接按钮分行显示 */
+    flex-direction: column !important; /* 强制垂直排列，让下载按钮和外部链接按钮分行显示 */
     justify-content: center;
     background: none; /* 完全移除背景 */
     margin: 0; /* 移除margin，让flex自动处理间距 */
@@ -827,8 +828,8 @@ body {
 }
 
 .btn-icon {
-    width: 16px;
-    height: 16px;
+    width: 20px; /* 增加桌面端图标尺寸 */
+    height: 20px;
     object-fit: contain;
     pointer-events: none;
 }
@@ -1235,6 +1236,10 @@ body {
     }
     
     /* 768px下折叠搜索框样式调整 */
+    .collapsed-search-box {
+        margin: 10px 0 0 0 !important; /* 768px下移除左右边距 */
+    }
+    
     .collapsed-search-box input {
         padding: 11px 36px 11px 14px;
         font-size: 0.98rem;
@@ -1465,6 +1470,10 @@ body {
     }
     
     /* 480px下折叠搜索框样式调整 */
+    .collapsed-search-box {
+        margin: 10px 0 0 0 !important; /* 480px下移除左右边距 */
+    }
+    
     .collapsed-search-box input {
         padding: 10px 32px 10px 12px;
         font-size: 0.95rem;
