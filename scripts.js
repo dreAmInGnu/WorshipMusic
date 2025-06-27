@@ -438,7 +438,6 @@ async function playCurrentSong(type) {
     
     // 先暂停并重置音频播放器状态
     elements.audioPlayer.pause();
-    elements.audioPlayer.currentTime = 0;
     
     currentAudioType = type;
     const audioUrl = buildAudioUrl(currentSong, type);
@@ -446,6 +445,15 @@ async function playCurrentSong(type) {
     // 设置新的音频源
     elements.audioPlayer.src = audioUrl;
     console.log(`设置音频源: ${audioUrl}`);
+
+    // 添加一次性事件监听器，确保音频加载完成后重置播放位置
+    const resetPositionOnLoad = () => {
+        console.log('音频元数据加载完成，重置播放位置');
+        elements.audioPlayer.currentTime = 0;
+        elements.audioPlayer.removeEventListener('loadedmetadata', resetPositionOnLoad);
+    };
+    
+    elements.audioPlayer.addEventListener('loadedmetadata', resetPositionOnLoad, { once: true });
 
     try {
         console.log('尝试播放音频...');
@@ -563,12 +571,44 @@ function buildAudioUrl(song, type) {
 
 // 切换播放/暂停
 function togglePlayPause() {
+    console.log('togglePlayPause被调用');
+    console.log('音频状态:', {
+        paused: elements.audioPlayer.paused,
+        readyState: elements.audioPlayer.readyState,
+        currentTime: elements.audioPlayer.currentTime,
+        src: elements.audioPlayer.src
+    });
+    
     if (elements.audioPlayer.paused) {
         if (!currentSong) {
             showError('请先选择一首歌曲');
             return;
         }
-        elements.audioPlayer.play().catch(e => handleAudioError(e));
+        
+        // 检查音频是否已准备好播放
+        if (elements.audioPlayer.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+            console.log('音频已准备好，直接播放');
+            elements.audioPlayer.play().catch(e => handleAudioError(e));
+        } else {
+            console.log('音频未准备好，等待加载完成');
+            showLoading(true);
+            
+            // 等待音频准备好再播放
+            const playWhenReady = () => {
+                console.log('音频准备完成，开始播放');
+                showLoading(false);
+                elements.audioPlayer.play().catch(e => handleAudioError(e));
+                elements.audioPlayer.removeEventListener('canplay', playWhenReady);
+            };
+            
+            elements.audioPlayer.addEventListener('canplay', playWhenReady, { once: true });
+            
+            // 如果音频源为空，重新播放当前歌曲
+            if (!elements.audioPlayer.src) {
+                console.log('音频源为空，重新播放当前歌曲');
+                playCurrentSong(currentAudioType);
+            }
+        }
     } else {
         elements.audioPlayer.pause();
     }
