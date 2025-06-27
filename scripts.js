@@ -444,6 +444,8 @@ async function playCurrentSong(type) {
         await elements.audioPlayer.play();
         updateAudioTypeButtons(type);
     } catch (error) {
+        console.error(`播放错误: ${error.name}: ${error.message}`);
+        
         // 检查是否为自动播放限制错误
         if (error.name === 'NotAllowedError') {
             console.log('自动播放被阻止，可能需要用户交互');
@@ -453,10 +455,17 @@ async function playCurrentSong(type) {
             } else {
                 showError('请点击播放按钮开始播放音乐');
             }
+        } else if (error.name === 'AbortError') {
+            console.log('播放被中断或取消');
+            // AbortError通常是因为快速切换歌曲或网络问题
+            if (isMobileDevice()) {
+                showMobilePlayPrompt(currentSong.title);
+            } else {
+                showError('播放被中断，请重试');
+            }
         } else {
             // 将其他播放错误传递给统一的错误处理器
             handleAudioError(error);
-            console.error(`播放失败: ${error.name}: ${error.message}`);
         }
     }
 }
@@ -1187,18 +1196,27 @@ function isMobileDevice() {
 // 检测是否支持自动播放
 async function canAutoplay() {
     try {
+        console.log('开始检测自动播放支持...');
         const audio = new Audio();
         audio.muted = true; // 静音测试
+        audio.volume = 0; // 确保静音
+        
+        // 使用一个短的空音频进行测试
+        audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEcBj2c3vPJdSMFl';
+        
         const playPromise = audio.play();
         if (playPromise !== undefined) {
             await playPromise;
             audio.pause();
+            console.log('自动播放检测：支持');
             return true;
         }
+        console.log('自动播放检测：不支持（无Promise）');
+        return false;
     } catch (error) {
+        console.log(`自动播放检测：不支持（${error.name}: ${error.message}）`);
         return false;
     }
-    return false;
 }
 
 // 检查URL参数并处理指定歌曲
@@ -1207,6 +1225,8 @@ async function checkUrlParameters() {
     const songParam = urlParams.get('song');
     
     if (songParam && songsData) {
+        console.log(`URL参数指定歌曲: ${songParam}`);
+        
         // 尝试通过ID或标题查找歌曲
         let targetSong = null;
         let targetIndex = -1;
@@ -1229,21 +1249,33 @@ async function checkUrlParameters() {
             // 设置当前播放列表为完整列表（如果有搜索过滤，需要重置）
             currentPlaylist = [...songsData];
             
-            // 检查是否为移动端或是否支持自动播放
+            // 检查是否为移动端
             const isMobile = isMobileDevice();
-            const autoplaySupported = !isMobile && await canAutoplay();
             
-            if (autoplaySupported) {
-                // 桌面端且支持自动播放：正常播放
-                selectSong(targetSong, targetIndex);
-            } else {
-                // 移动端或不支持自动播放：只选择歌曲不自动播放
+            if (isMobile) {
+                // 移动端：只选择歌曲不自动播放，显示播放提示
+                console.log('移动端检测到，不自动播放');
                 selectSongWithoutAutoplay(targetSong, targetIndex);
-                // 显示播放提示
                 showMobilePlayPrompt(targetSong.title);
+            } else {
+                // 桌面端：检查自动播放支持
+                console.log('桌面端检测到，检查自动播放支持');
+                const autoplaySupported = await canAutoplay();
+                
+                if (autoplaySupported) {
+                    // 支持自动播放：正常播放
+                    console.log('支持自动播放，开始播放');
+                    selectSong(targetSong, targetIndex);
+                } else {
+                    // 不支持自动播放：只选择歌曲，等待用户交互
+                    console.log('不支持自动播放，等待用户交互');
+                    selectSongWithoutAutoplay(targetSong, targetIndex);
+                    showError('请点击播放按钮开始播放音乐');
+                }
             }
         } else {
             console.log(`未找到URL指定的歌曲: ${songParam}`);
+            showError(`未找到歌曲: ${songParam}`);
         }
     }
 }

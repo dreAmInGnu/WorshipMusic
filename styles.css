@@ -1689,12 +1689,12 @@ input:focus {
     }
 }
 
-/* 确保按钮内的图标在浅灰背景下清晰显示 */
+/* 确保按钮内的图标正常显示 */
 .nav-btn img {
     width: 40px;
     height: 40px;
     object-fit: contain;
-    filter: brightness(0) invert(1);
+    /* 移除filter，让图标正常显示 */
 }
 
 /* 分享功能相关样式 */
