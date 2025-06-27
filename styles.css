@@ -359,7 +359,7 @@ body {
 .collapsed-search-box {
     display: none; /* 默认隐藏 */
     width: 100%;
-    margin: 10px 20px 0 20px; /* 增加左右边距，与播放器控制区域对齐 */
+    margin: 10px 0 0 0; /* 只保留上边距，左右边距由播放器padding控制 */
     padding: 0;
 }
 
