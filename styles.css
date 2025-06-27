@@ -302,7 +302,9 @@ body {
 
 /* 可折叠内容区域 */
 .player-collapsible-content {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 统一各子元素间距为8px */
     transition: all 0.3s ease;
     background: none; /* 移除背景 */
     backdrop-filter: none; /* 移除毛玻璃效果 */
@@ -310,7 +312,6 @@ body {
     border-radius: 0; /* 移除圆角 */
     border: none; /* 移除边框 */
     padding: 8px 0; /* 减少上下间距到8px，与新增按钮到歌谱的间距一致 */
-    display: flex; /* 使用Flex来帮助子元素填充空间 */
     flex: 1;
 }
 
@@ -767,10 +768,9 @@ body {
     background: none; /* 移除背景，继承父容器的毛玻璃效果 */
     border: none; /* 移除边框 */
     padding: 0; /* 移除内边距，实现左右对齐 */
-    margin: 0; /* 无外边距，保持与左右对齐 */
+    margin: 0; /* 移除边距，由父容器的gap统一控制间距 */
     display: flex; /* 使用flex布局 */
     flex-direction: column; /* 垂直方向排列 */
-    gap: 8px; /* 减少间距到8px，实现上下视觉统一 */
 }
 
 /* 桌面端sheet-header垂直布局 - 确保优先级 */
@@ -807,7 +807,7 @@ body {
     flex-wrap: nowrap;
     justify-content: center;
     background: none;
-    margin: 8px auto 0 auto; /* 顶部使用8px间距，与下载按钮间距保持一致 */
+    margin: 8px auto 0 auto; /* 恢复顶部8px间距，与下载按钮保持一致 */
     padding: 0;
     border: none;
     flex-shrink: 0;
@@ -1772,6 +1772,81 @@ input:focus {
     }
 }
 
+/* 移动端播放提示 */
+.mobile-play-prompt {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+    padding: 20px;
+}
+
+.prompt-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 350px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.prompt-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.prompt-text h3 {
+    color: #333;
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.prompt-text p {
+    color: #666;
+    margin: 8px 0;
+    font-size: 1rem;
+}
+
+.prompt-note {
+    color: #007AFF !important;
+    font-weight: 500;
+    font-size: 0.9rem !important;
+}
+
+.prompt-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.prompt-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
 /* 移动端分享按钮优化 */
 @media (max-width: 768px) {
     .share-btn {
@@ -1787,6 +1862,16 @@ input:focus {
         left: 15px;
         max-width: none;
         font-size: 0.85rem;
+    }
+    
+    .prompt-content {
+        margin: 0 10px;
+        padding: 20px;
+    }
+    
+    .prompt-icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
     }
 }
 
