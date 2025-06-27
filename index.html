@@ -53,6 +53,14 @@
                     </div>
                 </div>
                 
+                <!-- 折叠状态下的搜索框 -->
+                <div class="collapsed-search-box" id="collapsedSearchBox">
+                    <div class="search-input-container">
+                        <input type="text" id="collapsedSearchInput" placeholder="搜索歌曲...">
+                        <button id="collapsedClearSearchBtn" class="clear-search-btn" title="清除搜索">×</button>
+                    </div>
+                </div>
+                
                 <!-- 始终可见的播放控制区域 -->
                 <div class="player-controls-always-visible">
                     <!-- 音频控制器 -->
@@ -118,6 +126,12 @@
                                 <button id="downloadOriginalBtn" class="action-btn" disabled>🎤 歌曲下载</button>
                                 <button id="downloadAccompanimentBtn" class="action-btn" disabled>🎹 伴奏下载</button>
                                 <button id="downloadSheetBtn" class="action-btn hidden" disabled>🎼 歌谱</button>
+                            </div>
+                            <div class="external-link-controls">
+                                <a id="worshipResourceBtn" class="action-btn external-link-btn" href="https://worshipmusic.flowus.cn/" target="_blank" rel="noopener noreferrer">
+                                    <img src="icons/photo.png" alt="照片" class="btn-icon">
+                                    有光敬拜队资料库丨队员录音 & 照片视频
+                                </a>
                             </div>
                         </div>
                         <div class="sheet-display" id="sheetDisplay">

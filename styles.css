@@ -309,7 +309,7 @@ body {
     -webkit-backdrop-filter: none; /* 移除Safari毛玻璃效果 */
     border-radius: 0; /* 移除圆角 */
     border: none; /* 移除边框 */
-    padding: 20px 0; /* 左右与上方控件对齐，保留上下间距 */
+    padding: 8px 0; /* 减少上下间距到8px，与新增按钮到歌谱的间距一致 */
     display: flex; /* 使用Flex来帮助子元素填充空间 */
     flex: 1;
 }
@@ -353,6 +353,57 @@ body {
 
 .player-section.collapsed .collapsed-player-controls {
     display: flex; /* 折叠状态时显示 */
+}
+
+/* 折叠状态下的搜索框 */
+.collapsed-search-box {
+    display: none; /* 默认隐藏 */
+    width: 100%;
+    margin-top: 10px;
+    padding: 0;
+}
+
+.player-section.collapsed .collapsed-search-box {
+    display: block; /* 折叠状态时显示 */
+}
+
+.collapsed-search-box .search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.collapsed-search-box input {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    margin: 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.collapsed-search-box input:focus {
+    outline: none;
+    border-color: #000000;
+}
+
+.collapsed-search-box .clear-search-btn {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.collapsed-search-box .clear-search-btn:hover {
+    background: #f0f0f0;
+    color: #000;
 }
 
 .collapsed-song-info {
@@ -719,13 +770,13 @@ body {
     margin: 0; /* 无外边距，保持与左右对齐 */
     display: flex; /* 使用flex布局 */
     flex-direction: column; /* 垂直方向排列 */
-    gap: 20px; /* 上下间距 20px，使下载按钮与歌谱区域等距 */
+    gap: 8px; /* 减少间距到8px，实现上下视觉统一 */
 }
 
 .sheet-header {
     display: flex;
+    flex-direction: column; /* 垂直排列，让下载按钮和外部链接按钮分行显示 */
     justify-content: center;
-    align-items: center;
     background: none; /* 完全移除背景 */
     margin: 0; /* 移除margin，让flex自动处理间距 */
     padding: 0; /* 移除内边距，依赖父容器的边距 */
@@ -747,6 +798,39 @@ body {
     padding: 0; /* 移除内边距 */
     border: none; /* 移除边框 */
     flex-shrink: 0; /* 防止下载按钮区域被压缩 */
+}
+
+.external-link-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+    justify-content: center;
+    background: none;
+    margin: 8px auto 0 auto; /* 顶部使用8px间距，与下载按钮间距保持一致 */
+    padding: 0;
+    border: none;
+    flex-shrink: 0;
+}
+
+.external-link-btn {
+    color: rgb(163, 183, 203) !important; /* 使用音量条颜色 */
+    background: #555555 !important; /* 保持原有背景色 */
+    display: flex;
+    align-items: center;
+    gap: 6px; /* 图标和文字之间的间距 */
+    text-decoration: none;
+}
+
+.external-link-btn:hover {
+    background: #666666 !important;
+    color: rgb(163, 183, 203) !important; /* 悬停时保持相同文字颜色 */
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    pointer-events: none;
 }
 
 .action-btn {
@@ -1100,7 +1184,7 @@ body {
     
     .sheet-header {
         flex-direction: column;
-        gap: 12px;
+        gap: 8px; /* 调整移动端间距与桌面端保持一致 */
         align-items: stretch;
         background: none; /* 移动端也移除背景 */
         margin: 0; /* 移除外边距 */
@@ -1148,6 +1232,34 @@ body {
     .songs-list {
         padding: 15px; /* 移动端保持内容间距 */
         margin: 0; /* 去掉margin，与封面图对齐 */
+    }
+    
+    /* 768px下折叠搜索框样式调整 */
+    .collapsed-search-box input {
+        padding: 11px 36px 11px 14px;
+        font-size: 0.98rem;
+    }
+    
+    .collapsed-search-box .clear-search-btn {
+        right: 7px;
+        font-size: 1.15rem;
+        padding: 3px 7px;
+    }
+    
+    /* 768px下外部链接按钮样式调整 */
+    .external-link-controls {
+        margin: 7px auto 0 auto;
+    }
+    
+    .external-link-btn {
+        padding: 7px 11px !important;
+        font-size: 0.85rem !important;
+        gap: 5px !important;
+    }
+    
+    .btn-icon {
+        width: 15px !important;
+        height: 15px !important;
     }
 }
 
@@ -1285,6 +1397,16 @@ body {
         gap: 8px;
     }
     
+    .sheet-header {
+        flex-direction: column; /* 480px下也确保垂直排列 */
+        gap: 6px; /* 小屏幕使用更紧凑的间距 */
+        align-items: stretch;
+        background: none;
+        margin: 0;
+        padding: 0;
+        border: none;
+    }
+    
     .download-controls {
         gap: 6px;
         background: none; /* 480px下也移除背景 */
@@ -1332,6 +1454,34 @@ body {
     .songs-list {
         padding: 12px; /* 480px以下保持内容间距 */
         margin: 0; /* 去掉margin，与封面图对齐 */
+    }
+    
+    /* 480px下折叠搜索框样式调整 */
+    .collapsed-search-box input {
+        padding: 10px 32px 10px 12px;
+        font-size: 0.95rem;
+    }
+    
+    .collapsed-search-box .clear-search-btn {
+        right: 6px;
+        font-size: 1.1rem;
+        padding: 3px 6px;
+    }
+    
+    /* 480px下外部链接按钮样式调整 */
+    .external-link-controls {
+        margin: 6px auto 0 auto;
+    }
+    
+    .external-link-btn {
+        padding: 6px 10px !important;
+        font-size: 0.8rem !important;
+        gap: 4px !important; /* 减小图标和文字间距 */
+    }
+    
+    .btn-icon {
+        width: 14px !important;
+        height: 14px !important;
     }
 }
 

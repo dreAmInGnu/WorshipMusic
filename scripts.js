@@ -98,6 +98,10 @@ function initializeElements() {
     elements.collapsedPrevBtn = document.getElementById('collapsedPrevBtn');
     elements.collapsedPlayPauseBtn = document.getElementById('collapsedPlayPauseBtn');
     elements.collapsedNextBtn = document.getElementById('collapsedNextBtn');
+    elements.collapsedSearchBox = document.getElementById('collapsedSearchBox');
+    elements.collapsedSearchInput = document.getElementById('collapsedSearchInput');
+    elements.collapsedClearSearchBtn = document.getElementById('collapsedClearSearchBtn');
+    elements.worshipResourceBtn = document.getElementById('worshipResourceBtn');
 }
 
 // 设置事件监听器
@@ -133,6 +137,10 @@ function setupEventListeners() {
     elements.collapsedPlayPauseBtn.addEventListener('click', togglePlayPause);
     elements.collapsedNextBtn.addEventListener('click', playNextSong);
     
+    // 折叠状态搜索功能
+    elements.collapsedSearchInput.addEventListener('input', handleCollapsedSearch);
+    elements.collapsedClearSearchBtn.addEventListener('click', clearCollapsedSearch);
+    
     // Sheet music modal
     elements.sheetDisplay.addEventListener('click', openSheetModal);
     elements.closeSheetModal.addEventListener('click', closeSheetModal);
@@ -148,7 +156,8 @@ function setupEventListeners() {
     // 清除搜索按钮
     elements.clearSearchBtn.addEventListener('click', () => {
         elements.searchInput.value = '';
-        handleSearch();
+        elements.collapsedSearchInput.value = '';
+        performSearch('');
     });
 }
 
@@ -727,7 +736,25 @@ function playRandomSong() {
 // 处理搜索
 function handleSearch() {
     const searchTerm = elements.searchInput.value.toLowerCase().trim();
-    
+    performSearch(searchTerm);
+    // 同步折叠搜索框的值
+    if (elements.collapsedSearchInput.value.toLowerCase().trim() !== searchTerm) {
+        elements.collapsedSearchInput.value = elements.searchInput.value;
+    }
+}
+
+// 处理折叠状态的搜索
+function handleCollapsedSearch() {
+    const searchTerm = elements.collapsedSearchInput.value.toLowerCase().trim();
+    performSearch(searchTerm);
+    // 同步主搜索框的值
+    if (elements.searchInput.value.toLowerCase().trim() !== searchTerm) {
+        elements.searchInput.value = elements.collapsedSearchInput.value;
+    }
+}
+
+// 统一的搜索逻辑
+function performSearch(searchTerm) {
     if (!songsData) return;
     
     let filteredSongs;
@@ -742,6 +769,13 @@ function handleSearch() {
     
     currentPlaylist = filteredSongs; // 关键修复：搜索后立即更新播放列表
     renderSongsList(filteredSongs);
+}
+
+// 清除折叠状态的搜索
+function clearCollapsedSearch() {
+    elements.collapsedSearchInput.value = '';
+    elements.searchInput.value = '';
+    performSearch('');
 }
 
 // 加载歌谱
