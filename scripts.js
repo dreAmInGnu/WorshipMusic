@@ -598,10 +598,18 @@ function togglePlayPause() {
                 console.log('音频准备完成，开始播放');
                 showLoading(false);
                 elements.audioPlayer.play().catch(e => handleAudioError(e));
-                elements.audioPlayer.removeEventListener('canplay', playWhenReady);
             };
             
+            // 错误处理函数
+            const handleLoadError = () => {
+                console.log('音频加载失败');
+                showLoading(false);
+                showError('音频加载失败，请检查网络连接或重试');
+            };
+            
+            // 添加事件监听器
             elements.audioPlayer.addEventListener('canplay', playWhenReady, { once: true });
+            elements.audioPlayer.addEventListener('error', handleLoadError, { once: true });
             
             // 如果音频源为空，重新播放当前歌曲
             if (!elements.audioPlayer.src) {
@@ -1078,7 +1086,30 @@ function handleAudioError(e) {
 
 // 显示/隐藏加载状态
 function showLoading(show) {
-    elements.loadingOverlay.style.display = show ? 'flex' : 'none';
+    // 静态变量存储超时ID
+    if (!showLoading.timeoutId) {
+        showLoading.timeoutId = null;
+    }
+    
+    if (show) {
+        elements.loadingOverlay.style.display = 'flex';
+        
+        // 设置5秒超时保护
+        showLoading.timeoutId = setTimeout(() => {
+            console.log('加载超时，自动关闭loading');
+            elements.loadingOverlay.style.display = 'none';
+            showError('音频加载超时，请手动点击播放按钮重试');
+            showLoading.timeoutId = null;
+        }, 5000);
+    } else {
+        elements.loadingOverlay.style.display = 'none';
+        
+        // 清除超时定时器
+        if (showLoading.timeoutId) {
+            clearTimeout(showLoading.timeoutId);
+            showLoading.timeoutId = null;
+        }
+    }
 }
 
 // 显示错误消息
