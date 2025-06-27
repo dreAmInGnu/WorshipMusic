@@ -315,14 +315,14 @@ function renderSongsList(songs) {
         
         // 为歌曲信息区域添加点击事件（排除分享按钮）
         const songInfo = songItem.querySelector('.song-info');
-        songInfo.addEventListener('click', () => selectSong(song, index));
+        songInfo.addEventListener('click', () => selectSong(song, index, true)); // 用户点击时自动播放
         
         elements.songsList.appendChild(songItem);
     });
 }
 
 // 选择歌曲
-function selectSong(song, index) {
+function selectSong(song, index, autoPlay = false) {
     currentSong = song;
     currentIndex = index;
     
@@ -335,8 +335,16 @@ function selectSong(song, index) {
     // 更新URL以包含当前歌曲
     updateUrlWithSong(song);
     
-    // 自动开始播放
-    playCurrentSong(currentAudioType);
+    // 根据autoPlay参数决定是否自动播放
+    if (autoPlay) {
+        playCurrentSong(currentAudioType);
+    } else {
+        // 不自动播放，只是准备音频源但不播放
+        const audioUrl = buildAudioUrl(currentSong, currentAudioType);
+        elements.audioPlayer.src = audioUrl;
+        elements.audioPlayer.currentTime = 0; // 重置播放位置
+        console.log(`歌曲已选中: ${currentSong.title}，音频源已准备，等待手动播放`);
+    }
 }
 
 // 更新当前歌曲信息显示
@@ -442,18 +450,10 @@ async function playCurrentSong(type) {
     currentAudioType = type;
     const audioUrl = buildAudioUrl(currentSong, type);
     
-    // 设置新的音频源
+    // 设置新的音频源并立即重置播放位置
     elements.audioPlayer.src = audioUrl;
-    console.log(`设置音频源: ${audioUrl}`);
-
-    // 添加一次性事件监听器，确保音频加载完成后重置播放位置
-    const resetPositionOnLoad = () => {
-        console.log('音频元数据加载完成，重置播放位置');
-        elements.audioPlayer.currentTime = 0;
-        elements.audioPlayer.removeEventListener('loadedmetadata', resetPositionOnLoad);
-    };
-    
-    elements.audioPlayer.addEventListener('loadedmetadata', resetPositionOnLoad, { once: true });
+    elements.audioPlayer.currentTime = 0; // 立即重置，避免竞态条件
+    console.log(`设置音频源: ${audioUrl}，播放位置已重置`);
 
     try {
         console.log('尝试播放音频...');
@@ -466,7 +466,8 @@ async function playCurrentSong(type) {
         
         // 简化错误处理，统一显示错误消息
         if (error.name === 'NotAllowedError') {
-            showError('自动播放被阻止，请点击播放按钮开始播放');
+            console.log('自动播放被浏览器阻止，这是正常现象');
+            // 不显示错误提示，让用户自然地点击播放按钮
         } else if (error.name === 'AbortError') {
             console.log('播放被中断，可能是因为快速切换歌曲');
             // AbortError通常不需要显示给用户，因为它是正常的中断行为
@@ -737,10 +738,24 @@ function togglePlayMode() {
 function handleSongEnd() {
     switch(playMode) {
         case 0: // 顺序播放
-            playNextSong();
+            // 歌曲自然结束时应该自动播放下一首
+            if (currentPlaylist.length > 1) {
+                currentIndex = (currentIndex + 1) % currentPlaylist.length;
+                const nextSong = currentPlaylist[currentIndex];
+                selectSong(nextSong, currentIndex, true); // 自动播放
+            }
             break;
         case 1: // 随机播放
-            playRandomSong();
+            // 随机播放下一首
+            if (currentPlaylist.length > 1) {
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * currentPlaylist.length);
+                } while (randomIndex === currentIndex);
+                const randomSong = currentPlaylist[randomIndex];
+                currentIndex = randomIndex;
+                selectSong(randomSong, currentIndex, true); // 自动播放
+            }
             break;
         case 2: // 单曲循环
             // 重新播放当前歌曲
@@ -760,7 +775,7 @@ function playNextSong() {
     
     if (!currentSong || currentPlaylist.length === 0) {
         if (currentPlaylist.length > 0) {
-            selectSong(currentPlaylist[0], 0);
+            selectSong(currentPlaylist[0], 0, false); // 不自动播放
         } else {
             showError('歌曲列表为空');
         }
@@ -769,7 +784,7 @@ function playNextSong() {
     
     currentIndex = (currentIndex + 1) % currentPlaylist.length;
     const nextSong = currentPlaylist[currentIndex];
-    selectSong(nextSong, currentIndex);
+    selectSong(nextSong, currentIndex, false); // 不自动播放，让用户手动点击
 }
 
 // 播放上一首歌曲
@@ -782,7 +797,7 @@ function playPreviousSong() {
     
     if (!currentSong || currentPlaylist.length === 0) {
         if (currentPlaylist.length > 0) {
-            selectSong(currentPlaylist[0], 0);
+            selectSong(currentPlaylist[0], 0, false); // 不自动播放
         } else {
             showError('歌曲列表为空');
         }
@@ -791,7 +806,7 @@ function playPreviousSong() {
     
     currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
     const prevSong = currentPlaylist[currentIndex];
-    selectSong(prevSong, currentIndex);
+    selectSong(prevSong, currentIndex, false); // 不自动播放，让用户手动点击
 }
 
 // 播放随机歌曲
@@ -799,7 +814,7 @@ function playRandomSong() {
     if (currentPlaylist.length <= 1) {
         // 如果列表为空或只有一首歌，没必要随机播放
         if (currentPlaylist.length === 1 && elements.audioPlayer.paused) {
-            selectSong(currentPlaylist[0], 0);
+            selectSong(currentPlaylist[0], 0, false); // 不自动播放
         }
         return;
     }
@@ -811,7 +826,7 @@ function playRandomSong() {
 
     const randomSong = currentPlaylist[randomIndex];
     currentIndex = randomIndex;
-    selectSong(randomSong, currentIndex);
+    selectSong(randomSong, currentIndex, false); // 不自动播放，让用户手动点击
 }
 
 // 处理搜索
@@ -1326,7 +1341,7 @@ async function checkUrlParameters() {
                 showMobilePlayPrompt(targetSong.title);
             } else {
                 // 桌面端：直接播放（按用户要求）
-                selectSong(targetSong, targetIndex);
+                selectSong(targetSong, targetIndex, true); // 分享链接自动播放
             }
         } else {
             console.log(`未找到URL指定的歌曲: ${songParam}`);
