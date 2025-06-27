@@ -434,33 +434,34 @@ function updatePlaybackControls(isEnabled) {
 async function playCurrentSong(type) {
     if (!currentSong) return;
     
+    console.log(`开始播放歌曲: ${currentSong.title}, 类型: ${type}`);
+    
+    // 先暂停并重置音频播放器状态
+    elements.audioPlayer.pause();
+    elements.audioPlayer.currentTime = 0;
+    
     currentAudioType = type;
     const audioUrl = buildAudioUrl(currentSong, type);
+    
+    // 设置新的音频源
     elements.audioPlayer.src = audioUrl;
+    console.log(`设置音频源: ${audioUrl}`);
 
     try {
+        console.log('尝试播放音频...');
         await elements.audioPlayer.play();
+        console.log('音频播放成功');
         updateAudioTypeButtons(type);
     } catch (error) {
         console.error(`播放错误: ${error.name}: ${error.message}`);
+        console.error('错误详情:', error);
         
-        // 检查是否为自动播放限制错误
+        // 简化错误处理，统一显示错误消息
         if (error.name === 'NotAllowedError') {
-            console.log('自动播放被阻止，可能需要用户交互');
-            // 如果是移动端，显示播放提示
-            if (isMobileDevice()) {
-                showMobilePlayPrompt(currentSong.title);
-            } else {
-                showError('请点击播放按钮开始播放音乐');
-            }
+            showError('自动播放被阻止，请点击播放按钮开始播放');
         } else if (error.name === 'AbortError') {
-            console.log('播放被中断或取消');
-            // AbortError通常是因为快速切换歌曲或网络问题
-            if (isMobileDevice()) {
-                showMobilePlayPrompt(currentSong.title);
-            } else {
-                showError('播放被中断，请重试');
-            }
+            console.log('播放被中断，可能是因为快速切换歌曲');
+            // AbortError通常不需要显示给用户，因为它是正常的中断行为
         } else {
             // 将其他播放错误传递给统一的错误处理器
             handleAudioError(error);
