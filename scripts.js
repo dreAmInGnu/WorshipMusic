@@ -738,15 +738,15 @@ function togglePlayMode() {
 function handleSongEnd() {
     switch(playMode) {
         case 0: // 顺序播放
-            // 歌曲自然结束时应该自动播放下一首
+            // 歌曲自然结束时切换到下一首但不自动播放，避免浏览器限制
             if (currentPlaylist.length > 1) {
                 currentIndex = (currentIndex + 1) % currentPlaylist.length;
                 const nextSong = currentPlaylist[currentIndex];
-                selectSong(nextSong, currentIndex, true); // 自动播放
+                selectSong(nextSong, currentIndex, false); // 不自动播放，让用户手动点击
             }
             break;
         case 1: // 随机播放
-            // 随机播放下一首
+            // 随机切换到下一首但不自动播放
             if (currentPlaylist.length > 1) {
                 let randomIndex;
                 do {
@@ -754,7 +754,7 @@ function handleSongEnd() {
                 } while (randomIndex === currentIndex);
                 const randomSong = currentPlaylist[randomIndex];
                 currentIndex = randomIndex;
-                selectSong(randomSong, currentIndex, true); // 自动播放
+                selectSong(randomSong, currentIndex, false); // 不自动播放，让用户手动点击
             }
             break;
         case 2: // 单曲循环
@@ -775,7 +775,7 @@ function playNextSong() {
     
     if (!currentSong || currentPlaylist.length === 0) {
         if (currentPlaylist.length > 0) {
-            selectSong(currentPlaylist[0], 0, false); // 不自动播放
+            selectSong(currentPlaylist[0], 0, true); // 用户点击下一首时直接播放
         } else {
             showError('歌曲列表为空');
         }
@@ -784,7 +784,7 @@ function playNextSong() {
     
     currentIndex = (currentIndex + 1) % currentPlaylist.length;
     const nextSong = currentPlaylist[currentIndex];
-    selectSong(nextSong, currentIndex, false); // 不自动播放，让用户手动点击
+    selectSong(nextSong, currentIndex, true); // 用户点击下一首时直接播放
 }
 
 // 播放上一首歌曲
@@ -797,7 +797,7 @@ function playPreviousSong() {
     
     if (!currentSong || currentPlaylist.length === 0) {
         if (currentPlaylist.length > 0) {
-            selectSong(currentPlaylist[0], 0, false); // 不自动播放
+            selectSong(currentPlaylist[0], 0, true); // 用户点击上一首时直接播放
         } else {
             showError('歌曲列表为空');
         }
@@ -806,7 +806,7 @@ function playPreviousSong() {
     
     currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
     const prevSong = currentPlaylist[currentIndex];
-    selectSong(prevSong, currentIndex, false); // 不自动播放，让用户手动点击
+    selectSong(prevSong, currentIndex, true); // 用户点击上一首时直接播放
 }
 
 // 播放随机歌曲
@@ -814,7 +814,7 @@ function playRandomSong() {
     if (currentPlaylist.length <= 1) {
         // 如果列表为空或只有一首歌，没必要随机播放
         if (currentPlaylist.length === 1 && elements.audioPlayer.paused) {
-            selectSong(currentPlaylist[0], 0, false); // 不自动播放
+            selectSong(currentPlaylist[0], 0, true); // 用户触发的随机播放直接播放
         }
         return;
     }
@@ -826,7 +826,7 @@ function playRandomSong() {
 
     const randomSong = currentPlaylist[randomIndex];
     currentIndex = randomIndex;
-    selectSong(randomSong, currentIndex, false); // 不自动播放，让用户手动点击
+    selectSong(randomSong, currentIndex, true); // 用户触发的随机播放直接播放
 }
 
 // 处理搜索
@@ -1109,13 +1109,13 @@ function showLoading(show) {
     if (show) {
         elements.loadingOverlay.style.display = 'flex';
         
-        // 设置5秒超时保护
+        // 设置3秒超时保护
         showLoading.timeoutId = setTimeout(() => {
             console.log('加载超时，自动关闭loading');
             elements.loadingOverlay.style.display = 'none';
-            showError('音频加载超时，请手动点击播放按钮重试');
+            showError('音频加载较慢，请稍候或点击播放按钮重试');
             showLoading.timeoutId = null;
-        }, 5000);
+        }, 3000);
     } else {
         elements.loadingOverlay.style.display = 'none';
         
