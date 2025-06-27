@@ -1255,6 +1255,14 @@ body {
         padding: 7px 11px !important;
         font-size: 0.85rem !important;
         gap: 5px !important;
+        color: rgb(163, 183, 203) !important; /* 768px下明确设置音量条颜色 */
+        background: #555555 !important;
+        text-decoration: none !important;
+    }
+    
+    .external-link-btn:hover {
+        background: #666666 !important;
+        color: rgb(163, 183, 203) !important;
     }
     
     .btn-icon {
@@ -1477,6 +1485,14 @@ body {
         padding: 6px 10px !important;
         font-size: 0.8rem !important;
         gap: 4px !important; /* 减小图标和文字间距 */
+        color: rgb(163, 183, 203) !important; /* 480px下明确设置音量条颜色 */
+        background: #555555 !important;
+        text-decoration: none !important;
+    }
+    
+    .external-link-btn:hover {
+        background: #666666 !important;
+        color: rgb(163, 183, 203) !important;
     }
     
     .btn-icon {
