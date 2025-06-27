@@ -1101,30 +1101,7 @@ function handleAudioError(e) {
 
 // 显示/隐藏加载状态
 function showLoading(show) {
-    // 静态变量存储超时ID
-    if (!showLoading.timeoutId) {
-        showLoading.timeoutId = null;
-    }
-    
-    if (show) {
-        elements.loadingOverlay.style.display = 'flex';
-        
-        // 设置3秒超时保护
-        showLoading.timeoutId = setTimeout(() => {
-            console.log('加载超时，自动关闭loading');
-            elements.loadingOverlay.style.display = 'none';
-            showError('音频加载较慢，请稍候或点击播放按钮重试');
-            showLoading.timeoutId = null;
-        }, 3000);
-    } else {
-        elements.loadingOverlay.style.display = 'none';
-        
-        // 清除超时定时器
-        if (showLoading.timeoutId) {
-            clearTimeout(showLoading.timeoutId);
-            showLoading.timeoutId = null;
-        }
-    }
+    elements.loadingOverlay.style.display = show ? 'flex' : 'none';
 }
 
 // 显示错误消息
