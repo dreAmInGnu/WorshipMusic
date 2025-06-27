@@ -336,9 +336,7 @@ function selectSong(song, index) {
     updateUrlWithSong(song);
     
     // 自动开始播放
-    setTimeout(() => {
-        playCurrentSong(currentAudioType);
-    }, 100);
+    playCurrentSong(currentAudioType);
 }
 
 // 更新当前歌曲信息显示
@@ -1225,8 +1223,6 @@ async function checkUrlParameters() {
     const songParam = urlParams.get('song');
     
     if (songParam && songsData) {
-        console.log(`URL参数指定歌曲: ${songParam}`);
-        
         // 尝试通过ID或标题查找歌曲
         let targetSong = null;
         let targetIndex = -1;
@@ -1249,33 +1245,21 @@ async function checkUrlParameters() {
             // 设置当前播放列表为完整列表（如果有搜索过滤，需要重置）
             currentPlaylist = [...songsData];
             
-            // 检查是否为移动端
+            // 检查是否为移动端或是否支持自动播放
             const isMobile = isMobileDevice();
+            const autoplaySupported = !isMobile && await canAutoplay();
             
-            if (isMobile) {
-                // 移动端：只选择歌曲不自动播放，显示播放提示
-                console.log('移动端检测到，不自动播放');
-                selectSongWithoutAutoplay(targetSong, targetIndex);
-                showMobilePlayPrompt(targetSong.title);
+            if (autoplaySupported) {
+                // 桌面端且支持自动播放：正常播放
+                selectSong(targetSong, targetIndex);
             } else {
-                // 桌面端：检查自动播放支持
-                console.log('桌面端检测到，检查自动播放支持');
-                const autoplaySupported = await canAutoplay();
-                
-                if (autoplaySupported) {
-                    // 支持自动播放：正常播放
-                    console.log('支持自动播放，开始播放');
-                    selectSong(targetSong, targetIndex);
-                } else {
-                    // 不支持自动播放：只选择歌曲，等待用户交互
-                    console.log('不支持自动播放，等待用户交互');
-                    selectSongWithoutAutoplay(targetSong, targetIndex);
-                    showError('请点击播放按钮开始播放音乐');
-                }
+                // 移动端或不支持自动播放：只选择歌曲不自动播放
+                selectSongWithoutAutoplay(targetSong, targetIndex);
+                // 显示播放提示
+                showMobilePlayPrompt(targetSong.title);
             }
         } else {
             console.log(`未找到URL指定的歌曲: ${songParam}`);
-            showError(`未找到歌曲: ${songParam}`);
         }
     }
 }
