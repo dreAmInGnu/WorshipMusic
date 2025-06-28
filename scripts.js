@@ -189,7 +189,8 @@ function setupStagewiseToolbar() {
 function setupAudioEventListeners() {
     const audio = elements.audioPlayer;
     
-    audio.addEventListener('loadstart', () => showLoading(true));
+    // 移除loadstart的自动加载状态，改为手动控制
+    // audio.addEventListener('loadstart', () => showLoading(true));
     audio.addEventListener('canplay', () => showLoading(false));
     audio.addEventListener('timeupdate', updateProgress);
     audio.addEventListener('loadedmetadata', updateDuration);
@@ -326,6 +327,9 @@ function selectSong(song, index, autoPlay = false) {
     currentSong = song;
     currentIndex = index;
     
+    // 先清理音频播放器状态
+    resetAudioPlayer();
+    
     // 更新UI
     updateActiveSongListItem();
     loadSheetMusic();
@@ -339,14 +343,20 @@ function selectSong(song, index, autoPlay = false) {
     if (autoPlay) {
         playCurrentSong(currentAudioType);
     } else {
-        // 不自动播放，只是准备音频源但不播放
-        const audioUrl = buildAudioUrl(currentSong, currentAudioType);
-        elements.audioPlayer.src = audioUrl;
-        elements.audioPlayer.currentTime = 0; // 重置播放位置
-        console.log(`歌曲已选中: ${currentSong.title}，音频源已准备，等待手动播放`);
-        
+        // 不自动播放，不设置音频源，避免触发loadstart事件
+        console.log(`歌曲已选中: ${currentSong.title}，等待手动播放`);
         // 确保停止任何可能的加载状态
         showLoading(false);
+    }
+}
+
+// 重置音频播放器状态
+function resetAudioPlayer() {
+    if (elements.audioPlayer) {
+        elements.audioPlayer.pause();
+        elements.audioPlayer.currentTime = 0;
+        // 不清空src，避免触发不必要的事件
+        console.log('音频播放器状态已重置');
     }
 }
 
@@ -461,6 +471,26 @@ async function playCurrentSong(type) {
     try {
         console.log('尝试播放音频...');
         showLoading(true); // 开始播放时显示加载状态
+        
+        // 等待音频准备就绪
+        if (elements.audioPlayer.readyState < 2) {
+            console.log('等待音频准备就绪...');
+            await new Promise((resolve, reject) => {
+                const onCanPlay = () => {
+                    elements.audioPlayer.removeEventListener('canplay', onCanPlay);
+                    elements.audioPlayer.removeEventListener('error', onError);
+                    resolve();
+                };
+                const onError = (e) => {
+                    elements.audioPlayer.removeEventListener('canplay', onCanPlay);
+                    elements.audioPlayer.removeEventListener('error', onError);
+                    reject(e);
+                };
+                elements.audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
+                elements.audioPlayer.addEventListener('error', onError, { once: true });
+            });
+        }
+        
         await elements.audioPlayer.play();
         console.log('音频播放成功');
         showLoading(false); // 播放成功后隐藏加载状态
@@ -621,9 +651,11 @@ function togglePlayPause() {
             elements.audioPlayer.addEventListener('error', handleLoadError, { once: true });
             
             // 如果音频源为空，重新播放当前歌曲
-            if (!elements.audioPlayer.src) {
-                console.log('音频源为空，重新播放当前歌曲');
-                playCurrentSong(currentAudioType);
+            if (!elements.audioPlayer.src || !currentSong) {
+                console.log('音频源为空或无当前歌曲，重新播放当前歌曲');
+                if (currentSong) {
+                    playCurrentSong(currentAudioType);
+                }
             }
         }
     } else {
