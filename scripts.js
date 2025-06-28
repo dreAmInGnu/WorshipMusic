@@ -8,6 +8,9 @@ let currentIndex = 0;
 let playMode = 0;
 let isPlaying = false;
 let currentAudioType = 'original'; // 'original' 或 'accompaniment'
+// 静音状态管理
+let isMuted = false;
+let volumeBeforeMute = 100;
 
 // DOM 元素
 const elements = {
@@ -97,6 +100,7 @@ function initializeElements() {
     elements.closeSheetModal = document.getElementById('closeSheetModal');
     elements.progressSongTitle = document.getElementById('progressSongTitle');
     elements.collapsedSongTitle = document.getElementById('collapsedSongTitle');
+    elements.volumeBtn = document.getElementById('volumeBtn');
     elements.collapsedPlayerControls = document.getElementById('collapsedPlayerControls');
     elements.collapsedPrevBtn = document.getElementById('collapsedPrevBtn');
     elements.collapsedPlayPauseBtn = document.getElementById('collapsedPlayPauseBtn');
@@ -125,6 +129,7 @@ function setupEventListeners() {
     // 进度条和音量控制
     elements.progressSlider.addEventListener('input', handleProgressChange);
     elements.volumeSlider.addEventListener('input', handleVolumeChange);
+    elements.volumeBtn.addEventListener('click', toggleMute);
     
     // 下载按钮
     elements.downloadZipBtn.addEventListener('click', downloadSongZip);
@@ -780,16 +785,16 @@ function handleSongEnd() {
     
     switch(playMode) {
         case 0: // 顺序播放
-            // 歌曲自然结束时切换到下一首但不自动播放，避免浏览器限制
+            // 歌曲自然结束时切换到下一首并自动播放
             if (currentPlaylist.length > 1) {
                 currentIndex = (currentIndex + 1) % currentPlaylist.length;
                 const nextSong = currentPlaylist[currentIndex];
-                console.log(`顺序播放：切换到下一首 ${nextSong.title}，不自动播放`);
-                selectSong(nextSong, currentIndex, false); // 不自动播放，让用户手动点击
+                console.log(`顺序播放：切换到下一首 ${nextSong.title}，自动播放`);
+                selectSong(nextSong, currentIndex, true); // 自动播放下一首
             }
             break;
         case 1: // 随机播放
-            // 随机切换到下一首但不自动播放
+            // 随机切换到下一首并自动播放
             if (currentPlaylist.length > 1) {
                 let randomIndex;
                 do {
@@ -797,8 +802,8 @@ function handleSongEnd() {
                 } while (randomIndex === currentIndex);
                 const randomSong = currentPlaylist[randomIndex];
                 currentIndex = randomIndex;
-                console.log(`随机播放：切换到 ${randomSong.title}，不自动播放`);
-                selectSong(randomSong, currentIndex, false); // 不自动播放，让用户手动点击
+                console.log(`随机播放：切换到 ${randomSong.title}，自动播放`);
+                selectSong(randomSong, currentIndex, true); // 自动播放下一首
             }
             break;
         case 2: // 单曲循环
@@ -1081,7 +1086,44 @@ function handleProgressChange() {
 
 // 音量控制
 function handleVolumeChange() {
-    elements.audioPlayer.volume = elements.volumeSlider.value / 100;
+    const volume = elements.volumeSlider.value / 100;
+    elements.audioPlayer.volume = volume;
+    
+    // 更新静音状态和图标
+    if (volume === 0) {
+        isMuted = true;
+        elements.volumeBtn.textContent = '🔇';
+        elements.volumeBtn.title = '点击取消静音';
+    } else {
+        isMuted = false;
+        elements.volumeBtn.textContent = '🔊';
+        elements.volumeBtn.title = '点击静音/取消静音';
+        if (volume > 0) {
+            volumeBeforeMute = elements.volumeSlider.value;
+        }
+    }
+}
+
+// 切换静音状态
+function toggleMute() {
+    if (isMuted) {
+        // 取消静音，恢复之前的音量
+        elements.volumeSlider.value = volumeBeforeMute;
+        elements.audioPlayer.volume = volumeBeforeMute / 100;
+        isMuted = false;
+        elements.volumeBtn.textContent = '🔊';
+        elements.volumeBtn.title = '点击静音/取消静音';
+        console.log(`取消静音，恢复音量到 ${volumeBeforeMute}%`);
+    } else {
+        // 静音，保存当前音量
+        volumeBeforeMute = elements.volumeSlider.value;
+        elements.volumeSlider.value = 0;
+        elements.audioPlayer.volume = 0;
+        isMuted = true;
+        elements.volumeBtn.textContent = '🔇';
+        elements.volumeBtn.title = '点击取消静音';
+        console.log(`静音，保存音量 ${volumeBeforeMute}%`);
+    }
 }
 
 // 更新播放进度

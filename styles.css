@@ -728,8 +728,19 @@ body {
     margin-left: 15px;
 }
 
-.volume-control span {
+.volume-control .volume-btn {
+    background: none;
+    border: none;
     font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    color: inherit;
+}
+
+.volume-control .volume-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .volume-control input[type="range"] {
@@ -1172,9 +1183,10 @@ body {
         min-width: 0;
     }
     
-    .volume-control span {
+    .volume-control .volume-btn {
         font-size: 0.9rem;
         flex-shrink: 0;
+        padding: 3px;
     }
     
     .volume-control input[type="range"] {
@@ -1392,8 +1404,9 @@ body {
         gap: 4px;
     }
     
-    .volume-control span {
+    .volume-control .volume-btn {
         font-size: 0.8rem;
+        padding: 2px;
     }
     
     .volume-control input[type="range"] {
