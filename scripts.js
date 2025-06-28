@@ -344,6 +344,9 @@ function selectSong(song, index, autoPlay = false) {
         elements.audioPlayer.src = audioUrl;
         elements.audioPlayer.currentTime = 0; // 重置播放位置
         console.log(`歌曲已选中: ${currentSong.title}，音频源已准备，等待手动播放`);
+        
+        // 确保停止任何可能的加载状态
+        showLoading(false);
     }
 }
 
@@ -457,12 +460,17 @@ async function playCurrentSong(type) {
 
     try {
         console.log('尝试播放音频...');
+        showLoading(true); // 开始播放时显示加载状态
         await elements.audioPlayer.play();
         console.log('音频播放成功');
+        showLoading(false); // 播放成功后隐藏加载状态
         updateAudioTypeButtons(type);
     } catch (error) {
         console.error(`播放错误: ${error.name}: ${error.message}`);
         console.error('错误详情:', error);
+        
+        // 确保在任何错误情况下都隐藏加载状态
+        showLoading(false);
         
         // 简化错误处理，统一显示错误消息
         if (error.name === 'NotAllowedError') {
@@ -736,12 +744,15 @@ function togglePlayMode() {
 
 // 处理歌曲结束
 function handleSongEnd() {
+    console.log('歌曲播放结束，当前播放模式:', playMode);
+    
     switch(playMode) {
         case 0: // 顺序播放
             // 歌曲自然结束时切换到下一首但不自动播放，避免浏览器限制
             if (currentPlaylist.length > 1) {
                 currentIndex = (currentIndex + 1) % currentPlaylist.length;
                 const nextSong = currentPlaylist[currentIndex];
+                console.log(`顺序播放：切换到下一首 ${nextSong.title}，不自动播放`);
                 selectSong(nextSong, currentIndex, false); // 不自动播放，让用户手动点击
             }
             break;
@@ -754,13 +765,18 @@ function handleSongEnd() {
                 } while (randomIndex === currentIndex);
                 const randomSong = currentPlaylist[randomIndex];
                 currentIndex = randomIndex;
+                console.log(`随机播放：切换到 ${randomSong.title}，不自动播放`);
                 selectSong(randomSong, currentIndex, false); // 不自动播放，让用户手动点击
             }
             break;
         case 2: // 单曲循环
             // 重新播放当前歌曲
+            console.log('单曲循环：重新播放当前歌曲');
             elements.audioPlayer.currentTime = 0;
-            elements.audioPlayer.play();
+            elements.audioPlayer.play().catch(e => {
+                console.error('单曲循环播放失败:', e);
+                handleAudioError(e);
+            });
             break;
     }
 }
