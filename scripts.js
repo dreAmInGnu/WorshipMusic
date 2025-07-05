@@ -1,6 +1,6 @@
 // 全局变量
 let songsData = null;
-const R2_BASE_URL = "https://r2.windsmaker.com";
+// const R2_BASE_URL = "https://r2.windsmaker.com"; // 不再需要，音频通过 Worker 代理
 let currentSong = null;
 let currentPlaylist = [];
 let currentIndex = 0;
@@ -601,14 +601,14 @@ function getSimplePinyinLetter(char) {
 // 构建音频URL
 function buildAudioUrl(song, type) {
     const fileName = type === 'original' ? song.files.original : song.files.accompaniment;
-    const audioUrl = `${R2_BASE_URL}/${song.folder}/${fileName}`;
-    console.log(`构建音频URL: ${audioUrl}`);
+    // 使用新的 Worker 代理路径
+    const audioUrl = `/api/audio/${song.folder}/${fileName}`;
+    console.log(`构建音频URL (通过代理): ${audioUrl}`);
     console.log(`歌曲信息:`, {
-        title: song.title,
-        folder: song.folder,
-        fileName: fileName,
+        songTitle: song.title,
         type: type,
-        files: song.files
+        folder: song.folder,
+        fileName: fileName
     });
     return audioUrl;
 }
@@ -939,7 +939,7 @@ function loadSheetMusic() {
         return;
     }
     
-    const sheetUrl = `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.sheet}`;
+    const sheetUrl = `/api/audio/${currentSong.folder}/${currentSong.files.sheet}`;
     elements.sheetDisplay.innerHTML = `
         <img src="${sheetUrl}" alt="${currentSong.title} 歌谱" class="sheet-image" 
              onerror="this.parentElement.innerHTML='<div class=\\'sheet-placeholder\\'><p>🎼</p><p>歌谱加载失败</p></div>'">
@@ -957,16 +957,16 @@ async function downloadSongZip() {
         const folder = zip.folder(currentSong.title);
         
         // 下载原唱
-        await addFileToZip(folder, currentSong.files.original, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.original}`);
+        await addFileToZip(folder, currentSong.files.original, `/api/audio/${currentSong.folder}/${currentSong.files.original}`);
         
         // 下载伴奏（如果有）
         if (currentSong.hasAccompaniment && currentSong.files.accompaniment) {
-            await addFileToZip(folder, currentSong.files.accompaniment, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.accompaniment}`);
+            await addFileToZip(folder, currentSong.files.accompaniment, `/api/audio/${currentSong.folder}/${currentSong.files.accompaniment}`);
         }
         
         // 下载歌谱
         if (currentSong.files.sheet) {
-            await addFileToZip(folder, currentSong.files.sheet, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.sheet}`);
+            await addFileToZip(folder, currentSong.files.sheet, `/api/audio/${currentSong.folder}/${currentSong.files.sheet}`);
         }
         
         // 生成ZIP文件并下载
@@ -990,23 +990,23 @@ async function downloadSingleFile(type) {
 
     let fileUrl, fileName;
     const song = currentSong;
-    const baseUrl = R2_BASE_URL;
+    const baseUrl = `/api/audio/${song.folder}/`;
 
     switch (type) {
         case 'original':
             if (!song.files.original) { showError('该歌曲没有歌曲文件'); return; }
             fileName = song.files.original;
-            fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
+            fileUrl = `${baseUrl}${fileName}`;
             break;
         case 'accompaniment':
             if (!song.hasAccompaniment || !song.files.accompaniment) { showError('该歌曲没有伴奏文件'); return; }
             fileName = song.files.accompaniment;
-            fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
+            fileUrl = `${baseUrl}${fileName}`;
             break;
         case 'sheet':
             if (!song.files.sheet) { showError('该歌曲没有歌谱文件'); return; }
             fileName = song.files.sheet;
-            fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
+            fileUrl = `${baseUrl}${fileName}`;
 
             try {
                 showLoading(true);
