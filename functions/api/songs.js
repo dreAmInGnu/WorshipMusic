@@ -108,11 +108,18 @@ export async function onRequest(context) {
       const songKey = parts.length === 3 ? `${parts[0]}/${parts[1]}` : folderName;
       
       if (!songsMap.has(songKey)) {
-        let displayTitle = parts.length === 3 ? parts[1] : folderName;
+        let displayTitle;
         
-        // 如果是"列表丨"前缀，去除前缀显示
-        if (folderName.startsWith('列表丨')) {
-          displayTitle = folderName.replace(/^列表丨/, '');
+        if (parts.length === 3) {
+          // 嵌套结构：使用子文件夹名作为歌曲标题
+          displayTitle = parts[1];
+        } else {
+          // 直接结构：处理"列表丨"前缀
+          if (folderName.startsWith('列表丨')) {
+            displayTitle = folderName.replace(/^列表丨/, '');
+          } else {
+            displayTitle = folderName;
+          }
         }
 
         songsMap.set(songKey, {
@@ -143,6 +150,11 @@ export async function onRequest(context) {
     const songList = Array.from(songsMap.values());
     
     console.log(`Processed ${songList.length} songs`);
+    
+    // 添加调试信息
+    songList.forEach(song => {
+      console.log(`Song: ${song.title}, Playlist: ${song.playlist}, Folder: ${song.folder}`);
+    });
     
     const data = {
       songs: songList,
