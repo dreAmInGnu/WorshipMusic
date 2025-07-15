@@ -79,35 +79,54 @@ export async function onRequest(context) {
     const songsMap = new Map();
     for (const file of files) {
       const parts = file.key.split('/');
-      if (parts.length < 2) continue; // Ignore files in the root
-
-      const folderName = parts[0];
-      const fileName = parts[1];
-
-      if (!songsMap.has(folderName)) {
-        // 解析歌单前缀
-        let displayTitle = folderName;
-        let playlistName = "默认歌单";
+      
+      // 支持嵌套结构：温州教会/歌曲1/file.mp3 或 直接结构：歌曲1/file.mp3
+      let folderName, fileName, playlistName = "默认歌单";
+      
+      if (parts.length === 3) {
+        // 嵌套结构：温州教会/歌曲1/file.mp3
+        const parentFolder = parts[0];
+        folderName = parts[1];
+        fileName = parts[2];
+        playlistName = parentFolder + "合集";
+      } else if (parts.length === 2) {
+        // 直接结构：歌曲1/file.mp3 或 列表丨温州教会/file.mp3
+        folderName = parts[0];
+        fileName = parts[1];
         
-        // 检查是否有[歌单名]前缀
-        const playlistMatch = folderName.match(/^\[([^\]]+)\](.+)$/);
+        // 检查是否有"列表丨"前缀
+        const playlistMatch = folderName.match(/^列表丨(.+)$/);
         if (playlistMatch) {
           playlistName = playlistMatch[1] + "合集";
-          displayTitle = playlistMatch[2];
+          folderName = parts[0]; // 保留原始文件夹名用于访问
+        }
+      } else {
+        continue; // 忽略不符合结构的文件
+      }
+
+      // 为嵌套结构创建唯一的歌曲ID
+      const songKey = parts.length === 3 ? `${parts[0]}/${parts[1]}` : folderName;
+      
+      if (!songsMap.has(songKey)) {
+        let displayTitle = parts.length === 3 ? parts[1] : folderName;
+        
+        // 如果是"列表丨"前缀，去除前缀显示
+        if (folderName.startsWith('列表丨')) {
+          displayTitle = folderName.replace(/^列表丨/, '');
         }
 
-        songsMap.set(folderName, {
-          id: folderName.toLowerCase().replace(/\s+/g, '-'), // Generate a URL-friendly ID
-          title: displayTitle, // 显示名称去除前缀
+        songsMap.set(songKey, {
+          id: songKey.toLowerCase().replace(/\s+/g, '-').replace(/[\/\\]/g, '-'), // Generate a URL-friendly ID
+          title: displayTitle, // 显示名称
           artist: "未知艺术家", // Default artist, can be updated if metadata is available
-          folder: folderName, // 保留原始文件夹名用于文件访问
+          folder: songKey, // 保留完整路径用于文件访问
           playlist: playlistName, // 添加歌单归属
           hasAccompaniment: false,
           files: {},
         });
       }
 
-      const songData = songsMap.get(folderName);
+      const songData = songsMap.get(songKey);
 
       // 3. Identify file types
       if (fileName.includes('[伴奏].mp3')) {

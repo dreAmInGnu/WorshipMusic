@@ -317,10 +317,35 @@ function renderSongsList(songs) {
     
     elements.songsList.innerHTML = '';
     
+    // 如果在歌单内，显示返回按钮
+    if (currentPlaylistName !== "全部歌曲") {
+        const backItem = document.createElement('div');
+        backItem.className = 'song-item back-item';
+        backItem.innerHTML = `
+            <div class="song-info">
+                <div class="song-title">← 返回全部歌曲</div>
+            </div>
+            <div class="song-actions">
+                <div class="song-index-letter">🔙</div>
+            </div>
+        `;
+        
+        const songInfo = backItem.querySelector('.song-info');
+        songInfo.addEventListener('click', () => {
+            currentPlaylistName = "全部歌曲";
+            currentPlaylist = [...songsData];
+            renderSongsList(currentPlaylist);
+        });
+        
+        elements.songsList.appendChild(backItem);
+    }
+    
     // 渲染歌单（只在显示全部歌曲时显示）
     if (currentPlaylistName === "全部歌曲" && playlistsData) {
+        console.log('渲染歌单列表:', Object.keys(playlistsData));
         Object.keys(playlistsData).forEach(playlistName => {
             if (playlistName !== "默认歌单" && playlistsData[playlistName].length > 0) {
+                console.log(`渲染歌单: ${playlistName}, 歌曲数量: ${playlistsData[playlistName].length}`);
                 const playlistItem = document.createElement('div');
                 playlistItem.className = 'song-item playlist-item';
                 playlistItem.dataset.playlistName = playlistName;
@@ -339,6 +364,7 @@ function renderSongsList(songs) {
                 songInfo.addEventListener('click', () => selectPlaylist(playlistName));
                 
                 elements.songsList.appendChild(playlistItem);
+                console.log(`歌单 ${playlistName} 渲染完成，class: ${playlistItem.className}`);
             }
         });
     }

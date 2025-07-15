@@ -253,6 +253,23 @@ body {
     font-weight: bold;
 }
 
+/* 返回按钮样式 */
+.song-item.back-item {
+    background: #f0f0f0 !important;
+    border-color: #d0d0d0;
+    color: #666;
+}
+
+.song-item.back-item:hover {
+    background: #e0e0e0 !important;
+    border-color: #c0c0c0;
+}
+
+.song-item.back-item .song-title {
+    color: #666 !important;
+    font-weight: 500;
+}
+
 .song-info {
     flex-grow: 1;
     cursor: pointer;
