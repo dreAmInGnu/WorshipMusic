@@ -231,6 +231,28 @@ body {
     color: rgba(255, 255, 255, 0.8) !important; /* 半透明白色歌手名 */
 }
 
+/* 歌单项目样式 */
+.song-item.playlist-item {
+    background: rgb(163, 183, 203) !important; /* 使用音量条的蓝灰色 */
+    border-color: rgb(143, 163, 183);
+    color: #ffffff;
+}
+
+.song-item.playlist-item:hover {
+    background: rgb(143, 163, 183) !important;
+    border-color: rgb(123, 143, 163);
+}
+
+.song-item.playlist-item .song-title {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.song-item.playlist-item .song-index-letter {
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
 .song-info {
     flex-grow: 1;
     cursor: pointer;

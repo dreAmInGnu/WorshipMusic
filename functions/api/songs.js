@@ -85,11 +85,23 @@ export async function onRequest(context) {
       const fileName = parts[1];
 
       if (!songsMap.has(folderName)) {
+        // 解析歌单前缀
+        let displayTitle = folderName;
+        let playlistName = "默认歌单";
+        
+        // 检查是否有[歌单名]前缀
+        const playlistMatch = folderName.match(/^\[([^\]]+)\](.+)$/);
+        if (playlistMatch) {
+          playlistName = playlistMatch[1] + "合集";
+          displayTitle = playlistMatch[2];
+        }
+
         songsMap.set(folderName, {
           id: folderName.toLowerCase().replace(/\s+/g, '-'), // Generate a URL-friendly ID
-          title: folderName,
+          title: displayTitle, // 显示名称去除前缀
           artist: "未知艺术家", // Default artist, can be updated if metadata is available
-          folder: folderName,
+          folder: folderName, // 保留原始文件夹名用于文件访问
+          playlist: playlistName, // 添加歌单归属
           hasAccompaniment: false,
           files: {},
         });

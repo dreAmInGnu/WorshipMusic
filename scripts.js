@@ -4,8 +4,11 @@ const R2_BASE_URL = "https://r2.windsmaker.com";
 let currentSong = null;
 let currentPlaylist = [];
 let currentIndex = 0;
-// 播放模式：0=顺序播放, 1=随机播放, 2=单曲循环
+// 播放模式：0=顺序播放, 1=随机播放, 2=单曲循环, 3=列表循环, 4=全部循环
 let playMode = 0;
+// 歌单管理
+let playlistsData = {};
+let currentPlaylistName = "全部歌曲";
 let isPlaying = false;
 let currentAudioType = 'original'; // 'original' 或 'accompaniment'
 // 静音状态管理
@@ -271,6 +274,19 @@ async function loadSongsData() {
         }
         // --- 排序结束 ---
 
+        // --- 构建歌单数据结构 ---
+        playlistsData = { "默认歌单": [] };
+        songsData.forEach(song => {
+            const playlistName = song.playlist || "默认歌单";
+            if (!playlistsData[playlistName]) {
+                playlistsData[playlistName] = [];
+            }
+            playlistsData[playlistName].push(song);
+        });
+        
+        console.log('歌单构建完成:', Object.keys(playlistsData));
+        // --- 歌单构建结束 ---
+
         currentPlaylist = [...songsData];
         renderSongsList(currentPlaylist);
         updatePlaybackControls(true); // 关键修复：加载完成后启用播放控件
@@ -301,6 +317,33 @@ function renderSongsList(songs) {
     
     elements.songsList.innerHTML = '';
     
+    // 渲染歌单（只在显示全部歌曲时显示）
+    if (currentPlaylistName === "全部歌曲" && playlistsData) {
+        Object.keys(playlistsData).forEach(playlistName => {
+            if (playlistName !== "默认歌单" && playlistsData[playlistName].length > 0) {
+                const playlistItem = document.createElement('div');
+                playlistItem.className = 'song-item playlist-item';
+                playlistItem.dataset.playlistName = playlistName;
+                
+                playlistItem.innerHTML = `
+                    <div class="song-info">
+                        <div class="song-title">📁 ${playlistName} (${playlistsData[playlistName].length}首)</div>
+                    </div>
+                    <div class="song-actions">
+                        <div class="song-index-letter">♪</div>
+                    </div>
+                `;
+                
+                // 为歌单添加点击事件
+                const songInfo = playlistItem.querySelector('.song-info');
+                songInfo.addEventListener('click', () => selectPlaylist(playlistName));
+                
+                elements.songsList.appendChild(playlistItem);
+            }
+        });
+    }
+    
+    // 渲染歌曲
     songs.forEach((song, index) => {
         const songItem = document.createElement('div');
         songItem.className = 'song-item';
@@ -325,6 +368,26 @@ function renderSongsList(songs) {
         
         elements.songsList.appendChild(songItem);
     });
+}
+
+// 选择歌单
+function selectPlaylist(playlistName) {
+    console.log(`选择歌单: ${playlistName}`);
+    currentPlaylistName = playlistName;
+    
+    // 获取歌单中的歌曲
+    const playlistSongs = playlistsData[playlistName] || [];
+    currentPlaylist = [...playlistSongs];
+    
+    // 渲染歌单中的歌曲
+    renderSongsList(currentPlaylist);
+    
+    // 如果有歌曲，默认选择第一首但不自动播放
+    if (currentPlaylist.length > 0) {
+        selectSong(currentPlaylist[0], 0, false);
+    }
+    
+    console.log(`切换到歌单: ${playlistName}，包含 ${currentPlaylist.length} 首歌曲`);
 }
 
 // 选择歌曲
@@ -747,13 +810,13 @@ function updateAudioTypeButtons(type) {
 
 // 切换播放模式
 function togglePlayMode() {
-    playMode = (playMode + 1) % 3; // 循环：0->1->2->0
+    playMode = (playMode + 1) % 5; // 循环：0->1->2->3->4->0
     
     const modeIcon = elements.playModeBtn.querySelector('.mode-icon');
     const modeText = elements.playModeBtn.querySelector('span');
     
     // 移除所有模式类
-    elements.playModeBtn.classList.remove('random', 'repeat-one');
+    elements.playModeBtn.classList.remove('random', 'repeat-one', 'repeat-all');
     
     switch(playMode) {
         case 0: // 顺序播放
@@ -775,6 +838,20 @@ function togglePlayMode() {
             modeText.textContent = '单曲循环';
             elements.playModeBtn.classList.add('repeat-one');
             elements.playModeBtn.title = '当前为单曲循环模式';
+            break;
+        case 3: // 列表循环
+            modeIcon.src = 'icons/mode-sequence.png';
+            modeIcon.alt = '列表循环';
+            modeText.textContent = '列表循环';
+            elements.playModeBtn.classList.add('repeat-all');
+            elements.playModeBtn.title = '当前为列表循环模式';
+            break;
+        case 4: // 全部循环
+            modeIcon.src = 'icons/mode-sequence.png';
+            modeIcon.alt = '全部循环';
+            modeText.textContent = '全部循环';
+            elements.playModeBtn.classList.add('repeat-all');
+            elements.playModeBtn.title = '当前为全部循环模式';
             break;
     }
 }
@@ -814,6 +891,31 @@ function handleSongEnd() {
                 console.error('单曲循环播放失败:', e);
                 handleAudioError(e);
             });
+            break;
+        case 3: // 列表循环
+            // 播放当前列表的下一首，到最后一首时循环到第一首
+            if (currentPlaylist.length > 0) {
+                currentIndex = (currentIndex + 1) % currentPlaylist.length;
+                const nextSong = currentPlaylist[currentIndex];
+                console.log(`列表循环：切换到 ${nextSong.title}，自动播放`);
+                selectSong(nextSong, currentIndex, true); // 自动播放下一首
+            }
+            break;
+        case 4: // 全部循环
+            // 如果是在歌单中，先完成歌单播放，然后切换到全部歌曲
+            if (currentPlaylistName !== "全部歌曲") {
+                // 歌单内循环
+                currentIndex = (currentIndex + 1) % currentPlaylist.length;
+                const nextSong = currentPlaylist[currentIndex];
+                console.log(`全部循环（歌单内）：切换到 ${nextSong.title}，自动播放`);
+                selectSong(nextSong, currentIndex, true);
+            } else {
+                // 全部歌曲循环
+                currentIndex = (currentIndex + 1) % currentPlaylist.length;
+                const nextSong = currentPlaylist[currentIndex];
+                console.log(`全部循环：切换到 ${nextSong.title}，自动播放`);
+                selectSong(nextSong, currentIndex, true);
+            }
             break;
     }
 }
