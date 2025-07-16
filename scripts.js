@@ -328,12 +328,9 @@ function renderSongsList(songs) {
 }
 
 // 选择歌曲
-function selectSong(song, index, autoPlay = false) {
+function selectSong(song, index) {
     currentSong = song;
     currentIndex = index;
-    
-    // 先清理音频播放器状态
-    resetAudioPlayer();
     
     // 更新UI
     updateActiveSongListItem();
@@ -344,26 +341,12 @@ function selectSong(song, index, autoPlay = false) {
     // 更新URL以包含当前歌曲
     updateUrlWithSong(song);
     
-    // 根据autoPlay参数决定是否自动播放
-    if (autoPlay) {
+    // 自动开始播放
+    setTimeout(() => {
         playCurrentSong(currentAudioType);
-    } else {
-        // 不自动播放，不设置音频源，避免触发loadstart事件
-        console.log(`歌曲已选中: ${currentSong.title}，等待手动播放`);
-        // 确保停止任何可能的加载状态
-        showLoading(false);
-    }
+    }, 100);
 }
 
-// 重置音频播放器状态
-function resetAudioPlayer() {
-    if (elements.audioPlayer) {
-        elements.audioPlayer.pause();
-        elements.audioPlayer.currentTime = 0;
-        // 不清空src，避免触发不必要的事件
-        console.log('音频播放器状态已重置');
-    }
-}
 
 // 更新当前歌曲信息显示
 function updateActiveSongListItem() {
@@ -460,64 +443,17 @@ function updatePlaybackControls(isEnabled) {
 async function playCurrentSong(type) {
     if (!currentSong) return;
     
-    console.log(`开始播放歌曲: ${currentSong.title}, 类型: ${type}`);
-    
-    // 先暂停并重置音频播放器状态
-    elements.audioPlayer.pause();
-    
     currentAudioType = type;
     const audioUrl = buildAudioUrl(currentSong, type);
-    
-    // 设置新的音频源并立即重置播放位置
     elements.audioPlayer.src = audioUrl;
-    elements.audioPlayer.currentTime = 0; // 立即重置，避免竞态条件
-    console.log(`设置音频源: ${audioUrl}，播放位置已重置`);
 
     try {
-        console.log('尝试播放音频...');
-        showLoading(true); // 开始播放时显示加载状态
-        
-        // 等待音频准备就绪
-        if (elements.audioPlayer.readyState < 2) {
-            console.log('等待音频准备就绪...');
-            await new Promise((resolve, reject) => {
-                const onCanPlay = () => {
-                    elements.audioPlayer.removeEventListener('canplay', onCanPlay);
-                    elements.audioPlayer.removeEventListener('error', onError);
-                    resolve();
-                };
-                const onError = (e) => {
-                    elements.audioPlayer.removeEventListener('canplay', onCanPlay);
-                    elements.audioPlayer.removeEventListener('error', onError);
-                    reject(e);
-                };
-                elements.audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
-                elements.audioPlayer.addEventListener('error', onError, { once: true });
-            });
-        }
-        
         await elements.audioPlayer.play();
-        console.log('音频播放成功');
-        showLoading(false); // 播放成功后隐藏加载状态
         updateAudioTypeButtons(type);
     } catch (error) {
-        console.error(`播放错误: ${error.name}: ${error.message}`);
-        console.error('错误详情:', error);
-        
-        // 确保在任何错误情况下都隐藏加载状态
-        showLoading(false);
-        
-        // 简化错误处理，统一显示错误消息
-        if (error.name === 'NotAllowedError') {
-            console.log('自动播放被浏览器阻止，这是正常现象');
-            // 不显示错误提示，让用户自然地点击播放按钮
-        } else if (error.name === 'AbortError') {
-            console.log('播放被中断，可能是因为快速切换歌曲');
-            // AbortError通常不需要显示给用户，因为它是正常的中断行为
-        } else {
-            // 将其他播放错误传递给统一的错误处理器
-            handleAudioError(error);
-        }
+        // 将播放错误传递给统一的错误处理器
+        handleAudioError(error);
+        console.error(`播放失败: ${error.name}: ${error.message}`);
     }
 }
 
@@ -615,54 +551,12 @@ function buildAudioUrl(song, type) {
 
 // 切换播放/暂停
 function togglePlayPause() {
-    console.log('togglePlayPause被调用');
-    console.log('音频状态:', {
-        paused: elements.audioPlayer.paused,
-        readyState: elements.audioPlayer.readyState,
-        currentTime: elements.audioPlayer.currentTime,
-        src: elements.audioPlayer.src
-    });
-    
     if (elements.audioPlayer.paused) {
         if (!currentSong) {
-            showError('请先选择一首歌曲');
+            playRandomSong();
             return;
         }
-        
-        // 检查音频是否已准备好播放
-        if (elements.audioPlayer.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-            console.log('音频已准备好，直接播放');
-            elements.audioPlayer.play().catch(e => handleAudioError(e));
-        } else {
-            console.log('音频未准备好，等待加载完成');
-            showLoading(true);
-            
-            // 等待音频准备好再播放
-            const playWhenReady = () => {
-                console.log('音频准备完成，开始播放');
-                showLoading(false);
-                elements.audioPlayer.play().catch(e => handleAudioError(e));
-            };
-            
-            // 错误处理函数
-            const handleLoadError = () => {
-                console.log('音频加载失败');
-                showLoading(false);
-                showError('音频加载失败，请检查网络连接或重试');
-            };
-            
-            // 添加事件监听器
-            elements.audioPlayer.addEventListener('canplay', playWhenReady, { once: true });
-            elements.audioPlayer.addEventListener('error', handleLoadError, { once: true });
-            
-            // 如果音频源为空，重新播放当前歌曲
-            if (!elements.audioPlayer.src || !currentSong) {
-                console.log('音频源为空或无当前歌曲，重新播放当前歌曲');
-                if (currentSong) {
-                    playCurrentSong(currentAudioType);
-                }
-            }
-        }
+        elements.audioPlayer.play().catch(e => handleAudioError(e));
     } else {
         elements.audioPlayer.pause();
     }
@@ -1339,37 +1233,7 @@ window.addEventListener('resize',()=>{
 
 // URL参数处理相关函数
 
-// 检测是否为移动端设备
-function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-           (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
-}
 
-// 检测是否支持自动播放
-async function canAutoplay() {
-    try {
-        console.log('开始检测自动播放支持...');
-        const audio = new Audio();
-        audio.muted = true; // 静音测试
-        audio.volume = 0; // 确保静音
-        
-        // 使用一个短的空音频进行测试
-        audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEcBj2c3vPJdSMFl';
-        
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            await playPromise;
-            audio.pause();
-            console.log('自动播放检测：支持');
-            return true;
-        }
-        console.log('自动播放检测：不支持（无Promise）');
-        return false;
-    } catch (error) {
-        console.log(`自动播放检测：不支持（${error.name}: ${error.message}）`);
-        return false;
-    }
-}
 
 // 检查URL参数并处理指定歌曲
 async function checkUrlParameters() {
@@ -1400,16 +1264,19 @@ async function checkUrlParameters() {
             currentPlaylist = [...songsData];
             
             // 检查是否为移动端
-            const isMobile = isMobileDevice();
+            // const isMobile = isMobileDevice();
             
-            if (isMobile) {
-                // 移动端：只选择歌曲，不自动播放，显示播放提示
-                selectSongWithoutAutoplay(targetSong, targetIndex);
-                showMobilePlayPrompt(targetSong.title);
-            } else {
-                // 桌面端：直接播放（按用户要求）
-                selectSong(targetSong, targetIndex, true); // 分享链接自动播放
-            }
+            // if (isMobile) {
+            //     // 移动端：只选择歌曲，不自动播放，显示播放提示
+            //     selectSongWithoutAutoplay(targetSong, targetIndex);
+            //     showMobilePlayPrompt(targetSong.title);
+            // } else {
+            //     // 桌面端：直接播放（按用户要求）
+            //     selectSong(targetSong, targetIndex, true); // 分享链接自动播放
+            // }
+            
+            // 简化：所有设备都使用统一的选择逻辑
+            selectSong(targetSong, targetIndex); // 选择歌曲并播放
         } else {
             console.log(`未找到URL指定的歌曲: ${songParam}`);
             showError(`未找到歌曲: ${songParam}`);
@@ -1418,56 +1285,56 @@ async function checkUrlParameters() {
 }
 
 // 选择歌曲但不自动播放（用于移动端URL分享）
-function selectSongWithoutAutoplay(song, index) {
-    currentSong = song;
-    currentIndex = index;
-    
-    // 更新UI（不包含自动播放）
-    updateActiveSongListItem();
-    loadSheetMusic();
-    updateSongControls();
-    updateSongTitles();
-    
-    // 更新URL以包含当前歌曲
-    updateUrlWithSong(song);
-    
-    // 不自动播放，等待用户手动点击
-}
+// function selectSongWithoutAutoplay(song, index) {
+//     currentSong = song;
+//     currentIndex = index;
+//     
+//     // 更新UI（不包含自动播放）
+//     updateActiveSongListItem();
+//     loadSheetMusic();
+//     updateSongControls();
+//     updateSongTitles();
+//     
+//     // 更新URL以包含当前歌曲
+//     updateUrlWithSong(song);
+//     
+//     // 不自动播放，等待用户手动点击
+// }
 
 // 显示移动端播放提示
-function showMobilePlayPrompt(songTitle) {
-    // 移除可能存在的旧提示
-    const existingPrompt = document.querySelector('.mobile-play-prompt');
-    if (existingPrompt) {
-        existingPrompt.remove();
-    }
-    
-    // 创建提示元素
-    const prompt = document.createElement('div');
-    prompt.className = 'mobile-play-prompt';
-    prompt.innerHTML = `
-        <div class="prompt-content">
-            <div class="prompt-icon">🎵</div>
-            <div class="prompt-text">
-                <h3>已选择歌曲</h3>
-                <p>《${songTitle}》</p>
-                <p class="prompt-note">请点击播放按钮开始播放</p>
-            </div>
-            <button class="prompt-close" onclick="this.parentElement.parentElement.remove()">✕</button>
-        </div>
-    `;
-    
-    // 添加到页面
-    document.body.appendChild(prompt);
-    
-    // 5秒后自动消失
-    setTimeout(() => {
-        if (prompt.parentNode) {
-            prompt.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => prompt.remove(), 300);
-        }
-    }, 5000);
-}
+// function showMobilePlayPrompt(songTitle) {
+//     // 移除可能存在的旧提示
+//     const existingPrompt = document.querySelector('.mobile-play-prompt');
+//     if (existingPrompt) {
+//         existingPrompt.remove();
+//     }
+//     
+//     // 创建提示元素
+//     const prompt = document.createElement('div');
+//     prompt.className = 'mobile-play-prompt';
+//     prompt.innerHTML = `
+//         <div class="prompt-content">
+//             <div class="prompt-icon">🎵</div>
+//             <div class="prompt-text">
+//                 <h3>已选择歌曲</h3>
+//                 <p>《${songTitle}》</p>
+//                 <p class="prompt-note">请点击播放按钮开始播放</p>
+//             </div>
+//             <button class="prompt-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+//         </div>
+//     `;
+//     
+//     // 添加到页面
+//     document.body.appendChild(prompt);
+//     
+//     // 5秒后自动消失
+//     setTimeout(() => {
+//         if (prompt.parentNode) {
+//             prompt.style.animation = 'fadeOut 0.3s ease';
+//             setTimeout(() => prompt.remove(), 300);
+//         }
+//     }, 5000);
+// }
 
 // 更新URL以包含当前播放的歌曲
 function updateUrlWithSong(song) {
