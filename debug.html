@@ -149,7 +149,9 @@
                 console.log('开始测试 API...');
                 const startTime = Date.now();
                 
-                const response = await fetch('/api/songs');
+                // 使用绝对路径确保兼容性
+                const apiUrl = `${window.location.origin}/api/songs`;
+                const response = await fetch(apiUrl);
                 const endTime = Date.now();
                 const responseTime = endTime - startTime;
 

@@ -225,9 +225,11 @@ async function loadSongsData() {
         const isCustomDomain = !currentDomain.includes('.pages.dev');
         console.log(`当前域名: ${currentDomain}, 自定义域名: ${isCustomDomain}`);
         
-        // The new API endpoint. This path works when deploying to Cloudflare Pages.
-        // For local development, you might need to run the worker and adjust the URL.
-        const response = await fetch('/api/songs');
+        // 使用绝对路径确保在所有域名下都能正确访问API
+        // 这将确保无论是pages.dev还是自定义域名都能正确工作
+        const apiUrl = `${window.location.origin}/api/songs`;
+        console.log(`API请求URL: ${apiUrl}`);
+        const response = await fetch(apiUrl);
         if (!response.ok) {
             const errorText = await response.text();
             console.error('API响应错误:', {
@@ -704,7 +706,8 @@ function getSimplePinyinLetter(char) {
 // 构建音频URL
 function buildAudioUrl(song, type) {
     const fileName = type === 'original' ? song.files.original : song.files.accompaniment;
-    const audioUrl = `${R2_BASE_URL}/${song.folder}/${fileName}`;
+            // 使用当前网站域名访问音频文件，通过中间件代理到R2
+        const audioUrl = `${window.location.origin}/${song.folder}/${fileName}`;
     console.log(`构建音频URL: ${audioUrl}`);
     console.log(`歌曲信息:`, {
         title: song.title,
@@ -1081,7 +1084,8 @@ function loadSheetMusic() {
         return;
     }
     
-    const sheetUrl = `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.sheet}`;
+            // 使用当前网站域名访问歌谱文件，通过中间件代理到R2
+        const sheetUrl = `${window.location.origin}/${currentSong.folder}/${currentSong.files.sheet}`;
     elements.sheetDisplay.innerHTML = `
         <img src="${sheetUrl}" alt="${currentSong.title} 歌谱" class="sheet-image" 
              onerror="this.parentElement.innerHTML='<div class=\\'sheet-placeholder\\'><p>🎼</p><p>歌谱加载失败</p></div>'">
@@ -1099,16 +1103,16 @@ async function downloadSongZip() {
         const folder = zip.folder(currentSong.title);
         
         // 下载原唱
-        await addFileToZip(folder, currentSong.files.original, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.original}`);
+        await addFileToZip(folder, currentSong.files.original, `${window.location.origin}/${currentSong.folder}/${currentSong.files.original}`);
         
         // 下载伴奏（如果有）
         if (currentSong.hasAccompaniment && currentSong.files.accompaniment) {
-            await addFileToZip(folder, currentSong.files.accompaniment, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.accompaniment}`);
+            await addFileToZip(folder, currentSong.files.accompaniment, `${window.location.origin}/${currentSong.folder}/${currentSong.files.accompaniment}`);
         }
         
         // 下载歌谱
         if (currentSong.files.sheet) {
-            await addFileToZip(folder, currentSong.files.sheet, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.sheet}`);
+            await addFileToZip(folder, currentSong.files.sheet, `${window.location.origin}/${currentSong.folder}/${currentSong.files.sheet}`);
         }
         
         // 生成ZIP文件并下载
@@ -1132,7 +1136,8 @@ async function downloadSingleFile(type) {
 
     let fileUrl, fileName;
     const song = currentSong;
-    const baseUrl = R2_BASE_URL;
+    // 使用当前网站域名作为基础URL，通过中间件代理到R2
+    const baseUrl = window.location.origin;
 
     switch (type) {
         case 'original':
