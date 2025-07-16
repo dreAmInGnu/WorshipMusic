@@ -70,9 +70,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // 初始化DOM元素引用
 function initializeElements() {
+    console.log('=== 初始化DOM元素 ===');
+    console.log('当前域名:', window.location.hostname);
+    console.log('document.readyState:', document.readyState);
+    
     elements.appMain = document.getElementById('appMain');
     elements.songsList = document.getElementById('songsList');
     elements.searchInput = document.getElementById('searchInput');
+    
+    console.log('elements.songsList 获取结果:', elements.songsList);
+    console.log('songsList DOM元素存在:', !!elements.songsList);
+    console.log('===================');
     elements.clearSearchBtn = document.getElementById('clearSearchBtn');
     elements.audioPlayer = document.getElementById('audioPlayer');
     elements.originalBtn = document.getElementById('originalBtn');
@@ -248,6 +256,8 @@ async function loadSongsData() {
         songsData = dynamicData.songs; // The API returns an object with a "songs" property
         
         console.log(`成功加载 ${songsData.length} 首歌曲`);
+        console.log('前3首歌曲示例:', songsData.slice(0, 3));
+        console.log('dynamicData 完整结构:', dynamicData);
         
         // --- 拼音排序逻辑 ---
         try {
@@ -304,6 +314,8 @@ async function loadSongsData() {
         // --- 歌单构建结束 ---
 
         currentPlaylist = [...songsData];
+        console.log('准备调用 renderSongsList，currentPlaylist 长度:', currentPlaylist.length);
+        console.log('调用 renderSongsList 前的 elements.songsList:', elements.songsList);
         renderSongsList(currentPlaylist);
         updatePlaybackControls(true); // 关键修复：加载完成后启用播放控件
         console.log('歌曲列表渲染完成');
@@ -329,8 +341,25 @@ async function loadSongsData() {
 
 // 渲染歌曲列表
 function renderSongsList(songs) {
-    if (!elements.songsList || !songs) return;
+    // 添加详细的调试信息
+    console.log('=== renderSongsList 调试信息 ===');
+    console.log('elements.songsList:', elements.songsList);
+    console.log('songs:', songs);
+    console.log('songs.length:', songs ? songs.length : 'undefined');
+    console.log('当前域名:', window.location.hostname);
+    console.log('DOM元素songsList是否存在:', !!elements.songsList);
+    console.log('================================');
     
+    if (!elements.songsList || !songs) {
+        console.error('renderSongsList 提前退出:', {
+            songsList: !!elements.songsList,
+            songs: !!songs,
+            songsLength: songs ? songs.length : 'N/A'
+        });
+        return;
+    }
+    
+    console.log(`开始渲染 ${songs.length} 首歌曲...`);
     elements.songsList.innerHTML = '';
     
     // 如果在歌单内，显示返回按钮
