@@ -261,6 +261,10 @@ async function loadSongsData() {
         
         // --- 拼音排序逻辑 ---
         try {
+            console.log('开始处理歌曲排序...');
+            console.log('typeof pinyinPro:', typeof pinyinPro);
+            console.log('歌曲数据前3首示例（排序前）:', songsData.slice(0, 3).map(s => s.title));
+            
             // 检查 pinyin-pro 库是否已加载
             if (typeof pinyinPro === 'undefined') {
                 console.warn('pinyin-pro 库未加载，使用简单排序');
@@ -271,11 +275,14 @@ async function loadSongsData() {
                     let indexLetter = getSimplePinyinLetter(firstChar);
                     song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
                     song.indexLetter = indexLetter;
+                    if (index < 3) {
+                        console.log(`歌曲 "${song.title}" 首字符: "${firstChar}", indexLetter: "${indexLetter}", sortKey: "${song.sortKey}"`);
+                    }
                 });
             } else {
                 console.log('使用拼音排序...');
                 const { pinyin } = pinyinPro;
-                songsData.forEach(song => {
+                songsData.forEach((song, index) => {
                     const firstChar = song.title.charAt(0);
                     let sortKey = pinyin(firstChar, { toneType: 'none', nonZh: 'consecutive' }).toLowerCase();
                     if (!/^[a-z]/.test(sortKey)) {
@@ -283,11 +290,15 @@ async function loadSongsData() {
                     }
                     song.sortKey = sortKey;
                     song.indexLetter = sortKey.charAt(0).toUpperCase();
+                    if (index < 3) {
+                        console.log(`歌曲 "${song.title}" 首字符: "${firstChar}", indexLetter: "${song.indexLetter}", sortKey: "${song.sortKey}"`);
+                    }
                 });
             }
             
             songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
             console.log('歌曲排序完成');
+            console.log('排序后前3首歌曲:', songsData.slice(0, 3).map(s => `${s.title} (${s.indexLetter})`));
         } catch (sortError) {
             console.error('排序处理失败:', sortError);
             // 排序失败时使用原始顺序，但仍然设置基本属性
@@ -316,6 +327,14 @@ async function loadSongsData() {
         currentPlaylist = [...songsData];
         console.log('准备调用 renderSongsList，currentPlaylist 长度:', currentPlaylist.length);
         console.log('调用 renderSongsList 前的 elements.songsList:', elements.songsList);
+        console.log('songsData 总长度:', songsData.length);
+        console.log('currentPlaylist 前3首:', currentPlaylist.slice(0, 3).map(s => s.title));
+        
+        // 强制检查DOM元素
+        const songsListElement = document.getElementById('songsList');
+        console.log('直接获取songsList元素:', songsListElement);
+        console.log('是否相同:', elements.songsList === songsListElement);
+        
         renderSongsList(currentPlaylist);
         updatePlaybackControls(true); // 关键修复：加载完成后启用播放控件
         console.log('歌曲列表渲染完成');
