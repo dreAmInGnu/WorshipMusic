@@ -90,32 +90,47 @@ const R2_BASE_URL = "https://你的R2域名/worship";
    - 检查变量名是否为 `SONG_BUCKET`
    - 检查存储桶名称是否正确
 
-2. **R2 存储桶访问权限**
+2. **自定义域名下 Functions 路由问题**（常见问题）
+   - **现象**：在 `yoursite.pages.dev` 下正常工作，但自定义域下失败
+   - **原因**：Cloudflare Pages Functions 在自定义域下需要正确的路由配置
+   - **解决方案**：
+     - 确保项目根目录存在 `_routes.json` 文件（已自动创建）
+     - 检查 Cloudflare Pages 设置中自定义域的 Functions 配置
+     - 重新部署项目确保配置生效
+
+3. **R2 存储桶访问权限**
    - 确保 R2 存储桶已启用公共访问
    - 检查 R2 域名配置是否正确
 
-3. **文件结构问题**
+4. **文件结构问题**
    - 确保文件按照要求的目录结构组织
    - 检查文件名和扩展名是否正确
 
-4. **网络或CORS问题**
+5. **网络或CORS问题**
    - 检查浏览器开发者工具的网络标签
    - 查看是否有CORS错误
 
 ### 调试步骤
 
-1. **检查 API 响应**
+1. **使用专用诊断工具**
    ```
-   访问: https://你的域名.pages.dev/api/songs
+   访问: https://你的域名/debug.html
    ```
-   应该返回 JSON 格式的歌曲列表
+   这个工具会自动检测域名环境并测试 API 连接
 
-2. **查看 Pages Functions 日志**
+2. **手动检查 API 响应**
+   ```
+   Pages.dev: https://worshipmusic.pages.dev/api/songs
+   自定义域: https://worshipmusic.windsmaker.com/api/songs
+   ```
+   两个URL都应该返回相同的 JSON 格式歌曲列表
+
+3. **查看 Pages Functions 日志**
    - 转到 Cloudflare Dashboard > Pages > 你的项目
    - 点击 **Functions** 标签
    - 查看 **Real-time Logs**
 
-3. **验证 R2 存储桶内容**
+4. **验证 R2 存储桶内容**
    - 在 R2 Dashboard 中检查文件结构
    - 确保至少有一个正确格式的歌曲文件夹
 

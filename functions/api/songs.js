@@ -31,12 +31,16 @@ export async function onRequest(context) {
     }
 
     // 添加详细的环境诊断
+    const url = new URL(request.url);
     const diagnostics = {
       timestamp: new Date().toISOString(),
       hasR2Binding: !!env.SONG_BUCKET,
       environmentKeys: Object.keys(env || {}),
       requestMethod: request.method,
-      requestUrl: request.url
+      requestUrl: request.url,
+      hostname: url.hostname,
+      isCustomDomain: !url.hostname.includes('.pages.dev'),
+      userAgent: request.headers.get('User-Agent') || 'Unknown'
     };
 
     // 检查 R2 bucket 绑定是否存在

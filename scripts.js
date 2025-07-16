@@ -220,10 +220,24 @@ async function loadSongsData() {
         showLoading(true);
         console.log('开始加载歌曲数据...');
         
+        // 检测当前域名环境
+        const currentDomain = window.location.hostname;
+        const isCustomDomain = !currentDomain.includes('.pages.dev');
+        console.log(`当前域名: ${currentDomain}, 自定义域名: ${isCustomDomain}`);
+        
         // The new API endpoint. This path works when deploying to Cloudflare Pages.
         // For local development, you might need to run the worker and adjust the URL.
         const response = await fetch('/api/songs');
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API响应错误:', {
+                status: response.status,
+                statusText: response.statusText,
+                url: response.url,
+                domain: currentDomain,
+                isCustomDomain: isCustomDomain,
+                errorBody: errorText
+            });
             throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
         }
         
