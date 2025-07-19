@@ -298,6 +298,7 @@ body {
 /* 播放控制区域始终可见 */
 .player-controls-always-visible {
     display: block;
+    margin-bottom: 8px; /* 减少底部间距 */
 }
 
 /* 可折叠内容区域 */
@@ -309,9 +310,7 @@ body {
     -webkit-backdrop-filter: none; /* 移除Safari毛玻璃效果 */
     border-radius: 0; /* 移除圆角 */
     border: none; /* 移除边框 */
-    padding: 8px 0; /* 减少上下间距到8px，与新增按钮到歌谱的间距一致 */
-    display: flex; /* 使用Flex来帮助子元素填充空间 */
-    flex: 1;
+    padding: 8px 0; /* 减少上下间距 */
 }
 
 .player-section.collapsed .player-collapsible-content {
@@ -767,10 +766,8 @@ body {
     background: none; /* 移除背景，继承父容器的毛玻璃效果 */
     border: none; /* 移除边框 */
     padding: 0; /* 移除内边距，实现左右对齐 */
-    margin: 0; /* 无外边距，保持与左右对齐 */
-    display: flex; /* 使用flex布局 */
-    flex-direction: column; /* 垂直方向排列 */
-    gap: 8px; /* 减少间距到8px，实现上下视觉统一 */
+    margin: 8px 0 0 0; /* 减少顶部间距 */
+    display: block; /* 使用block布局确保垂直排列 */
 }
 
 /* 桌面端sheet-header垂直布局 - 确保优先级 */
@@ -779,7 +776,7 @@ body {
     flex-direction: column !important; /* 强制垂直排列，让下载按钮和外部链接按钮分行显示 */
     justify-content: center;
     background: none; /* 完全移除背景 */
-    margin: 0; /* 移除margin，让flex自动处理间距 */
+    margin: 0 0 8px 0; /* 减少底部间距 */
     padding: 0; /* 移除内边距，依赖父容器的边距 */
     border: none; /* 移除边框 */
 }
@@ -879,8 +876,7 @@ body {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    margin: 0; /* 移除margin，让flex自动处理间距 */
-    flex: 1; /* 让歌谱区域占据剩余空间 */
+    margin: 0; /* 移除margin，让block自动处理间距 */
 }
 
 .sheet-placeholder {

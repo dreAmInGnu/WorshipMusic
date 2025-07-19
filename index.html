@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜歌曲库 - 在线播放器</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20250719_1758">
 </head>
 <body>
     <div class="container">
@@ -15,7 +15,7 @@
             <h1>📜有光✨敬拜队歌曲库🎼</h1>
         </header>
         
-        <main class="app-main player-collapsed" id="appMain">
+        <main class="app-main" id="appMain">
             <!-- 歌曲列表区域 -->
             <section class="songs-section">
                 <div class="search-box">
@@ -30,9 +30,9 @@
             </section>
             
             <!-- 播放器区域 -->
-            <section class="player-section collapsed" id="playerSection">
-                <button id="playerToggleBtn" class="player-toggle-btn" title="展开播放器">
-                    <span id="playerToggleText">展开</span><img id="playerToggleIcon" src="icons/expand.png" alt="展开" class="toggle-icon">
+            <section class="player-section" id="playerSection">
+                <button id="playerToggleBtn" class="player-toggle-btn" title="折叠播放器">
+                    <span id="playerToggleText">折叠</span><img id="playerToggleIcon" src="icons/collapse.png" alt="折叠" class="toggle-icon">
                 </button>
                 
                 <!-- 折叠状态下的播放控制区域 -->
@@ -61,79 +61,83 @@
                     </div>
                 </div>
                 
-                <!-- 始终可见的播放控制区域 -->
-                <div class="player-controls-always-visible">
-                    <!-- 音频控制器 -->
-                    <div class="audio-controls">
-                        <div class="audio-player">
-                            <audio id="audioPlayer" preload="none">
-                                您的浏览器不支持音频播放。
-                            </audio>
-                            
-                            <div class="control-buttons">
-                                <div class="audio-and-mode-buttons">
-                                    <button id="originalBtn" class="audio-btn active" disabled>
-                                        🎤 原唱
-                                    </button>
-                                    <button id="accompanimentBtn" class="audio-btn" disabled>
-                                        🎹 伴奏
-                                    </button>
-                                    <button id="playModeBtn" class="mode-btn" title="播放模式">
-                                        <img src="icons/mode-sequence.png" alt="顺序播放" class="mode-icon">
-                                        <span>顺序播放</span>
-                                    </button>
-                                </div>
-                                <div class="playback-controls">
-                                    <div class="navigation-buttons">
-                                        <button id="prevBtn" class="nav-btn" disabled title="上一首">
-                                            <img src="icons/prev.png" alt="上一首" class="nav-icon">
+
+                
+                <!-- 可折叠的歌谱和下载区域 -->
+                <div class="player-collapsible-content" id="playerCollapsibleContent">
+                    <!-- 下载和外部链接控制区域 -->
+                    <div class="sheet-header">
+                        <div class="download-controls">
+                            <button id="downloadZipBtn" class="action-btn" disabled>打包下载</button>
+                            <button id="downloadOriginalBtn" class="action-btn" disabled>🎤 歌曲下载</button>
+                            <button id="downloadAccompanimentBtn" class="action-btn" disabled>🎹 伴奏下载</button>
+                            <button id="downloadSheetBtn" class="action-btn hidden" disabled>🎼 歌谱</button>
+                        </div>
+                        <div class="external-link-controls">
+                            <a id="worshipResourceBtn" class="action-btn external-link-btn" href="https://worshipmusic.flowus.cn/" target="_blank" rel="noopener noreferrer">
+                                <img src="icons/photo.png" alt="照片" class="btn-icon">
+                                有光敬拜队资料库丨队员录音 & 照片视频
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 始终可见的播放控制区域 -->
+                    <div class="player-controls-always-visible">
+                        <!-- 音频控制器 -->
+                        <div class="audio-controls">
+                            <div class="audio-player">
+                                <audio id="audioPlayer" preload="metadata">
+                                    您的浏览器不支持音频播放。
+                                </audio>
+                                
+                                <div class="control-buttons">
+                                    <div class="audio-and-mode-buttons">
+                                        <button id="originalBtn" class="audio-btn active" disabled>
+                                            🎤 原唱
                                         </button>
-                                        <button id="playPauseBtn" class="nav-btn play-pause" disabled title="播放/暂停">
-                                            <img src="icons/play.png" alt="播放" class="nav-icon">
+                                        <button id="accompanimentBtn" class="audio-btn" disabled>
+                                            🎹 伴奏
                                         </button>
-                                        <button id="nextBtn" class="nav-btn" disabled title="下一首">
-                                            <img src="icons/next.png" alt="下一首" class="nav-icon">
+                                        <button id="playModeBtn" class="mode-btn" title="播放模式">
+                                            <img src="icons/mode-sequence.png" alt="顺序播放" class="mode-icon">
+                                            <span>顺序播放</span>
                                         </button>
                                     </div>
-                                    <div class="volume-control">
-                                        <span>🔊</span>
-                                        <input type="range" id="volumeSlider" min="0" max="100" value="100">
+                                    <div class="playback-controls">
+                                        <div class="navigation-buttons">
+                                            <button id="prevBtn" class="nav-btn" disabled title="上一首">
+                                                <img src="icons/prev.png" alt="上一首" class="nav-icon">
+                                            </button>
+                                            <button id="playPauseBtn" class="nav-btn play-pause" disabled title="播放/暂停">
+                                                <img src="icons/play.png" alt="播放" class="nav-icon">
+                                            </button>
+                                            <button id="nextBtn" class="nav-btn" disabled title="下一首">
+                                                <img src="icons/next.png" alt="下一首" class="nav-icon">
+                                            </button>
+                                        </div>
+                                        <div class="volume-control">
+                                            <button id="volumeBtn" class="volume-btn" title="点击静音/取消静音">🔊</button>
+                                            <input type="range" id="volumeSlider" min="0" max="100" value="100">
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            
-                            <div class="progress-container">
-                                <div class="time-display">
-                                    <span id="currentTime">00:00</span>
-                                    <span id="progressSongTitle" class="song-title-progress"></span>
-                                    <span id="duration">00:00</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <input type="range" id="progressSlider" min="0" max="100" value="0">
+                                    
+                                    <div class="progress-container">
+                                        <div class="time-display">
+                                            <span id="currentTime">00:00</span>
+                                            <span id="progressSongTitle" class="song-title-progress"></span>
+                                            <span id="duration">00:00</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <input type="range" id="progressSlider" min="0" max="100" value="0">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- 可折叠的歌谱和下载区域 -->
-                <div class="player-collapsible-content" id="playerCollapsibleContent">
+                    
                     <!-- 歌谱显示区域 -->
                     <div class="sheet-music">
-                        <div class="sheet-header">
-                            <div class="download-controls">
-                                <button id="downloadZipBtn" class="action-btn" disabled>打包下载</button>
-                                <button id="downloadOriginalBtn" class="action-btn" disabled>🎤 歌曲下载</button>
-                                <button id="downloadAccompanimentBtn" class="action-btn" disabled>🎹 伴奏下载</button>
-                                <button id="downloadSheetBtn" class="action-btn hidden" disabled>🎼 歌谱</button>
-                            </div>
-                            <div class="external-link-controls">
-                                <a id="worshipResourceBtn" class="action-btn external-link-btn" href="https://worshipmusic.flowus.cn/" target="_blank" rel="noopener noreferrer">
-                                    <img src="icons/photo.png" alt="照片" class="btn-icon">
-                                    有光敬拜队资料库丨队员录音 & 照片视频
-                                </a>
-                            </div>
-                        </div>
                         <div class="sheet-display" id="sheetDisplay">
                             <div class="sheet-placeholder">
                                 <p>🎼</p>
@@ -169,6 +173,6 @@
     <!-- 引入库文件和脚本 -->
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
     <script src="libs/jszip.min.js"></script>
-    <script src="scripts.js"></script>
+    <script src="scripts.js?v=20250719_1758"></script>
 </body>
 </html> 
