@@ -431,7 +431,7 @@ function updatePlaybackControls(isEnabled) {
 // 播放当前歌曲
 async function playCurrentSong(type) {
     if (!currentSong) return;
-    // 修复：先暂停并重置播放器状态
+    // 先暂停并重置播放器状态
     elements.audioPlayer.pause();
     elements.audioPlayer.currentTime = 0;
     currentAudioType = type;
@@ -442,10 +442,16 @@ async function playCurrentSong(type) {
         await elements.audioPlayer.play();
         updateAudioTypeButtons(type);
     } catch (error) {
-        // 修复：确保出错时隐藏加载状态
-        showLoading(false);
-        handleAudioError(error);
-        console.error(`播放失败: ${error.name}: ${error.message}`);
+        // 严格参考97a15de：NotAllowedError静默处理，不弹窗
+        if (error.name === 'NotAllowedError') {
+            console.log('自动播放被浏览器拦截（NotAllowedError），请用户手动点击播放按钮');
+            showLoading(false);
+            // 不弹窗，不调用handleAudioError
+        } else {
+            showLoading(false);
+            handleAudioError(error);
+            console.error(`播放失败: ${error.name}: ${error.message}`);
+        }
     }
 }
 
