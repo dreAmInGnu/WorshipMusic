@@ -204,7 +204,6 @@ body {
     padding: 15px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    cursor: pointer;
     transition: all 0.3s ease;
     background: #fafafa;
     display: flex;
@@ -234,6 +233,7 @@ body {
 
 .song-info {
     flex-grow: 1;
+    cursor: pointer;
 }
 
 .song-title {
@@ -298,19 +298,21 @@ body {
 /* 播放控制区域始终可见 */
 .player-controls-always-visible {
     display: block;
-    margin-bottom: 8px; /* 减少底部间距 */
 }
 
 /* 可折叠内容区域 */
 .player-collapsible-content {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 统一各子元素间距为8px */
     transition: all 0.3s ease;
     background: none; /* 移除背景 */
     backdrop-filter: none; /* 移除毛玻璃效果 */
     -webkit-backdrop-filter: none; /* 移除Safari毛玻璃效果 */
     border-radius: 0; /* 移除圆角 */
     border: none; /* 移除边框 */
-    padding: 8px 0; /* 减少上下间距 */
+    padding: 8px 0; /* 减少上下间距到8px，与新增按钮到歌谱的间距一致 */
+    flex: 1;
 }
 
 .player-section.collapsed .player-collapsible-content {
@@ -726,8 +728,19 @@ body {
     margin-left: 15px;
 }
 
-.volume-control span {
+.volume-control .volume-btn {
+    background: none;
+    border: none;
     font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    color: inherit;
+}
+
+.volume-control .volume-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .volume-control input[type="range"] {
@@ -766,8 +779,9 @@ body {
     background: none; /* 移除背景，继承父容器的毛玻璃效果 */
     border: none; /* 移除边框 */
     padding: 0; /* 移除内边距，实现左右对齐 */
-    margin: 8px 0 0 0; /* 减少顶部间距 */
-    display: block; /* 使用block布局确保垂直排列 */
+    margin: 0; /* 移除边距，由父容器的gap统一控制间距 */
+    display: flex; /* 使用flex布局 */
+    flex-direction: column; /* 垂直方向排列 */
 }
 
 /* 桌面端sheet-header垂直布局 - 确保优先级 */
@@ -776,7 +790,7 @@ body {
     flex-direction: column !important; /* 强制垂直排列，让下载按钮和外部链接按钮分行显示 */
     justify-content: center;
     background: none; /* 完全移除背景 */
-    margin: 0 0 8px 0; /* 减少底部间距 */
+    margin: 0; /* 移除margin，让flex自动处理间距 */
     padding: 0; /* 移除内边距，依赖父容器的边距 */
     border: none; /* 移除边框 */
 }
@@ -804,7 +818,7 @@ body {
     flex-wrap: nowrap;
     justify-content: center;
     background: none;
-    margin: 8px auto 0 auto; /* 顶部使用8px间距，与下载按钮间距保持一致 */
+    margin: 8px auto 0 auto; /* 恢复顶部8px间距，与下载按钮保持一致 */
     padding: 0;
     border: none;
     flex-shrink: 0;
@@ -876,7 +890,8 @@ body {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    margin: 0; /* 移除margin，让block自动处理间距 */
+    margin: 0; /* 移除margin，让flex自动处理间距 */
+    flex: 1; /* 让歌谱区域占据剩余空间 */
 }
 
 .sheet-placeholder {
@@ -1168,9 +1183,10 @@ body {
         min-width: 0;
     }
     
-    .volume-control span {
+    .volume-control .volume-btn {
         font-size: 0.9rem;
         flex-shrink: 0;
+        padding: 3px;
     }
     
     .volume-control input[type="range"] {
@@ -1388,8 +1404,9 @@ body {
         gap: 4px;
     }
     
-    .volume-control span {
+    .volume-control .volume-btn {
         font-size: 0.8rem;
+        padding: 2px;
     }
     
     .volume-control input[type="range"] {
@@ -1685,74 +1702,114 @@ input:focus {
     }
 }
 
-/* 确保按钮内的图标在浅灰背景下清晰显示 */
+/* 确保按钮内的图标正常显示 */
 .nav-btn img {
     width: 40px;
     height: 40px;
     object-fit: contain;
+    /* 移除filter，让图标正常显示 */
 }
 
-/* 分享链接相关样式 */
+/* 分享功能相关样式 */
+
+/* 歌曲操作区域 */
 .song-actions {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
+/* 分享按钮 */
 .share-btn {
-    background: none;
-    border: none;
-    font-size: 1rem;
-    color: #666;
+    background: transparent;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.9rem;
     cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 4px;
     transition: all 0.2s ease;
+    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 24px;
-    height: 24px;
+    min-width: 30px;
+    height: 30px;
 }
 
 .share-btn:hover {
     background: #f0f0f0;
-    color: #000;
-    transform: scale(1.1);
+    border-color: #999;
+    transform: translateY(-1px);
 }
 
+.song-item.active .share-btn {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.song-item.active .share-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.8);
+    color: #fff;
+}
+
+/* 分享成功提示框 */
 .share-success-toast {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: #4CAF50;
+    background: #28a745;
     color: white;
-    padding: 12px 20px;
+    padding: 12px 16px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 1000;
-    animation: slideIn 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    animation: shareToastSlideIn 0.3s ease;
+    max-width: 350px;
     font-size: 0.9rem;
 }
 
+.share-success-toast span {
+    display: block;
+    font-weight: 500;
+}
+
+@keyframes shareToastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* 移动端播放提示 */
 .mobile-play-prompt {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    z-index: 1000;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
     animation: fadeIn 0.3s ease;
-    max-width: 90vw;
-    width: 320px;
+    padding: 20px;
 }
 
 .prompt-content {
+    background: white;
+    border-radius: 12px;
     padding: 24px;
+    max-width: 350px;
+    width: 100%;
     text-align: center;
     position: relative;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .prompt-icon {
@@ -1761,21 +1818,22 @@ input:focus {
 }
 
 .prompt-text h3 {
-    margin: 0 0 8px 0;
     color: #333;
+    margin: 0 0 8px 0;
     font-size: 1.2rem;
+    font-weight: 600;
 }
 
 .prompt-text p {
-    margin: 0 0 4px 0;
     color: #666;
+    margin: 8px 0;
     font-size: 1rem;
 }
 
 .prompt-note {
+    color: #007AFF !important;
+    font-weight: 500;
     font-size: 0.9rem !important;
-    color: #999 !important;
-    margin-top: 8px !important;
 }
 
 .prompt-close {
@@ -1784,11 +1842,16 @@ input:focus {
     right: 12px;
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     color: #999;
     cursor: pointer;
     padding: 4px;
-    border-radius: 4px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s ease;
 }
 
@@ -1797,28 +1860,25 @@ input:focus {
     color: #333;
 }
 
-/* 移动端适配 */
+/* 移动端分享按钮优化 */
 @media (max-width: 768px) {
     .share-btn {
-        font-size: 0.9rem;
-        padding: 3px 5px;
-        min-width: 20px;
-        height: 20px;
+        min-width: 28px;
+        height: 28px;
+        padding: 5px 6px;
+        font-size: 0.8rem;
     }
     
     .share-success-toast {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-        font-size: 0.8rem;
-        padding: 10px 16px;
-    }
-    
-    .mobile-play-prompt {
-        width: 280px;
+        top: 15px;
+        right: 15px;
+        left: 15px;
+        max-width: none;
+        font-size: 0.85rem;
     }
     
     .prompt-content {
+        margin: 0 10px;
         padding: 20px;
     }
     
@@ -1826,16 +1886,22 @@ input:focus {
         font-size: 2.5rem;
         margin-bottom: 12px;
     }
-    
-    .prompt-text h3 {
-        font-size: 1.1rem;
+}
+
+@media (max-width: 480px) {
+    .song-actions {
+        gap: 6px;
     }
     
-    .prompt-text p {
-        font-size: 0.9rem;
+    .share-btn {
+        min-width: 26px;
+        height: 26px;
+        padding: 4px 5px;
+        font-size: 0.75rem;
     }
     
-    .prompt-note {
-        font-size: 0.8rem !important;
+    .song-index-letter {
+        font-size: 1rem;
+        margin-left: 8px;
     }
 }

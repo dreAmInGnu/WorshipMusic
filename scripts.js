@@ -8,6 +8,9 @@ let currentIndex = 0;
 let playMode = 0;
 let isPlaying = false;
 let currentAudioType = 'original'; // 'original' 或 'accompaniment'
+// 静音状态管理
+let isMuted = false;
+let volumeBeforeMute = 100;
 
 // DOM 元素
 const elements = {
@@ -97,6 +100,7 @@ function initializeElements() {
     elements.closeSheetModal = document.getElementById('closeSheetModal');
     elements.progressSongTitle = document.getElementById('progressSongTitle');
     elements.collapsedSongTitle = document.getElementById('collapsedSongTitle');
+    elements.volumeBtn = document.getElementById('volumeBtn');
     elements.collapsedPlayerControls = document.getElementById('collapsedPlayerControls');
     elements.collapsedPrevBtn = document.getElementById('collapsedPrevBtn');
     elements.collapsedPlayPauseBtn = document.getElementById('collapsedPlayPauseBtn');
@@ -125,6 +129,7 @@ function setupEventListeners() {
     // 进度条和音量控制
     elements.progressSlider.addEventListener('input', handleProgressChange);
     elements.volumeSlider.addEventListener('input', handleVolumeChange);
+    elements.volumeBtn.addEventListener('click', toggleMute);
     
     // 下载按钮
     elements.downloadZipBtn.addEventListener('click', downloadSongZip);
@@ -189,7 +194,8 @@ function setupStagewiseToolbar() {
 function setupAudioEventListeners() {
     const audio = elements.audioPlayer;
     
-    audio.addEventListener('loadstart', () => showLoading(true));
+    // 移除loadstart的自动加载状态，改为手动控制
+    // audio.addEventListener('loadstart', () => showLoading(true));
     audio.addEventListener('canplay', () => showLoading(false));
     audio.addEventListener('timeupdate', updateProgress);
     audio.addEventListener('loadedmetadata', updateDuration);
@@ -226,26 +232,39 @@ async function loadSongsData() {
         
         // --- 拼音排序逻辑 ---
         try {
-            console.log('开始拼音排序处理...');
-            songsData.forEach((song, index) => {
-                const firstChar = song.title.charAt(0);
-                let indexLetter = getPinyinLetter(firstChar);
-                song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
-                song.indexLetter = indexLetter;
-                if (index < 3) {
-                    console.log(`歌曲 "${song.title}" 首字符: "${firstChar}", indexLetter: "${indexLetter}", sortKey: "${song.sortKey}"`);
-                }
-            });
+            // 检查 pinyin-pro 库是否已加载
+            if (typeof pinyinPro === 'undefined') {
+                console.warn('pinyin-pro 库未加载，使用简单排序');
+                // 如果库未加载，使用简单的拼音映射
+                songsData.forEach((song, index) => {
+                    const firstChar = song.title.charAt(0);
+                    // 简单的中文字符到拼音字母映射
+                    let indexLetter = getSimplePinyinLetter(firstChar);
+                    song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
+                    song.indexLetter = indexLetter;
+                });
+            } else {
+                console.log('使用拼音排序...');
+                const { pinyin } = pinyinPro;
+                songsData.forEach(song => {
+                    const firstChar = song.title.charAt(0);
+                    let sortKey = pinyin(firstChar, { toneType: 'none', nonZh: 'consecutive' }).toLowerCase();
+                    if (!/^[a-z]/.test(sortKey)) {
+                        sortKey = '~' + sortKey;
+                    }
+                    song.sortKey = sortKey;
+                    song.indexLetter = sortKey.charAt(0).toUpperCase();
+                });
+            }
             
             songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
             console.log('歌曲排序完成');
-            console.log('排序后前3首歌曲:', songsData.slice(0, 3).map(s => `${s.title} (${s.indexLetter})`));
         } catch (sortError) {
             console.error('排序处理失败:', sortError);
             // 排序失败时使用原始顺序，但仍然设置基本属性
             songsData.forEach((song, index) => {
                 const firstChar = song.title.charAt(0);
-                let indexLetter = getPinyinLetter(firstChar);
+                let indexLetter = getSimplePinyinLetter(firstChar);
                 song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
                 song.indexLetter = indexLetter;
             });
@@ -310,10 +329,11 @@ function renderSongsList(songs) {
 
 // 选择歌曲
 function selectSong(song, index, autoPlay = false) {
-    // 修复：先重置播放器状态
-    resetAudioPlayer();
     currentSong = song;
     currentIndex = index;
+    
+    // 先清理音频播放器状态
+    resetAudioPlayer();
     
     // 更新UI
     updateActiveSongListItem();
@@ -326,14 +346,22 @@ function selectSong(song, index, autoPlay = false) {
     
     // 根据autoPlay参数决定是否自动播放
     if (autoPlay) {
-        setTimeout(() => {
-            playCurrentSong(currentAudioType);
-        }, 100);
+        playCurrentSong(currentAudioType);
     } else {
-        // 不自动播放，等待用户手动点击
+        // 不自动播放，不设置音频源，避免触发loadstart事件
         console.log(`歌曲已选中: ${currentSong.title}，等待手动播放`);
-        // 修复：确保停止任何可能的加载状态
+        // 确保停止任何可能的加载状态
         showLoading(false);
+    }
+}
+
+// 重置音频播放器状态
+function resetAudioPlayer() {
+    if (elements.audioPlayer) {
+        elements.audioPlayer.pause();
+        elements.audioPlayer.currentTime = 0;
+        // 不清空src，避免触发不必要的事件
+        console.log('音频播放器状态已重置');
     }
 }
 
@@ -431,32 +459,118 @@ function updatePlaybackControls(isEnabled) {
 // 播放当前歌曲
 async function playCurrentSong(type) {
     if (!currentSong) return;
-    // 先暂停并重置播放器状态
+    
+    console.log(`开始播放歌曲: ${currentSong.title}, 类型: ${type}`);
+    
+    // 先暂停并重置音频播放器状态
     elements.audioPlayer.pause();
-    elements.audioPlayer.currentTime = 0;
+    
     currentAudioType = type;
     const audioUrl = buildAudioUrl(currentSong, type);
+    
+    // 设置新的音频源并立即重置播放位置
     elements.audioPlayer.src = audioUrl;
     elements.audioPlayer.currentTime = 0; // 立即重置，避免竞态条件
+    console.log(`设置音频源: ${audioUrl}，播放位置已重置`);
+
     try {
+        console.log('尝试播放音频...');
+        showLoading(true); // 开始播放时显示加载状态
+        
+        // 等待音频准备就绪
+        if (elements.audioPlayer.readyState < 2) {
+            console.log('等待音频准备就绪...');
+            await new Promise((resolve, reject) => {
+                const onCanPlay = () => {
+                    elements.audioPlayer.removeEventListener('canplay', onCanPlay);
+                    elements.audioPlayer.removeEventListener('error', onError);
+                    resolve();
+                };
+                const onError = (e) => {
+                    elements.audioPlayer.removeEventListener('canplay', onCanPlay);
+                    elements.audioPlayer.removeEventListener('error', onError);
+                    reject(e);
+                };
+                elements.audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
+                elements.audioPlayer.addEventListener('error', onError, { once: true });
+            });
+        }
+        
         await elements.audioPlayer.play();
+        console.log('音频播放成功');
+        showLoading(false); // 播放成功后隐藏加载状态
         updateAudioTypeButtons(type);
     } catch (error) {
-        // 严格参考97a15de：NotAllowedError静默处理，不弹窗
+        console.error(`播放错误: ${error.name}: ${error.message}`);
+        console.error('错误详情:', error);
+        
+        // 确保在任何错误情况下都隐藏加载状态
+        showLoading(false);
+        
+        // 简化错误处理，统一显示错误消息
         if (error.name === 'NotAllowedError') {
-            console.log('自动播放被浏览器拦截（NotAllowedError），请用户手动点击播放按钮');
-            showLoading(false);
-            // 不弹窗，不调用handleAudioError
+            console.log('自动播放被浏览器阻止，这是正常现象');
+            // 不显示错误提示，让用户自然地点击播放按钮
+        } else if (error.name === 'AbortError') {
+            console.log('播放被中断，可能是因为快速切换歌曲');
+            // AbortError通常不需要显示给用户，因为它是正常的中断行为
         } else {
-            showLoading(false);
+            // 将其他播放错误传递给统一的错误处理器
             handleAudioError(error);
-            console.error(`播放失败: ${error.name}: ${error.message}`);
         }
     }
 }
 
-// 智能拼音字母转换函数
-function getPinyinLetter(char) {
+// 简单的中文字符到拼音字母映射
+function getSimplePinyinLetter(char) {
+    // 完整的中文字符拼音首字母映射表
+    const pinyinMap = {
+        // A开头
+        '阿': 'A', '爱': 'A', '安': 'A', '按': 'A', '啊': 'A',
+        // B开头
+        '不': 'B', '白': 'B', '宝': 'B', '贝': 'B', '比': 'B', '被': 'B', '本': 'B', '别': 'B', '帮': 'B', '保': 'B',
+        // C开头
+        '超': 'C', '出': 'C', '充': 'C', '除': 'C', '从': 'C', '常': 'C', '成': 'C', '创': 'C', '唱': 'C',
+        // D开头
+        '大': 'D', '打': 'D', '的': 'D', '到': 'D', '得': 'D', '都': 'D', '但': 'D', '道': 'D', '等': 'D', '对': 'D',
+        // E开头
+        '恩': 'E', '而': 'E', '二': 'E', '儿': 'E',
+        // F开头
+        '复': 'F', '付': 'F', '父': 'F', '放': 'F', '飞': 'F', '分': 'F', '风': 'F', '丰': 'F',
+        // G开头
+        '光': 'G', '感': 'G', '歌': 'G', '给': 'G', '高': 'G', '国': 'G', '过': 'G', '跟': 'G', '更': 'G',
+        // H开头
+        '和': 'H', '何': 'H', '活': 'H', '荣': 'H', '好': 'H', '还': 'H', '很': 'H', '会': 'H', '后': 'H', '华': 'H',
+        // J开头
+        '基': 'J', '寄': 'J', '进': 'J', '君': 'J', '叫': 'J', '救': 'J', '就': 'J', '见': 'J', '今': 'J', '家': 'J', '加': 'J', '将': 'J', '教': 'J',
+        // K开头
+        '可': 'K', '看': 'K', '开': 'K', '快': 'K',
+        // L开头
+        '来': 'L', '立': 'L', '灵': 'L', '力': 'L', '炼': 'L', '了': 'L', '里': 'L', '离': 'L', '老': 'L', '路': 'L', '流': 'L',
+        // M开头
+        '美': 'M', '满': 'M', '名': 'M', '们': 'M', '没': 'M', '每': 'M', '面': 'M', '门': 'M',
+        // N开头
+        '你': 'N', '那': 'N', '能': 'N', '年': 'N', '内': 'N', '难': 'N',
+        // P开头
+        '平': 'P', '朋': 'P', '破': 'P', '普': 'P',
+        // Q开头
+        '奇': 'Q', '全': 'Q', '求': 'Q', '起': 'Q', '去': 'Q', '前': 'Q', '清': 'Q', '情': 'Q',
+        // R开头
+        '人': 'R', '如': 'R', '让': 'R', '然': 'R', '日': 'R', '热': 'R',
+        // S开头
+        '神': 'S', '圣': 'S', '生': 'S', '是': 'S', '什': 'S', '诗': 'S', '十': 'S', '时': 'S', '世': 'S', '手': 'S', '寻': 'S', '说': 'S', '水': 'S', '所': 'S', '死': 'S', '三': 'S', '上': 'S', '声': 'S',
+        // T开头
+        '天': 'T', '太': 'T', '听': 'T', '他': 'T', '她': 'T', '它': 'T', '同': 'T', '团': 'T', '这': 'T', '通': 'T', '头': 'T', '投': 'T',
+        // W开头
+        '我': 'W', '为': 'W', '万': 'W', '王': 'W', '无': 'W', '唯': 'W', '文': 'W', '问': 'W', '忘': 'W', '望': 'W', '完': 'W', '外': 'W',
+        // X开头
+        '新': 'X', '心': 'X', '行': 'X', '信': 'X', '喜': 'X', '想': 'X', '希': 'X', '幸': 'X', '献': 'X', '向': 'X', '下': 'X', '小': 'X', '像': 'X', '先': 'X',
+        // Y开头
+        '一': 'Y', '义': 'Y', '有': 'Y', '要': 'Y', '耶': 'Y', '与': 'Y', '以': 'Y', '因': 'Y', '永': 'Y', '用': 'Y', '又': 'Y', '医': 'Y', '应': 'Y', '牺': 'Y', '也': 'Y', '已': 'Y', '样': 'Y', '音': 'Y',
+        // Z开头
+        '在': 'Z', '主': 'Z', '真': 'Z', '只': 'Z', '知': 'Z', '中': 'Z', '住': 'Z', '最': 'Z', '自': 'Z', '尊': 'Z', '着': 'Z', '这': 'Z', '正': 'Z', '之': 'Z', '总': 'Z', '走': 'Z'
+    };
+    
     // 如果是英文字符，直接返回大写
     if (/^[a-zA-Z]/.test(char)) {
         return char.toUpperCase();
@@ -467,51 +581,9 @@ function getPinyinLetter(char) {
         return '#';
     }
     
-    // 优先使用 pinyin-pro 库进行转换
-    if (typeof pinyinPro !== 'undefined') {
-        try {
-            const { pinyin } = pinyinPro;
-            const pinyinResult = pinyin(char, { toneType: 'none', nonZh: 'consecutive' });
-            const firstLetter = pinyinResult.charAt(0).toUpperCase();
-            
-            // 确保返回的是有效的字母
-            if (/^[A-Z]$/.test(firstLetter)) {
-                return firstLetter;
-            }
-        } catch (error) {
-            console.warn('pinyin-pro 转换失败，使用回退方案:', error);
-        }
-    }
-    
-    // 回退方案：使用简单映射表
-    const fallbackMap = {
-        '愿': 'Y', '一': 'Y', '义': 'Y', '有': 'Y', '要': 'Y', '耶': 'Y', '与': 'Y', '以': 'Y', '因': 'Y', '永': 'Y', '用': 'Y', '又': 'Y', '医': 'Y', '应': 'Y', '牺': 'Y', '也': 'Y', '已': 'Y', '样': 'Y', '音': 'Y',
-        '阿': 'A', '爱': 'A', '安': 'A', '按': 'A', '啊': 'A',
-        '不': 'B', '白': 'B', '宝': 'B', '贝': 'B', '比': 'B', '被': 'B', '本': 'B', '别': 'B', '帮': 'B', '保': 'B',
-        '超': 'C', '出': 'C', '充': 'C', '除': 'C', '从': 'C', '常': 'C', '成': 'C', '创': 'C', '唱': 'C',
-        '大': 'D', '打': 'D', '的': 'D', '到': 'D', '得': 'D', '都': 'D', '但': 'D', '道': 'D', '等': 'D', '对': 'D',
-        '恩': 'E', '而': 'E', '二': 'E', '儿': 'E',
-        '复': 'F', '付': 'F', '父': 'F', '放': 'F', '飞': 'F', '分': 'F', '风': 'F', '丰': 'F',
-        '光': 'G', '感': 'G', '歌': 'G', '给': 'G', '高': 'G', '国': 'G', '过': 'G', '跟': 'G', '更': 'G',
-        '和': 'H', '何': 'H', '活': 'H', '好': 'H', '还': 'H', '很': 'H', '会': 'H', '后': 'H', '华': 'H',
-        '基': 'J', '寄': 'J', '进': 'J', '君': 'J', '叫': 'J', '救': 'J', '就': 'J', '见': 'J', '今': 'J', '家': 'J', '加': 'J', '将': 'J', '教': 'J',
-        '可': 'K', '看': 'K', '开': 'K', '快': 'K',
-        '来': 'L', '立': 'L', '灵': 'L', '力': 'L', '炼': 'L', '了': 'L', '里': 'L', '离': 'L', '老': 'L', '路': 'L', '流': 'L',
-        '美': 'M', '满': 'M', '名': 'M', '们': 'M', '没': 'M', '每': 'M', '面': 'M', '门': 'M',
-        '你': 'N', '那': 'N', '能': 'N', '年': 'N', '内': 'N', '难': 'N',
-        '平': 'P', '朋': 'P', '破': 'P', '普': 'P',
-        '奇': 'Q', '全': 'Q', '求': 'Q', '起': 'Q', '去': 'Q', '前': 'Q', '清': 'Q', '情': 'Q',
-        '人': 'R', '如': 'R', '让': 'R', '然': 'R', '日': 'R', '热': 'R', '荣': 'R',
-        '神': 'S', '圣': 'S', '生': 'S', '是': 'S', '什': 'S', '诗': 'S', '十': 'S', '时': 'S', '世': 'S', '手': 'S', '寻': 'S', '说': 'S', '水': 'S', '所': 'S', '死': 'S', '三': 'S', '上': 'S', '声': 'S',
-        '天': 'T', '太': 'T', '听': 'T', '他': 'T', '她': 'T', '它': 'T', '同': 'T', '团': 'T', '这': 'T', '通': 'T', '头': 'T', '投': 'T',
-        '我': 'W', '为': 'W', '万': 'W', '王': 'W', '无': 'W', '唯': 'W', '文': 'W', '问': 'W', '忘': 'W', '望': 'W', '完': 'W', '外': 'W',
-        '新': 'X', '心': 'X', '行': 'X', '信': 'X', '喜': 'X', '想': 'X', '希': 'X', '幸': 'X', '献': 'X', '向': 'X', '下': 'X', '小': 'X', '像': 'X', '先': 'X',
-        '在': 'Z', '主': 'Z', '真': 'Z', '只': 'Z', '知': 'Z', '中': 'Z', '住': 'Z', '最': 'Z', '自': 'Z', '尊': 'Z', '着': 'Z', '这': 'Z', '正': 'Z', '之': 'Z', '总': 'Z', '走': 'Z'
-    };
-    
-    // 查找回退映射
-    if (fallbackMap[char]) {
-        return fallbackMap[char];
+    // 查找中文字符映射
+    if (pinyinMap[char]) {
+        return pinyinMap[char];
     }
     
     // 对于未映射的汉字，使用Unicode编码范围判断
@@ -543,12 +615,54 @@ function buildAudioUrl(song, type) {
 
 // 切换播放/暂停
 function togglePlayPause() {
+    console.log('togglePlayPause被调用');
+    console.log('音频状态:', {
+        paused: elements.audioPlayer.paused,
+        readyState: elements.audioPlayer.readyState,
+        currentTime: elements.audioPlayer.currentTime,
+        src: elements.audioPlayer.src
+    });
+    
     if (elements.audioPlayer.paused) {
         if (!currentSong) {
-            playRandomSong();
+            showError('请先选择一首歌曲');
             return;
         }
-        elements.audioPlayer.play().catch(e => handleAudioError(e));
+        
+        // 检查音频是否已准备好播放
+        if (elements.audioPlayer.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+            console.log('音频已准备好，直接播放');
+            elements.audioPlayer.play().catch(e => handleAudioError(e));
+        } else {
+            console.log('音频未准备好，等待加载完成');
+            showLoading(true);
+            
+            // 等待音频准备好再播放
+            const playWhenReady = () => {
+                console.log('音频准备完成，开始播放');
+                showLoading(false);
+                elements.audioPlayer.play().catch(e => handleAudioError(e));
+            };
+            
+            // 错误处理函数
+            const handleLoadError = () => {
+                console.log('音频加载失败');
+                showLoading(false);
+                showError('音频加载失败，请检查网络连接或重试');
+            };
+            
+            // 添加事件监听器
+            elements.audioPlayer.addEventListener('canplay', playWhenReady, { once: true });
+            elements.audioPlayer.addEventListener('error', handleLoadError, { once: true });
+            
+            // 如果音频源为空，重新播放当前歌曲
+            if (!elements.audioPlayer.src || !currentSong) {
+                console.log('音频源为空或无当前歌曲，重新播放当前歌曲');
+                if (currentSong) {
+                    playCurrentSong(currentAudioType);
+                }
+            }
+        }
     } else {
         elements.audioPlayer.pause();
     }
@@ -667,17 +781,39 @@ function togglePlayMode() {
 
 // 处理歌曲结束
 function handleSongEnd() {
+    console.log('歌曲播放结束，当前播放模式:', playMode);
+    
     switch(playMode) {
         case 0: // 顺序播放
-            playNextSong();
+            // 歌曲自然结束时切换到下一首并自动播放
+            if (currentPlaylist.length > 1) {
+                currentIndex = (currentIndex + 1) % currentPlaylist.length;
+                const nextSong = currentPlaylist[currentIndex];
+                console.log(`顺序播放：切换到下一首 ${nextSong.title}，自动播放`);
+                selectSong(nextSong, currentIndex, true); // 自动播放下一首
+            }
             break;
         case 1: // 随机播放
-            playRandomSong();
+            // 随机切换到下一首并自动播放
+            if (currentPlaylist.length > 1) {
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * currentPlaylist.length);
+                } while (randomIndex === currentIndex);
+                const randomSong = currentPlaylist[randomIndex];
+                currentIndex = randomIndex;
+                console.log(`随机播放：切换到 ${randomSong.title}，自动播放`);
+                selectSong(randomSong, currentIndex, true); // 自动播放下一首
+            }
             break;
         case 2: // 单曲循环
             // 重新播放当前歌曲
+            console.log('单曲循环：重新播放当前歌曲');
             elements.audioPlayer.currentTime = 0;
-            elements.audioPlayer.play();
+            elements.audioPlayer.play().catch(e => {
+                console.error('单曲循环播放失败:', e);
+                handleAudioError(e);
+            });
             break;
     }
 }
@@ -692,7 +828,7 @@ function playNextSong() {
     
     if (!currentSong || currentPlaylist.length === 0) {
         if (currentPlaylist.length > 0) {
-            selectSong(currentPlaylist[0], 0);
+            selectSong(currentPlaylist[0], 0, true); // 用户点击下一首时直接播放
         } else {
             showError('歌曲列表为空');
         }
@@ -701,7 +837,7 @@ function playNextSong() {
     
     currentIndex = (currentIndex + 1) % currentPlaylist.length;
     const nextSong = currentPlaylist[currentIndex];
-    selectSong(nextSong, currentIndex);
+    selectSong(nextSong, currentIndex, true); // 用户点击下一首时直接播放
 }
 
 // 播放上一首歌曲
@@ -714,7 +850,7 @@ function playPreviousSong() {
     
     if (!currentSong || currentPlaylist.length === 0) {
         if (currentPlaylist.length > 0) {
-            selectSong(currentPlaylist[0], 0);
+            selectSong(currentPlaylist[0], 0, true); // 用户点击上一首时直接播放
         } else {
             showError('歌曲列表为空');
         }
@@ -723,7 +859,7 @@ function playPreviousSong() {
     
     currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
     const prevSong = currentPlaylist[currentIndex];
-    selectSong(prevSong, currentIndex);
+    selectSong(prevSong, currentIndex, true); // 用户点击上一首时直接播放
 }
 
 // 播放随机歌曲
@@ -731,7 +867,7 @@ function playRandomSong() {
     if (currentPlaylist.length <= 1) {
         // 如果列表为空或只有一首歌，没必要随机播放
         if (currentPlaylist.length === 1 && elements.audioPlayer.paused) {
-            selectSong(currentPlaylist[0], 0);
+            selectSong(currentPlaylist[0], 0, true); // 用户触发的随机播放直接播放
         }
         return;
     }
@@ -743,7 +879,7 @@ function playRandomSong() {
 
     const randomSong = currentPlaylist[randomIndex];
     currentIndex = randomIndex;
-    selectSong(randomSong, currentIndex);
+    selectSong(randomSong, currentIndex, true); // 用户触发的随机播放直接播放
 }
 
 // 处理搜索
@@ -950,7 +1086,44 @@ function handleProgressChange() {
 
 // 音量控制
 function handleVolumeChange() {
-    elements.audioPlayer.volume = elements.volumeSlider.value / 100;
+    const volume = elements.volumeSlider.value / 100;
+    elements.audioPlayer.volume = volume;
+    
+    // 更新静音状态和图标
+    if (volume === 0) {
+        isMuted = true;
+        elements.volumeBtn.textContent = '🔇';
+        elements.volumeBtn.title = '点击取消静音';
+    } else {
+        isMuted = false;
+        elements.volumeBtn.textContent = '🔊';
+        elements.volumeBtn.title = '点击静音/取消静音';
+        if (volume > 0) {
+            volumeBeforeMute = elements.volumeSlider.value;
+        }
+    }
+}
+
+// 切换静音状态
+function toggleMute() {
+    if (isMuted) {
+        // 取消静音，恢复之前的音量
+        elements.volumeSlider.value = volumeBeforeMute;
+        elements.audioPlayer.volume = volumeBeforeMute / 100;
+        isMuted = false;
+        elements.volumeBtn.textContent = '🔊';
+        elements.volumeBtn.title = '点击静音/取消静音';
+        console.log(`取消静音，恢复音量到 ${volumeBeforeMute}%`);
+    } else {
+        // 静音，保存当前音量
+        volumeBeforeMute = elements.volumeSlider.value;
+        elements.volumeSlider.value = 0;
+        elements.audioPlayer.volume = 0;
+        isMuted = true;
+        elements.volumeBtn.textContent = '🔇';
+        elements.volumeBtn.title = '点击取消静音';
+        console.log(`静音，保存音量 ${volumeBeforeMute}%`);
+    }
 }
 
 // 更新播放进度
@@ -1162,7 +1335,7 @@ function applyMarquee(el){
 // 在窗口改变大小时重新计算
 window.addEventListener('resize',()=>{
     applyMarquee(elements.progressSongTitle);
-});
+}); 
 
 // URL参数处理相关函数
 
@@ -1170,6 +1343,32 @@ window.addEventListener('resize',()=>{
 function isMobileDevice() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
            (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+}
+
+// 检测是否支持自动播放
+async function canAutoplay() {
+    try {
+        console.log('开始检测自动播放支持...');
+        const audio = new Audio();
+        audio.muted = true; // 静音测试
+        audio.volume = 0; // 确保静音
+        
+        // 使用一个短的空音频进行测试
+        audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEcBj2c3vPJdSMFl';
+        
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            await playPromise;
+            audio.pause();
+            console.log('自动播放检测：支持');
+            return true;
+        }
+        console.log('自动播放检测：不支持（无Promise）');
+        return false;
+    } catch (error) {
+        console.log(`自动播放检测：不支持（${error.name}: ${error.message}）`);
+        return false;
+    }
 }
 
 // 检查URL参数并处理指定歌曲
@@ -1220,7 +1419,6 @@ async function checkUrlParameters() {
 
 // 选择歌曲但不自动播放（用于移动端URL分享）
 function selectSongWithoutAutoplay(song, index) {
-    resetAudioPlayer();
     currentSong = song;
     currentIndex = index;
     
@@ -1329,13 +1527,4 @@ function showShareSuccess(songTitle) {
             toast.remove();
         }
     }, 3000);
-}
-
-// 修复：实现resetAudioPlayer函数
-function resetAudioPlayer() {
-    if (elements.audioPlayer) {
-        elements.audioPlayer.pause();
-        elements.audioPlayer.currentTime = 0;
-        // 不清空src，避免触发不必要的事件
-    }
-}
+} 

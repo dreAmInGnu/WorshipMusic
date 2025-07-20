@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜歌曲库 - 在线播放器</title>
-    <link rel="stylesheet" href="styles.css?v=20250720_1030">
+    <link rel="stylesheet" href="styles.css?v=20250720_1040">
 </head>
 <body>
     <div class="container">
@@ -15,7 +15,7 @@
             <h1>📜有光✨敬拜队歌曲库🎼</h1>
         </header>
         
-        <main class="app-main" id="appMain">
+        <main class="app-main player-collapsed" id="appMain">
             <!-- 歌曲列表区域 -->
             <section class="songs-section">
                 <div class="search-box">
@@ -30,9 +30,9 @@
             </section>
             
             <!-- 播放器区域 -->
-            <section class="player-section" id="playerSection">
-                <button id="playerToggleBtn" class="player-toggle-btn" title="折叠播放器">
-                    <span id="playerToggleText">折叠</span><img id="playerToggleIcon" src="icons/collapse.png" alt="折叠" class="toggle-icon">
+            <section class="player-section collapsed" id="playerSection">
+                <button id="playerToggleBtn" class="player-toggle-btn" title="展开播放器">
+                    <span id="playerToggleText">展开</span><img id="playerToggleIcon" src="icons/expand.png" alt="展开" class="toggle-icon">
                 </button>
                 
                 <!-- 折叠状态下的播放控制区域 -->
@@ -60,8 +60,6 @@
                         <button id="collapsedClearSearchBtn" class="clear-search-btn" title="清除搜索">×</button>
                     </div>
                 </div>
-                
-
                 
                 <!-- 可折叠的歌谱和下载区域 -->
                 <div class="player-collapsible-content" id="playerCollapsibleContent">
@@ -120,16 +118,16 @@
                                             <input type="range" id="volumeSlider" min="0" max="100" value="100">
                                         </div>
                                     </div>
-                                    
-                                    <div class="progress-container">
-                                        <div class="time-display">
-                                            <span id="currentTime">00:00</span>
-                                            <span id="progressSongTitle" class="song-title-progress"></span>
-                                            <span id="duration">00:00</span>
-                                        </div>
-                                        <div class="progress-bar">
-                                            <input type="range" id="progressSlider" min="0" max="100" value="0">
-                                        </div>
+                                </div>
+                                
+                                <div class="progress-container">
+                                    <div class="time-display">
+                                        <span id="currentTime">00:00</span>
+                                        <span id="progressSongTitle" class="song-title-progress"></span>
+                                        <span id="duration">00:00</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <input type="range" id="progressSlider" min="0" max="100" value="0">
                                     </div>
                                 </div>
                             </div>
@@ -173,6 +171,6 @@
     <!-- 引入库文件和脚本 -->
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
     <script src="libs/jszip.min.js"></script>
-    <script src="scripts.js?v=20250720_1030"></script>
+    <script src="scripts.js?v=20250720_1040"></script>
 </body>
 </html> 
