@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 初始化折叠图标
     updateToggleIcon();
+    
+    // 检查URL参数，自动播放指定歌曲
+    checkUrlParameters();
 });
 
 // 初始化DOM元素引用
@@ -289,16 +292,24 @@ function renderSongsList(songs) {
             <div class="song-info">
                 <div class="song-title">${song.title}</div>
             </div>
-            <div class="song-index-letter">${song.indexLetter}</div>
+            <div class="song-actions">
+                <button class="share-btn" onclick="copyShareLink(${JSON.stringify(song).replace(/"/g, '&quot;')});" title="分享歌曲链接">
+                    🔗
+                </button>
+                <div class="song-index-letter">${song.indexLetter}</div>
+            </div>
         `;
         
-        songItem.addEventListener('click', () => selectSong(song, index));
+        // 为歌曲信息区域添加点击事件（排除分享按钮）
+        const songInfo = songItem.querySelector('.song-info');
+        songInfo.addEventListener('click', () => selectSong(song, index, true)); // 用户点击时自动播放
+        
         elements.songsList.appendChild(songItem);
     });
 }
 
 // 选择歌曲
-function selectSong(song, index) {
+function selectSong(song, index, autoPlay = false) {
     currentSong = song;
     currentIndex = index;
     
@@ -308,10 +319,19 @@ function selectSong(song, index) {
     updateSongControls();
     updateSongTitles();
     
-    // 自动开始播放
-    setTimeout(() => {
-        playCurrentSong(currentAudioType);
-    }, 100);
+    // 更新URL以包含当前歌曲
+    updateUrlWithSong(song);
+    
+    // 根据autoPlay参数决定是否自动播放
+    if (autoPlay) {
+        // 自动开始播放
+        setTimeout(() => {
+            playCurrentSong(currentAudioType);
+        }, 100);
+    } else {
+        // 不自动播放，等待用户手动点击
+        console.log(`歌曲已选中: ${currentSong.title}，等待手动播放`);
+    }
 }
 
 // 更新当前歌曲信息显示
@@ -1130,4 +1150,170 @@ function applyMarquee(el){
 // 在窗口改变大小时重新计算
 window.addEventListener('resize',()=>{
     applyMarquee(elements.progressSongTitle);
-}); 
+});
+
+// URL参数处理相关函数
+
+// 检测是否为移动端设备
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+}
+
+// 检查URL参数并处理指定歌曲
+async function checkUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const songParam = urlParams.get('song');
+    
+    if (songParam && songsData) {
+        // 尝试通过ID或标题查找歌曲
+        let targetSong = null;
+        let targetIndex = -1;
+        
+        // 首先尝试通过ID查找
+        targetIndex = songsData.findIndex(song => song.id === songParam);
+        
+        if (targetIndex === -1) {
+            // 如果ID查找失败，尝试通过标题查找（支持模糊匹配）
+            targetIndex = songsData.findIndex(song => 
+                song.title.toLowerCase().includes(songParam.toLowerCase()) ||
+                songParam.toLowerCase().includes(song.title.toLowerCase())
+            );
+        }
+        
+        if (targetIndex !== -1) {
+            targetSong = songsData[targetIndex];
+            console.log(`找到URL指定的歌曲: ${targetSong.title}`);
+            
+            // 设置当前播放列表为完整列表（如果有搜索过滤，需要重置）
+            currentPlaylist = [...songsData];
+            
+            // 检查是否为移动端
+            const isMobile = isMobileDevice();
+            
+            if (isMobile) {
+                // 移动端：只选择歌曲，不自动播放，显示播放提示
+                selectSongWithoutAutoplay(targetSong, targetIndex);
+                showMobilePlayPrompt(targetSong.title);
+            } else {
+                // 桌面端：直接播放（按用户要求）
+                selectSong(targetSong, targetIndex, true); // 分享链接自动播放
+            }
+        } else {
+            console.log(`未找到URL指定的歌曲: ${songParam}`);
+            showError(`未找到歌曲: ${songParam}`);
+        }
+    }
+}
+
+// 选择歌曲但不自动播放（用于移动端URL分享）
+function selectSongWithoutAutoplay(song, index) {
+    currentSong = song;
+    currentIndex = index;
+    
+    // 更新UI（不包含自动播放）
+    updateActiveSongListItem();
+    loadSheetMusic();
+    updateSongControls();
+    updateSongTitles();
+    
+    // 更新URL以包含当前歌曲
+    updateUrlWithSong(song);
+    
+    // 不自动播放，等待用户手动点击
+}
+
+// 显示移动端播放提示
+function showMobilePlayPrompt(songTitle) {
+    // 移除可能存在的旧提示
+    const existingPrompt = document.querySelector('.mobile-play-prompt');
+    if (existingPrompt) {
+        existingPrompt.remove();
+    }
+    
+    // 创建提示元素
+    const prompt = document.createElement('div');
+    prompt.className = 'mobile-play-prompt';
+    prompt.innerHTML = `
+        <div class="prompt-content">
+            <div class="prompt-icon">🎵</div>
+            <div class="prompt-text">
+                <h3>已选择歌曲</h3>
+                <p>《${songTitle}》</p>
+                <p class="prompt-note">请点击播放按钮开始播放</p>
+            </div>
+            <button class="prompt-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+        </div>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(prompt);
+    
+    // 5秒后自动消失
+    setTimeout(() => {
+        if (prompt.parentNode) {
+            prompt.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => prompt.remove(), 300);
+        }
+    }, 5000);
+}
+
+// 更新URL以包含当前播放的歌曲
+function updateUrlWithSong(song) {
+    if (song && song.id) {
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('song', song.id);
+        
+        // 使用pushState更新URL，不会刷新页面
+        window.history.pushState({songId: song.id}, '', newUrl);
+    }
+}
+
+// 生成歌曲分享链接
+function generateShareLink(song) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}?song=${encodeURIComponent(song.id)}`;
+}
+
+// 复制分享链接到剪贴板
+async function copyShareLink(song) {
+    try {
+        const shareLink = generateShareLink(song);
+        await navigator.clipboard.writeText(shareLink);
+        
+        // 显示成功提示
+        showShareSuccess(song.title);
+    } catch (error) {
+        console.error('复制链接失败:', error);
+        
+        // 降级处理：创建临时输入框
+        const tempInput = document.createElement('input');
+        tempInput.value = generateShareLink(song);
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        
+        showShareSuccess(song.title);
+    }
+}
+
+// 显示分享成功提示
+function showShareSuccess(songTitle) {
+    // 创建提示元素
+    const toast = document.createElement('div');
+    toast.className = 'share-success-toast';
+    toast.innerHTML = `
+        <span>✅ 已复制《${songTitle}》的分享链接</span>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(toast);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
