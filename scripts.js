@@ -1220,6 +1220,7 @@ async function checkUrlParameters() {
 
 // 选择歌曲但不自动播放（用于移动端URL分享）
 function selectSongWithoutAutoplay(song, index) {
+    resetAudioPlayer();
     currentSong = song;
     currentIndex = index;
     
