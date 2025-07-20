@@ -514,20 +514,16 @@ function getPinyinLetter(char) {
     if (/^[a-zA-Z]/.test(char)) {
         return char.toUpperCase();
     }
-    
     // 如果是数字，返回#
     if (/^[0-9]/.test(char)) {
         return '#';
     }
-    
     // 优先使用 pinyin-pro 库进行转换
     if (typeof pinyinPro !== 'undefined') {
         try {
             const { pinyin } = pinyinPro;
             const pinyinResult = pinyin(char, { toneType: 'none', nonZh: 'consecutive' });
             const firstLetter = pinyinResult.charAt(0).toUpperCase();
-            
-            // 确保返回的是有效的字母
             if (/^[A-Z]$/.test(firstLetter)) {
                 return firstLetter;
             }
@@ -535,31 +531,17 @@ function getPinyinLetter(char) {
             console.warn('pinyin-pro 转换失败，使用回退方案:', error);
         }
     }
-    
-    // 回退方案：使用简单映射表
+    // 兜底表：只包含极少数特殊字
     const fallbackMap = {
-        '愿': 'Y', '一': 'Y', '有': 'Y', '没': 'Y', '要': 'Y', '二': 'Y', '中': 'Y', '使': 'Y', '国': 'Y', '水': 'Y', '是': 'Y', '可': 'Y', '安': 'Y', '帮': 'Y', '现': 'Y', '有': 'Y', '成': 'Y', '路': 'Y', '音': 'Y',
-        '阿': 'A', '爱': 'A', '安': 'A', '按': 'A', '啊': 'A',
-        '和': 'H', '好': 'H', '后': 'H', '进': 'H', '还': 'H', '会': 'H', '美': 'H', '很': 'H', '黑': 'H',
-        '见': 'J', '对': 'J', '进': 'J', '很': 'J', '可': 'J', '数': 'J', '小': 'J', '难': 'J', '使': 'J', '安': 'J', '动': 'J', '小': 'J', '数': 'J',
-        '人': 'R', '如': 'R', '让': 'R', '然': 'R', '日': 'R', '热': 'R', '好': 'R',
-        '说': 'S', '时': 'S', '是': 'S', '上': 'S', '什': 'S', '谁': 'S', '时': 'S', '中': 'S', '所': 'S', '对': 'S', '谁': 'S', '水': 'S', '所': 'S', '主': 'S', '中': 'S', '生': 'S'
+        '〇': 'L', // 零
+        '㐀': 'Y', // 罕见字举例
+        '主': 'Z', // 明确兜底主=Z
     };
-    
-    // 查找回退映射
     if (fallbackMap[char]) {
         return fallbackMap[char];
     }
-    
-    // 对于未映射的汉字，使用Unicode编码范围判断
-    const code = char.charCodeAt(0);
-    if (code >= 0x4E00 && code <= 0x9FFF) {
-        // 汉字范围，返回'#'
-        return '#';
-    }
-    
-    // 其他字符返回原字符
-    return char.toUpperCase();
+    // 其他未识别汉字或符号统一为#
+    return '#';
 }
 
 // 构建音频URL
