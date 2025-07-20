@@ -310,6 +310,8 @@ function renderSongsList(songs) {
 
 // 选择歌曲
 function selectSong(song, index, autoPlay = false) {
+    // 修复：先重置播放器状态
+    resetAudioPlayer();
     currentSong = song;
     currentIndex = index;
     
@@ -324,13 +326,14 @@ function selectSong(song, index, autoPlay = false) {
     
     // 根据autoPlay参数决定是否自动播放
     if (autoPlay) {
-        // 自动开始播放
         setTimeout(() => {
             playCurrentSong(currentAudioType);
         }, 100);
     } else {
         // 不自动播放，等待用户手动点击
         console.log(`歌曲已选中: ${currentSong.title}，等待手动播放`);
+        // 修复：确保停止任何可能的加载状态
+        showLoading(false);
     }
 }
 
@@ -428,16 +431,19 @@ function updatePlaybackControls(isEnabled) {
 // 播放当前歌曲
 async function playCurrentSong(type) {
     if (!currentSong) return;
-    
+    // 修复：先暂停并重置播放器状态
+    elements.audioPlayer.pause();
+    elements.audioPlayer.currentTime = 0;
     currentAudioType = type;
     const audioUrl = buildAudioUrl(currentSong, type);
     elements.audioPlayer.src = audioUrl;
-
+    elements.audioPlayer.currentTime = 0; // 立即重置，避免竞态条件
     try {
         await elements.audioPlayer.play();
         updateAudioTypeButtons(type);
     } catch (error) {
-        // 将播放错误传递给统一的错误处理器
+        // 修复：确保出错时隐藏加载状态
+        showLoading(false);
         handleAudioError(error);
         console.error(`播放失败: ${error.name}: ${error.message}`);
     }
@@ -1316,4 +1322,13 @@ function showShareSuccess(songTitle) {
             toast.remove();
         }
     }, 3000);
+}
+
+// 修复：实现resetAudioPlayer函数
+function resetAudioPlayer() {
+    if (elements.audioPlayer) {
+        elements.audioPlayer.pause();
+        elements.audioPlayer.currentTime = 0;
+        // 不清空src，避免触发不必要的事件
+    }
 }
