@@ -232,39 +232,26 @@ async function loadSongsData() {
         
         // --- 拼音排序逻辑 ---
         try {
-            // 检查 pinyin-pro 库是否已加载
-            if (typeof pinyinPro === 'undefined') {
-                console.warn('pinyin-pro 库未加载，使用简单排序');
-                // 如果库未加载，使用简单的拼音映射
-                songsData.forEach((song, index) => {
-                    const firstChar = song.title.charAt(0);
-                    // 简单的中文字符到拼音字母映射
-                    let indexLetter = getSimplePinyinLetter(firstChar);
-                    song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
-                    song.indexLetter = indexLetter;
-                });
-            } else {
-                console.log('使用拼音排序...');
-                const { pinyin } = pinyinPro;
-                songsData.forEach(song => {
-                    const firstChar = song.title.charAt(0);
-                    let sortKey = pinyin(firstChar, { toneType: 'none', nonZh: 'consecutive' }).toLowerCase();
-                    if (!/^[a-z]/.test(sortKey)) {
-                        sortKey = '~' + sortKey;
-                    }
-                    song.sortKey = sortKey;
-                    song.indexLetter = sortKey.charAt(0).toUpperCase();
-                });
-            }
+            console.log('开始拼音排序处理...');
+            songsData.forEach((song, index) => {
+                const firstChar = song.title.charAt(0);
+                let indexLetter = getPinyinLetter(firstChar);
+                song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
+                song.indexLetter = indexLetter;
+                if (index < 3) {
+                    console.log(`歌曲 "${song.title}" 首字符: "${firstChar}", indexLetter: "${indexLetter}", sortKey: "${song.sortKey}"`);
+                }
+            });
             
             songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
             console.log('歌曲排序完成');
+            console.log('排序后前3首歌曲:', songsData.slice(0, 3).map(s => `${s.title} (${s.indexLetter})`));
         } catch (sortError) {
             console.error('排序处理失败:', sortError);
             // 排序失败时使用原始顺序，但仍然设置基本属性
             songsData.forEach((song, index) => {
                 const firstChar = song.title.charAt(0);
-                let indexLetter = getSimplePinyinLetter(firstChar);
+                let indexLetter = getPinyinLetter(firstChar);
                 song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
                 song.indexLetter = indexLetter;
             });
@@ -521,84 +508,7 @@ async function playCurrentSong(type) {
     }
 }
 
-// 简单的中文字符到拼音字母映射
-function getSimplePinyinLetter(char) {
-    // 完整的中文字符拼音首字母映射表
-    const pinyinMap = {
-        // A开头
-        '阿': 'A', '爱': 'A', '安': 'A', '按': 'A', '啊': 'A',
-        // B开头
-        '不': 'B', '白': 'B', '宝': 'B', '贝': 'B', '比': 'B', '被': 'B', '本': 'B', '别': 'B', '帮': 'B', '保': 'B',
-        // C开头
-        '超': 'C', '出': 'C', '充': 'C', '除': 'C', '从': 'C', '常': 'C', '成': 'C', '创': 'C', '唱': 'C',
-        // D开头
-        '大': 'D', '打': 'D', '的': 'D', '到': 'D', '得': 'D', '都': 'D', '但': 'D', '道': 'D', '等': 'D', '对': 'D',
-        // E开头
-        '恩': 'E', '而': 'E', '二': 'E', '儿': 'E',
-        // F开头
-        '复': 'F', '付': 'F', '父': 'F', '放': 'F', '飞': 'F', '分': 'F', '风': 'F', '丰': 'F',
-        // G开头
-        '光': 'G', '感': 'G', '歌': 'G', '给': 'G', '高': 'G', '国': 'G', '过': 'G', '跟': 'G', '更': 'G',
-        // H开头
-        '和': 'H', '何': 'H', '活': 'H', '荣': 'H', '好': 'H', '还': 'H', '很': 'H', '会': 'H', '后': 'H', '华': 'H',
-        // J开头
-        '基': 'J', '寄': 'J', '进': 'J', '君': 'J', '叫': 'J', '救': 'J', '就': 'J', '见': 'J', '今': 'J', '家': 'J', '加': 'J', '将': 'J', '教': 'J',
-        // K开头
-        '可': 'K', '看': 'K', '开': 'K', '快': 'K',
-        // L开头
-        '来': 'L', '立': 'L', '灵': 'L', '力': 'L', '炼': 'L', '了': 'L', '里': 'L', '离': 'L', '老': 'L', '路': 'L', '流': 'L',
-        // M开头
-        '美': 'M', '满': 'M', '名': 'M', '们': 'M', '没': 'M', '每': 'M', '面': 'M', '门': 'M',
-        // N开头
-        '你': 'N', '那': 'N', '能': 'N', '年': 'N', '内': 'N', '难': 'N',
-        // P开头
-        '平': 'P', '朋': 'P', '破': 'P', '普': 'P',
-        // Q开头
-        '奇': 'Q', '全': 'Q', '求': 'Q', '起': 'Q', '去': 'Q', '前': 'Q', '清': 'Q', '情': 'Q',
-        // R开头
-        '人': 'R', '如': 'R', '让': 'R', '然': 'R', '日': 'R', '热': 'R',
-        // S开头
-        '神': 'S', '圣': 'S', '生': 'S', '是': 'S', '什': 'S', '诗': 'S', '十': 'S', '时': 'S', '世': 'S', '手': 'S', '寻': 'S', '说': 'S', '水': 'S', '所': 'S', '死': 'S', '三': 'S', '上': 'S', '声': 'S',
-        // T开头
-        '天': 'T', '太': 'T', '听': 'T', '他': 'T', '她': 'T', '它': 'T', '同': 'T', '团': 'T', '这': 'T', '通': 'T', '头': 'T', '投': 'T',
-        // W开头
-        '我': 'W', '为': 'W', '万': 'W', '王': 'W', '无': 'W', '唯': 'W', '文': 'W', '问': 'W', '忘': 'W', '望': 'W', '完': 'W', '外': 'W',
-        // X开头
-        '新': 'X', '心': 'X', '行': 'X', '信': 'X', '喜': 'X', '想': 'X', '希': 'X', '幸': 'X', '献': 'X', '向': 'X', '下': 'X', '小': 'X', '像': 'X', '先': 'X',
-        // Y开头
-        '一': 'Y', '义': 'Y', '有': 'Y', '要': 'Y', '耶': 'Y', '与': 'Y', '以': 'Y', '因': 'Y', '永': 'Y', '用': 'Y', '又': 'Y', '医': 'Y', '应': 'Y', '牺': 'Y', '也': 'Y', '已': 'Y', '样': 'Y', '音': 'Y',
-        // Z开头
-        '在': 'Z', '主': 'Z', '真': 'Z', '只': 'Z', '知': 'Z', '中': 'Z', '住': 'Z', '最': 'Z', '自': 'Z', '尊': 'Z', '着': 'Z', '这': 'Z', '正': 'Z', '之': 'Z', '总': 'Z', '走': 'Z'
-    };
-    
-    // 如果是英文字符，直接返回大写
-    if (/^[a-zA-Z]/.test(char)) {
-        return char.toUpperCase();
-    }
-    
-    // 如果是数字，返回#
-    if (/^[0-9]/.test(char)) {
-        return '#';
-    }
-    
-    // 查找中文字符映射
-    if (pinyinMap[char]) {
-        return pinyinMap[char];
-    }
-    
-    // 对于未映射的汉字，使用Unicode编码范围判断
-    const code = char.charCodeAt(0);
-    if (code >= 0x4e00 && code <= 0x9fff) {
-        // 是汉字但不在映射表中，根据Unicode编码进行简单分组
-        const group = Math.floor((code - 0x4e00) / 800) % 26;
-        return String.fromCharCode(65 + group); // A-Z
-    }
-    
-    // 其他字符返回#
-    return '#';
-}
-
-// 智能拼音字母转换函数（兜底用）
+// 智能拼音字母转换函数
 function getPinyinLetter(char) {
     // 如果是英文字符，直接返回大写
     if (/^[a-zA-Z]/.test(char)) {
@@ -614,6 +524,7 @@ function getPinyinLetter(char) {
             const { pinyin } = pinyinPro;
             const pinyinResult = pinyin(char, { toneType: 'none', nonZh: 'consecutive' });
             const firstLetter = pinyinResult.charAt(0).toUpperCase();
+            // 确保返回的是有效的字母
             if (/^[A-Z]$/.test(firstLetter)) {
                 return firstLetter;
             }
@@ -621,16 +532,43 @@ function getPinyinLetter(char) {
             console.warn('pinyin-pro 转换失败，使用回退方案:', error);
         }
     }
-    // 兜底表：只包含极少数特殊字
+    // 回退方案：使用简单映射表
     const fallbackMap = {
-        '〇': 'L', // 零
-        '㐀': 'Y', // 罕见字举例
-        '主': 'Z', // 明确兜底主=Z
+        '愿': 'Y', '一': 'Y', '义': 'Y', '有': 'Y', '要': 'Y', '耶': 'Y', '与': 'Y', '以': 'Y', '因': 'Y', '永': 'Y', '用': 'Y', '又': 'Y', '医': 'Y', '应': 'Y', '牺': 'Y', '也': 'Y', '已': 'Y', '样': 'Y', '音': 'Y',
+        '阿': 'A', '爱': 'A', '安': 'A', '按': 'A', '啊': 'A',
+        '不': 'B', '白': 'B', '宝': 'B', '贝': 'B', '比': 'B', '被': 'B', '本': 'B', '别': 'B', '帮': 'B', '保': 'B',
+        '超': 'C', '出': 'C', '充': 'C', '除': 'C', '从': 'C', '常': 'C', '成': 'C', '创': 'C', '唱': 'C',
+        '大': 'D', '打': 'D', '的': 'D', '到': 'D', '得': 'D', '都': 'D', '但': 'D', '道': 'D', '等': 'D', '对': 'D',
+        '恩': 'E', '而': 'E', '二': 'E', '儿': 'E',
+        '复': 'F', '付': 'F', '父': 'F', '放': 'F', '飞': 'F', '分': 'F', '风': 'F', '丰': 'F',
+        '光': 'G', '感': 'G', '歌': 'G', '给': 'G', '高': 'G', '国': 'G', '过': 'G', '跟': 'G', '更': 'G',
+        '和': 'H', '何': 'H', '活': 'H', '好': 'H', '还': 'H', '很': 'H', '会': 'H', '后': 'H', '华': 'H',
+        '基': 'J', '寄': 'J', '进': 'J', '君': 'J', '叫': 'J', '救': 'J', '就': 'J', '见': 'J', '今': 'J', '家': 'J', '加': 'J', '将': 'J', '教': 'J',
+        '可': 'K', '看': 'K', '开': 'K', '快': 'K',
+        '来': 'L', '立': 'L', '灵': 'L', '力': 'L', '炼': 'L', '了': 'L', '里': 'L', '离': 'L', '老': 'L', '路': 'L', '流': 'L',
+        '美': 'M', '满': 'M', '名': 'M', '们': 'M', '没': 'M', '每': 'M', '面': 'M', '门': 'M',
+        '你': 'N', '那': 'N', '能': 'N', '年': 'N', '内': 'N', '难': 'N',
+        '平': 'P', '朋': 'P', '破': 'P', '普': 'P',
+        '奇': 'Q', '全': 'Q', '求': 'Q', '起': 'Q', '去': 'Q', '前': 'Q', '清': 'Q', '情': 'Q',
+        '人': 'R', '如': 'R', '让': 'R', '然': 'R', '日': 'R', '热': 'R', '荣': 'R',
+        '神': 'S', '圣': 'S', '生': 'S', '是': 'S', '什': 'S', '诗': 'S', '十': 'S', '时': 'S', '世': 'S', '手': 'S', '寻': 'S', '说': 'S', '水': 'S', '所': 'S', '死': 'S', '三': 'S', '上': 'S', '声': 'S',
+        '天': 'T', '太': 'T', '听': 'T', '他': 'T', '她': 'T', '它': 'T', '同': 'T', '团': 'T', '这': 'T', '通': 'T', '头': 'T', '投': 'T',
+        '我': 'W', '为': 'W', '万': 'W', '王': 'W', '无': 'W', '唯': 'W', '文': 'W', '问': 'W', '忘': 'W', '望': 'W', '完': 'W', '外': 'W',
+        '新': 'X', '心': 'X', '行': 'X', '信': 'X', '喜': 'X', '想': 'X', '希': 'X', '幸': 'X', '献': 'X', '向': 'X', '下': 'X', '小': 'X', '像': 'X', '先': 'X',
+        '在': 'Z', '主': 'Z', '真': 'Z', '只': 'Z', '知': 'Z', '中': 'Z', '住': 'Z', '最': 'Z', '自': 'Z', '尊': 'Z', '着': 'Z', '这': 'Z', '正': 'Z', '之': 'Z', '总': 'Z', '走': 'Z'
     };
+    // 查找回退映射
     if (fallbackMap[char]) {
         return fallbackMap[char];
     }
-    // 其他未识别汉字或符号统一为#
+    // 对于未映射的汉字，使用Unicode编码范围判断
+    const code = char.charCodeAt(0);
+    if (code >= 0x4e00 && code <= 0x9fff) {
+        // 是汉字但不在映射表中，根据Unicode编码进行简单分组
+        const group = Math.floor((code - 0x4e00) / 800) % 26;
+        return String.fromCharCode(65 + group); // A-Z
+    }
+    // 其他字符返回#
     return '#';
 }
 
