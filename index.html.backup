@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敬拜歌曲库 - 在线播放器</title>
+    <link rel="stylesheet" href="styles.css?v=20250720_1064">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="header-cover">
+                <img src="icons/worship-cover.webp" alt="敬拜歌曲库封面" class="cover-image" id="coverImage">
+            </div>
+            <h1>📜有光✨敬拜队歌曲库🎼</h1>
+        </header>
+        
+        <main class="app-main player-collapsed" id="appMain">
+            <!-- 歌曲列表区域 -->
+            <section class="songs-section">
+                <div class="search-box">
+                    <div class="search-input-container">
+                        <input type="text" id="searchInput" placeholder="搜索歌曲...">
+                        <button id="clearSearchBtn" class="clear-search-btn" title="清除搜索">×</button>
+                    </div>
+                </div>
+                <div class="songs-list" id="songsList">
+                    <!-- 歌曲项目将通过JavaScript动态加载 -->
+                </div>
+            </section>
+            
+            <!-- 播放器区域 -->
+            <section class="player-section collapsed" id="playerSection">
+                <button id="playerToggleBtn" class="player-toggle-btn" title="展开播放器">
+                    <span id="playerToggleText">展开</span><img id="playerToggleIcon" src="icons/expand.png" alt="展开" class="toggle-icon">
+                </button>
+                
+                <!-- 折叠状态下的播放控制区域 -->
+                <div class="collapsed-player-controls" id="collapsedPlayerControls">
+                    <div class="collapsed-song-info">
+                        <span id="collapsedSongTitle" class="song-title-collapsed">&nbsp;</span>
+                    </div>
+                    <div class="collapsed-navigation-buttons">
+                                            <button id="collapsedPrevBtn" class="collapsed-nav-btn" title="上一首">
+                        <img src="icons/prev.png" alt="上一首" class="nav-icon">
+                    </button>
+                    <button id="collapsedPlayPauseBtn" class="collapsed-nav-btn collapsed-play-pause" title="播放/暂停">
+                        <img src="icons/play.png" alt="播放" class="nav-icon">
+                    </button>
+                    <button id="collapsedNextBtn" class="collapsed-nav-btn" title="下一首">
+                        <img src="icons/next.png" alt="下一首" class="nav-icon">
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 折叠状态下的搜索框 -->
+                <div class="collapsed-search-box" id="collapsedSearchBox">
+                    <div class="search-input-container">
+                        <input type="text" id="collapsedSearchInput" placeholder="搜索歌曲...">
+                        <button id="collapsedClearSearchBtn" class="clear-search-btn" title="清除搜索">×</button>
+                    </div>
+                </div>
+                
+                <!-- 可折叠的歌谱和下载区域 -->
+                <div class="player-collapsible-content" id="playerCollapsibleContent">
+                    <!-- 下载和外部链接控制区域 -->
+                    <div class="sheet-header">
+                        <div class="download-controls">
+                            <button id="downloadZipBtn" class="action-btn" disabled>打包下载</button>
+                            <button id="downloadOriginalBtn" class="action-btn" disabled>🎤 歌曲下载</button>
+                            <button id="downloadAccompanimentBtn" class="action-btn" disabled>🎹 伴奏下载</button>
+                            <button id="downloadSheetBtn" class="action-btn hidden" disabled>🎼 歌谱</button>
+                        </div>
+                        <div class="external-link-controls">
+                            <a id="worshipResourceBtn" class="action-btn external-link-btn" href="https://worshipmusic.flowus.cn/" target="_blank" rel="noopener noreferrer">
+                                <img src="icons/photo.png" alt="照片" class="btn-icon">
+                                有光敬拜队资料库丨队员录音 & 照片视频
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 始终可见的播放控制区域 -->
+                    <div class="player-controls-always-visible">
+                        <!-- 音频控制器 -->
+                        <div class="audio-controls">
+                            <div class="audio-player">
+                                <audio id="audioPlayer" preload="metadata">
+                                    您的浏览器不支持音频播放。
+                                </audio>
+                                
+                                <div class="control-buttons">
+                                    <div class="audio-and-mode-buttons">
+                                        <button id="originalBtn" class="audio-btn active" disabled>
+                                            🎤 原唱
+                                        </button>
+                                        <button id="accompanimentBtn" class="audio-btn" disabled>
+                                            🎹 伴奏
+                                        </button>
+                                        <button id="playModeBtn" class="mode-btn" title="播放模式">
+                                            <img src="icons/mode-sequence.png" alt="顺序播放" class="mode-icon">
+                                            <span>顺序播放</span>
+                                        </button>
+                                    </div>
+                                    <div class="playback-controls">
+                                        <div class="navigation-buttons">
+                                            <button id="prevBtn" class="nav-btn" disabled title="上一首">
+                                                <img src="icons/prev.png" alt="上一首" class="nav-icon">
+                                            </button>
+                                            <button id="playPauseBtn" class="nav-btn play-pause" disabled title="播放/暂停">
+                                                <img src="icons/play.png" alt="播放" class="nav-icon">
+                                            </button>
+                                            <button id="nextBtn" class="nav-btn" disabled title="下一首">
+                                                <img src="icons/next.png" alt="下一首" class="nav-icon">
+                                            </button>
+                                        </div>
+                                        <div class="volume-control">
+                                            <button id="volumeBtn" class="volume-btn" title="点击静音/取消静音">🔊</button>
+                                            <input type="range" id="volumeSlider" min="0" max="100" value="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="progress-container">
+                                    <div class="time-display">
+                                        <span id="currentTime">00:00</span>
+                                        <span id="progressSongTitle" class="song-title-progress"></span>
+                                        <span id="duration">00:00</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <input type="range" id="progressSlider" min="0" max="100" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 歌谱显示区域 -->
+                    <div class="sheet-music">
+                        <div class="sheet-display" id="sheetDisplay">
+                            <div class="sheet-placeholder">
+                                <p>🎼</p>
+                                <p>请选择歌曲查看歌谱</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- 加载状态 -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>正在加载...</p>
+            </div>
+        </div>
+        
+        <!-- 错误提示 -->
+        <div class="error-toast" id="errorToast" style="display: none;">
+            <span id="errorMessage"></span>
+            <button onclick="hideError()">×</button>
+        </div>
+    </div>
+    
+    <!-- 全屏歌谱查看器 -->
+    <div id="sheetModal" class="sheet-modal">
+        <span class="close-modal" id="closeSheetModal">&times;</span>
+        <img class="sheet-modal-content" id="modalSheetImage">
+    </div>
+
+    <!-- 引入库文件和脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
+    <script src="libs/jszip.min.js"></script>
+    <script src="scripts.js?v=20250720_1064"></script>
+</body>
+</html> 
