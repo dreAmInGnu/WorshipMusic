@@ -1,16 +1,8 @@
 /**
- * Cloudflare Pages Function for dynamically listing songs from an R2 bucket.
- *
- * How it works:
- * 1. Receives a fetch request.
- * 2. Lists all objects in the bound R2 bucket (`SONG_BUCKET`).
- * 3. Groups files by their parent directory (which represents a song).
- * 4. Identifies file types (original, accompaniment, sheet) based on naming conventions.
- * 5. Constructs a JSON response identical in structure to the previous static `songs.json`.
- * 6. Adds CORS headers to allow access from any origin.
+ * Cloudflare Pages Function for dynamically listing songs from an R2 bucket
+ * with playlist support.
  */
 
-// Pages Functions 导出格式
 export async function onRequest(context) {
   const { request, env } = context;
   
@@ -75,41 +67,67 @@ export async function onRequest(context) {
 
     console.log(`Found ${files.length} files in R2 bucket`);
 
-    // 2. Group files by song folder
+    // 2. Group files by song folder and identify playlists
     const songsMap = new Map();
+    const playlistsMap = new Map();
+    
+    // 默认播放列表
+    playlistsMap.set('default', {
+      id: 'default',
+      name: '默认播放列表',
+      songs: []
+    });
+
     for (const file of files) {
       const parts = file.key.split('/');
-      if (parts.length < 2) continue; // Ignore files in the root
-
-      const folderName = parts[0];
-      const fileName = parts[1];
-
-      if (!songsMap.has(folderName)) {
-        // 解析歌单前缀
-        let displayTitle = folderName;
-        let playlistName = "默认歌单";
+      
+      // 处理不同的文件路径格式
+      let folderName, fileName, playlistName;
+      
+      if (parts.length === 2) {
+        // 标准格式: songFolder/file.mp3
+        folderName = parts[0];
+        fileName = parts[1];
+        playlistName = 'default'; // 默认播放列表
+      } else if (parts.length >= 3) {
+        // 播放列表格式: playlistName/songFolder/file.mp3
+        playlistName = parts[0];
+        folderName = parts[1];
+        fileName = parts[2];
         
-        // 检查是否有[歌单名]前缀
-        const playlistMatch = folderName.match(/^\[([^\]]+)\](.+)$/);
-        if (playlistMatch) {
-          playlistName = playlistMatch[1] + "合集";
-          displayTitle = playlistMatch[2];
+        // 确保播放列表存在
+        if (!playlistsMap.has(playlistName)) {
+          playlistsMap.set(playlistName, {
+            id: playlistName.toLowerCase().replace(/\s+/g, '-'),
+            name: playlistName,
+            songs: []
+          });
         }
-
-        songsMap.set(folderName, {
-          id: folderName.toLowerCase().replace(/\s+/g, '-'), // Generate a URL-friendly ID
-          title: displayTitle, // 显示名称去除前缀
-          artist: "未知艺术家", // Default artist, can be updated if metadata is available
-          folder: folderName, // 保留原始文件夹名用于文件访问
-          playlist: playlistName, // 添加歌单归属
-          hasAccompaniment: false,
-          files: {},
-        });
+      } else {
+        // 忽略根目录文件或其他不符合格式的文件
+        continue;
       }
 
-      const songData = songsMap.get(folderName);
+      // 创建歌曲对象（如果不存在）
+      const songId = `${playlistName}-${folderName}`.toLowerCase().replace(/\s+/g, '-');
+      if (!songsMap.has(songId)) {
+        songsMap.set(songId, {
+          id: songId,
+          title: folderName,
+          artist: "未知艺术家", // 默认艺术家
+          folder: parts.length >= 3 ? `${playlistName}/${folderName}` : folderName,
+          hasAccompaniment: false,
+          files: {},
+          playlist: playlistName // 记录歌曲所属的播放列表
+        });
+        
+        // 将歌曲添加到对应的播放列表
+        playlistsMap.get(playlistName).songs.push(songId);
+      }
 
-      // 3. Identify file types
+      const songData = songsMap.get(songId);
+
+      // 3. 识别文件类型
       if (fileName.includes('[伴奏].mp3')) {
         songData.files.accompaniment = fileName;
         songData.hasAccompaniment = true;
@@ -120,15 +138,18 @@ export async function onRequest(context) {
       }
     }
 
-    // 4. Convert map to array and return as JSON
+    // 4. 转换为数组并返回JSON
     const songList = Array.from(songsMap.values());
+    const playlists = Array.from(playlistsMap.values());
     
-    console.log(`Processed ${songList.length} songs`);
+    console.log(`处理了 ${songList.length} 首歌曲，${playlists.length} 个播放列表`);
     
     const data = {
       songs: songList,
+      playlists: playlists,
       metadata: {
         totalSongs: songList.length,
+        totalPlaylists: playlists.length,
         totalFiles: files.length,
         generatedAt: new Date().toISOString(),
         bucketName: 'worship'
@@ -139,7 +160,7 @@ export async function onRequest(context) {
     const response = new Response(JSON.stringify(data, null, 2), {
       headers: {
         'Content-Type': 'application/json;charset=UTF-8',
-        'Access-Control-Allow-Origin': '*', // Allow all origins (for development)
+        'Access-Control-Allow-Origin': '*', // 允许所有来源（开发环境）
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Cache-Control': 'public, max-age=300', // 5分钟缓存
@@ -177,4 +198,4 @@ export default {
   async fetch(request, env, ctx) {
     return onRequest({ request, env, ctx });
   },
-}; 
+};

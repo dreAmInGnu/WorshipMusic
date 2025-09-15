@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜歌曲库 - 在线播放器</title>
-    <link rel="stylesheet" href="styles.css?v=20250803_2242">
+    <link rel="stylesheet" href="styles.css?v=20250915_1200">
 </head>
 <body>
     <div class="container">
@@ -70,6 +70,10 @@
                             <button id="downloadOriginalBtn" class="action-btn" disabled>🎤 歌曲下载</button>
                             <button id="downloadAccompanimentBtn" class="action-btn" disabled>🎹 伴奏下载</button>
                             <button id="downloadSheetBtn" class="action-btn hidden" disabled>🎼 歌谱</button>
+                        </div>
+                        <div class="playlist-controls">
+                            <button id="addToPlaylistBtn" class="action-btn" disabled>➕ 添加到播放列表</button>
+                            <button id="showPlaylistBtn" class="action-btn">📋 播放列表</button>
                         </div>
                         <div class="external-link-controls">
                             <a id="worshipResourceBtn" class="action-btn external-link-btn" href="https://worshipmusic.flowus.cn/" target="_blank" rel="noopener noreferrer">
@@ -168,12 +172,42 @@
         <span class="close-modal" id="closeSheetModal">&times;</span>
         <img class="sheet-modal-content" id="modalSheetImage">
     </div>
+    
+    <!-- 播放列表模态框 -->
+    <div id="playlistModal" class="playlist-modal">
+        <div class="playlist-modal-content">
+            <div class="playlist-modal-header">
+                <h3>播放列表</h3>
+                <span class="close-modal" id="closePlaylistModal">&times;</span>
+            </div>
+            <div class="playlist-modal-body">
+                <div class="playlist-actions">
+                    <div class="playlist-selector">
+                        <select id="playlistSelector">
+                            <option value="default">默认播放列表</option>
+                        </select>
+                        <button id="createPlaylistBtn" class="action-btn small">新建</button>
+                        <button id="renamePlaylistBtn" class="action-btn small">重命名</button>
+                        <button id="deletePlaylistBtn" class="action-btn small danger">删除</button>
+                    </div>
+                </div>
+                <div class="playlist-items" id="playlistItems">
+                    <!-- 播放列表项目将通过JavaScript动态加载 -->
+                </div>
+            </div>
+            <div class="playlist-modal-footer">
+                <button id="clearPlaylistBtn" class="action-btn danger">清空列表</button>
+                <button id="playAllBtn" class="action-btn">播放全部</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 引入库文件和脚本 -->
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
     <script src="libs/jszip.min.js"></script>
 
-    <script src="scripts.js?v=20250803_2242"></script>
+    <script src="scripts.js?v=20250915_1200"></script>
+    <script src="playlist.js?v=20250915_1200"></script>
 
 </body>
 </html> 

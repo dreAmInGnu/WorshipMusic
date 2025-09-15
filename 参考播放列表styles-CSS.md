@@ -1,3 +1,4 @@
+
 /* 全局样式重置和基础设置 */
 * {
     margin: 0;
@@ -231,6 +232,45 @@ body {
     color: rgba(255, 255, 255, 0.8) !important; /* 半透明白色歌手名 */
 }
 
+/* 歌单项目样式 */
+.song-item.playlist-item {
+    background: rgb(163, 183, 203) !important; /* 使用音量条的蓝灰色 */
+    border-color: rgb(143, 163, 183);
+    color: #ffffff;
+}
+
+.song-item.playlist-item:hover {
+    background: rgb(143, 163, 183) !important;
+    border-color: rgb(123, 143, 163);
+}
+
+.song-item.playlist-item .song-title {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.song-item.playlist-item .song-index-letter {
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+/* 返回按钮样式 */
+.song-item.back-item {
+    background: #f0f0f0 !important;
+    border-color: #d0d0d0;
+    color: #666;
+}
+
+.song-item.back-item:hover {
+    background: #e0e0e0 !important;
+    border-color: #c0c0c0;
+}
+
+.song-item.back-item .song-title {
+    color: #666 !important;
+    font-weight: 500;
+}
+
 .song-info {
     flex-grow: 1;
     cursor: pointer;
@@ -253,29 +293,6 @@ body {
     color: #cccccc;
     margin-left: 15px;
     flex-shrink: 0;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    user-select: none;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.song-index-letter:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    transform: scale(1.05);
-}
-
-.song-index-letter.custom {
-    background: rgba(66, 133, 244, 0.3);
-    color: #4285f4;
-    border: 1px solid rgba(66, 133, 244, 0.5);
-}
-
-.song-index-letter.custom:hover {
-    background: rgba(66, 133, 244, 0.4);
-    color: #ffffff;
 }
 
 .song-item.active .song-index-letter {
@@ -1742,57 +1759,6 @@ input:focus {
     gap: 8px;
 }
 
-/* 歌单项目样式 */
-.song-item.playlist-item {
-    background: rgb(163, 183, 203) !important; /* 使用音量条的蓝灰色 */
-    border-color: rgb(143, 163, 183);
-    color: #ffffff;
-}
-
-.song-item.playlist-item:hover {
-    background: rgb(143, 163, 183) !important;
-    border-color: rgb(123, 143, 163);
-}
-
-.song-item.playlist-item .song-title {
-    color: #ffffff !important;
-    font-weight: 600;
-}
-
-.song-item.playlist-item .song-index-letter {
-    color: #ffffff !important;
-    font-weight: bold;
-}
-
-/* 返回按钮样式 */
-.song-item.back-item {
-    background: #f0f0f0 !important;
-    border-color: #d0d0d0;
-    color: #666;
-}
-
-.song-item.back-item:hover {
-    background: #e0e0e0 !important;
-    border-color: #c0c0c0;
-}
-
-.song-item.back-item .song-title {
-    color: #666 !important;
-    font-weight: 500;
-}
-
-/* 播放列表相关样式 */
-.playlist-controls {
-    display: flex;
-    gap: 8px;
-    flex-wrap: nowrap;
-    justify-content: center;
-    background: none;
-    margin: 8px auto 0 auto;
-    padding: 0;
-    border: none;
-}
-
 /* 分享按钮 */
 .share-btn {
     background: transparent;
@@ -1856,272 +1822,6 @@ input:focus {
     to {
         transform: translateX(0);
         opacity: 1;
-    }
-}
-
-/* 播放列表模态框 */
-.playlist-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 2000;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.3s ease;
-}
-
-.playlist-modal-content {
-    background: #ffffff;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.playlist-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.playlist-modal-header h3 {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.playlist-modal-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.playlist-modal-footer {
-    display: flex;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-top: 1px solid #e0e0e0;
-}
-
-.playlist-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.playlist-selector {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.playlist-selector select {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #d2d2d7;
-    border-radius: 6px;
-    font-size: 1rem;
-}
-
-.action-btn.small {
-    padding: 8px 12px;
-    font-size: 0.85rem;
-}
-
-.action-btn.danger {
-    background: #dc3545;
-}
-
-.action-btn.danger:not(:disabled):hover {
-    background: #c82333;
-}
-
-.playlist-items {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-height: 200px;
-}
-
-.playlist-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background: #f8f9fa;
-    transition: all 0.2s ease;
-}
-
-.playlist-item:hover {
-    background: #f0f0f0;
-    border-color: #d0d0d0;
-}
-
-.playlist-item-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.playlist-item-title {
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.playlist-item-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.playlist-item-play-btn,
-.playlist-item-remove-btn {
-    background: transparent;
-    border: 1px solid #d2d2d7;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-}
-
-.playlist-item-play-btn:hover {
-    background: #4285f4;
-    color: white;
-    border-color: #4285f4;
-}
-
-.playlist-item-remove-btn:hover {
-    background: #dc3545;
-    color: white;
-    border-color: #dc3545;
-}
-
-.playlist-empty-message {
-    text-align: center;
-    color: #999;
-    padding: 20px;
-    font-style: italic;
-}
-
-.playlist-message-toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #4285f4;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 9999;
-    animation: shareToastSlideIn 0.3s ease;
-    max-width: 350px;
-    font-size: 0.9rem;
-    transition: opacity 0.3s ease;
-}
-
-.add-to-playlist-btn {
-    background: transparent;
-    border: 1px solid #d2d2d7;
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: #666;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 30px;
-    height: 30px;
-}
-
-.add-to-playlist-btn:hover {
-    background: #f0f0f0;
-    border-color: #999;
-    transform: translateY(-1px);
-}
-
-.song-item.active .add-to-playlist-btn {
-    border-color: rgba(255, 255, 255, 0.5);
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.song-item.active .add-to-playlist-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.8);
-    color: #fff;
-}
-
-/* 移动端播放列表样式适配 */
-@media (max-width: 768px) {
-    .playlist-modal-content {
-        width: 95%;
-        max-height: 85vh;
-    }
-    
-    .playlist-modal-header h3 {
-        font-size: 1.2rem;
-    }
-    
-    .playlist-selector {
-        flex-wrap: wrap;
-    }
-    
-    .playlist-selector select {
-        flex: 1 1 100%;
-        margin-bottom: 8px;
-    }
-    
-    .action-btn.small {
-        padding: 6px 10px;
-        font-size: 0.8rem;
-        flex: 1;
-    }
-    
-    .add-to-playlist-btn {
-        min-width: 28px;
-        height: 28px;
-        padding: 5px 6px;
-        font-size: 0.8rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .playlist-modal-content {
-        width: 98%;
-    }
-    
-    .playlist-modal-header,
-    .playlist-modal-body,
-    .playlist-modal-footer {
-        padding: 12px 16px;
-    }
-    
-    .add-to-playlist-btn {
-        min-width: 26px;
-        height: 26px;
-        padding: 4px 5px;
-        font-size: 0.75rem;
     }
 }
 
@@ -2244,253 +1944,4 @@ input:focus {
         font-size: 1rem;
         margin-left: 8px;
     }
-}
-
-/* 字母编辑对话框样式 */
-.letter-edit-dialog .letter-edit-content {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.3s ease;
-}
-
-.letter-edit-content h3 {
-    margin: 0 0 16px 0;
-    color: #333;
-    font-size: 1.2rem;
-    font-weight: 600;
-}
-
-.song-title-display {
-    background: #f5f5f7;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-weight: 500;
-    color: #333;
-    text-align: center;
-}
-
-.letter-input-group {
-    margin-bottom: 20px;
-}
-
-.letter-input-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #666;
-    font-weight: 500;
-}
-
-.letter-input-group input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    text-align: center;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-}
-
-.letter-input-group input:focus {
-    outline: none;
-    border-color: #4285f4;
-    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
-}
-
-.letter-buttons {
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    gap: 4px;
-    margin-top: 8px;
-}
-
-.letter-btn {
-    padding: 8px 4px;
-    border: 1px solid #e0e0e0;
-    background: #f8f9fa;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-}
-
-.letter-btn:hover {
-    background: #e9ecef;
-    border-color: #4285f4;
-}
-
-.letter-btn.active {
-    background: #4285f4;
-    color: white;
-    border-color: #4285f4;
-}
-
-.dialog-buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-.dialog-buttons button {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.save-btn {
-    background: #4285f4;
-    color: white;
-}
-
-.save-btn:hover {
-    background: #3367d6;
-}
-
-.cancel-btn {
-    background: #f1f3f4;
-    color: #333;
-}
-
-.cancel-btn:hover {
-    background: #e8eaed;
-}
-
-.reset-btn {
-    background: #dc3545;
-    color: white;
-}
-
-.reset-btn:hover {
-    background: #c82333;
-}
-
-/* 自定义字母管理面板样式 */
-.custom-letters-panel .panel-content {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.panel-content h3 {
-    margin: 0 0 16px 0;
-    color: #333;
-    font-size: 1.2rem;
-    font-weight: 600;
-}
-
-.custom-list {
-    margin: 16px 0;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.custom-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    background: #f8f9fa;
-}
-
-.custom-item .song-title {
-    flex: 1;
-    font-weight: 500;
-    color: #333;
-}
-
-.custom-item .custom-letter {
-    background: #4285f4;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-    margin: 0 12px;
-}
-
-.reset-single-btn {
-    padding: 6px 12px;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-}
-
-.reset-single-btn:hover {
-    background: #c82333;
-}
-
-.panel-buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-top: 16px;
-}
-
-.panel-buttons button {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-.close-btn {
-    background: #f1f3f4;
-    color: #333;
-}
-
-.close-btn:hover {
-    background: #e8eaed;
-}
-
-.reset-all-btn {
-    background: #dc3545;
-    color: white;
-}
-
-.reset-all-btn:hover {
-    background: #c82333;
-}
-
-/* 成功消息动画 */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideOut {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-
-}
+}-

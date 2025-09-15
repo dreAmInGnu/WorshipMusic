@@ -1,16 +1,8 @@
 /**
- * Cloudflare Pages Function for dynamically listing songs from an R2 bucket.
- *
- * How it works:
- * 1. Receives a fetch request.
- * 2. Lists all objects in the bound R2 bucket (`SONG_BUCKET`).
- * 3. Groups files by their parent directory (which represents a song).
- * 4. Identifies file types (original, accompaniment, sheet) based on naming conventions.
- * 5. Constructs a JSON response identical in structure to the previous static `songs.json`.
- * 6. Adds CORS headers to allow access from any origin.
+ * Cloudflare Pages Function for dynamically listing songs from an R2 bucket
+ * with playlist support using a metadata file.
  */
 
-// Pages Functions 导出格式
 export async function onRequest(context) {
   const { request, env } = context;
   
@@ -30,23 +22,12 @@ export async function onRequest(context) {
       });
     }
 
-    // 添加详细的环境诊断
-    const diagnostics = {
-      timestamp: new Date().toISOString(),
-      hasR2Binding: !!env.SONG_BUCKET,
-      environmentKeys: Object.keys(env || {}),
-      requestMethod: request.method,
-      requestUrl: request.url
-    };
-
     // 检查 R2 bucket 绑定是否存在
     if (!env.SONG_BUCKET) {
       console.error('SONG_BUCKET binding not found in environment');
       return new Response(JSON.stringify({ 
         error: 'R2 bucket not configured', 
-        message: 'SONG_BUCKET binding is missing. Please configure R2 binding in Cloudflare Pages settings.',
-        troubleshooting: 'Go to Cloudflare Pages dashboard > Your site > Settings > Functions > R2 bucket bindings',
-        diagnostics: diagnostics
+        message: 'SONG_BUCKET binding is missing. Please configure R2 binding in Cloudflare Pages settings.'
       }), {
         status: 500,
         headers: {
@@ -69,39 +50,41 @@ export async function onRequest(context) {
       });
     }
 
-    // 1. List all objects from the R2 bucket
+    // 1. 从R2存储桶中获取歌曲列表
     const list = await env.SONG_BUCKET.list();
     const files = list.objects;
 
     console.log(`Found ${files.length} files in R2 bucket`);
 
-    // 2. Group files by song folder
+    // 2. 从R2存储桶中获取播放列表元数据文件
+    let playlistsData = { playlists: [] };
+    try {
+      const playlistsFile = await env.SONG_BUCKET.get('playlists.json');
+      if (playlistsFile) {
+        const playlistsText = await playlistsFile.text();
+        playlistsData = JSON.parse(playlistsText);
+      }
+    } catch (error) {
+      console.warn('Could not load playlists.json, using default playlists:', error);
+      // 如果无法加载元数据文件，继续使用空的播放列表数据
+    }
+
+    // 3. 处理歌曲文件
     const songsMap = new Map();
     for (const file of files) {
       const parts = file.key.split('/');
-      if (parts.length < 2) continue; // Ignore files in the root
+      if (parts.length < 2) continue; // 忽略根目录文件
+      if (parts[0] === 'playlists.json') continue; // 忽略元数据文件
 
       const folderName = parts[0];
       const fileName = parts[1];
 
       if (!songsMap.has(folderName)) {
-        // 解析歌单前缀
-        let displayTitle = folderName;
-        let playlistName = "默认歌单";
-        
-        // 检查是否有[歌单名]前缀
-        const playlistMatch = folderName.match(/^\[([^\]]+)\](.+)$/);
-        if (playlistMatch) {
-          playlistName = playlistMatch[1] + "合集";
-          displayTitle = playlistMatch[2];
-        }
-
         songsMap.set(folderName, {
-          id: folderName.toLowerCase().replace(/\s+/g, '-'), // Generate a URL-friendly ID
-          title: displayTitle, // 显示名称去除前缀
-          artist: "未知艺术家", // Default artist, can be updated if metadata is available
-          folder: folderName, // 保留原始文件夹名用于文件访问
-          playlist: playlistName, // 添加歌单归属
+          id: folderName.toLowerCase().replace(/\s+/g, '-'), // 生成URL友好的ID
+          title: folderName,
+          artist: "未知艺术家", // 默认艺术家
+          folder: folderName,
           hasAccompaniment: false,
           files: {},
         });
@@ -109,7 +92,7 @@ export async function onRequest(context) {
 
       const songData = songsMap.get(folderName);
 
-      // 3. Identify file types
+      // 4. 识别文件类型
       if (fileName.includes('[伴奏].mp3')) {
         songData.files.accompaniment = fileName;
         songData.hasAccompaniment = true;
@@ -120,26 +103,41 @@ export async function onRequest(context) {
       }
     }
 
-    // 4. Convert map to array and return as JSON
+    // 5. 转换为数组
     const songList = Array.from(songsMap.values());
     
-    console.log(`Processed ${songList.length} songs`);
+    // 6. 确保所有播放列表中的歌曲ID都有效
+    const validSongIds = new Set(songList.map(song => song.id));
+    playlistsData.playlists.forEach(playlist => {
+      playlist.songs = playlist.songs.filter(songId => validSongIds.has(songId));
+    });
+    
+    // 7. 添加默认播放列表（包含所有歌曲）
+    if (!playlistsData.playlists.some(p => p.id === 'default')) {
+      playlistsData.playlists.unshift({
+        id: 'default',
+        name: '全部歌曲',
+        songs: songList.map(song => song.id)
+      });
+    }
+    
+    console.log(`Processed ${songList.length} songs and ${playlistsData.playlists.length} playlists`);
     
     const data = {
       songs: songList,
+      playlists: playlistsData.playlists,
       metadata: {
         totalSongs: songList.length,
+        totalPlaylists: playlistsData.playlists.length,
         totalFiles: files.length,
-        generatedAt: new Date().toISOString(),
-        bucketName: 'worship'
-      },
-      diagnostics: diagnostics
+        generatedAt: new Date().toISOString()
+      }
     };
 
     const response = new Response(JSON.stringify(data, null, 2), {
       headers: {
         'Content-Type': 'application/json;charset=UTF-8',
-        'Access-Control-Allow-Origin': '*', // Allow all origins (for development)
+        'Access-Control-Allow-Origin': '*', // 允许所有来源（开发环境）
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Cache-Control': 'public, max-age=300', // 5分钟缓存
@@ -154,11 +152,7 @@ export async function onRequest(context) {
       error: 'Could not list songs from R2 bucket.', 
       details: e.message,
       stack: e.stack,
-      timestamp: new Date().toISOString(),
-      diagnostics: {
-        hasR2Binding: !!context.env.SONG_BUCKET,
-        environmentKeys: Object.keys(context.env || {})
-      }
+      timestamp: new Date().toISOString()
     }), {
       status: 500,
       headers: {
@@ -177,4 +171,4 @@ export default {
   async fetch(request, env, ctx) {
     return onRequest({ request, env, ctx });
   },
-}; 
+};
