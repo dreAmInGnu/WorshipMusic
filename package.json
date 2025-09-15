@@ -5,8 +5,11 @@
   "main": "index.html",
   "scripts": {
     "build": "bash build.sh",
+    "build:cache": "node build.js",
+    "build:full": "node build.js && bash build.sh",
     "dev": "wrangler pages dev .",
-    "deploy": "wrangler pages publish ."
+    "deploy": "wrangler pages publish .",
+    "deploy:cache": "node build.js && wrangler pages publish ."
   },
   "repository": {
     "type": "git",

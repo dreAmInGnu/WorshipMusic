@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜歌曲库 - 在线播放器</title>
+
     <link rel="stylesheet" href="styles.css?v=20250720_1064">
+
 </head>
 <body>
     <div class="container">
@@ -14,7 +16,6 @@
             </div>
             <h1>📜有光✨敬拜队歌曲库🎼</h1>
         </header>
-        
         <main class="app-main player-collapsed" id="appMain">
             <!-- 歌曲列表区域 -->
             <section class="songs-section">
@@ -129,13 +130,16 @@
                                     <div class="progress-bar">
                                         <input type="range" id="progressSlider" min="0" max="100" value="0">
                                     </div>
+
                                 </div>
                             </div>
                         </div>
                     </div>
+
                     
                     <!-- 歌谱显示区域 -->
                     <div class="sheet-music">
+
                         <div class="sheet-display" id="sheetDisplay">
                             <div class="sheet-placeholder">
                                 <p>🎼</p>
@@ -172,5 +176,6 @@
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
     <script src="libs/jszip.min.js"></script>
     <script src="scripts.js?v=20250720_1064"></script>
+
 </body>
 </html> 

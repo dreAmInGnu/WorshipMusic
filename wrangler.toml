@@ -20,4 +20,10 @@ compatibility_date = "2024-06-25"
 # `bucket_name`: The exact name of your R2 bucket in the Cloudflare dashboard.
 [[r2_buckets]]
 binding = "SONG_BUCKET"
-bucket_name = "worship" 
+bucket_name = "worship"
+
+[env.production.vars]
+R2_BASE_URL = "https://r2.windsmaker.com"
+
+[env.preview.vars]  
+R2_BASE_URL = "https://r2.windsmaker.com" 

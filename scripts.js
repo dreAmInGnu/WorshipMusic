@@ -320,7 +320,9 @@ function renderSongsList(songs) {
                 <button class="share-btn" onclick="copyShareLink(${JSON.stringify(song).replace(/"/g, '&quot;')});" title="分享歌曲链接">
                     🔗
                 </button>
+
                 <div class="song-index-letter ${isCustom}" onclick="editSongLetter('${song.id}', '${song.title}', '${song.indexLetter}')" title="${isCustom ? '自定义字母 - 点击编辑' : '自动识别字母 - 点击编辑'}">${song.indexLetter}</div>
+
             </div>
         `;
         
@@ -349,8 +351,10 @@ function selectSong(song, index, autoPlay = false) {
     // 更新URL以包含当前歌曲
     updateUrlWithSong(song);
     
+
     // 根据autoPlay参数决定是否自动播放
     if (autoPlay) {
+
         playCurrentSong(currentAudioType);
     } else {
         // 不自动播放，不设置音频源，避免触发loadstart事件
@@ -369,6 +373,7 @@ function resetAudioPlayer() {
         console.log('音频播放器状态已重置');
     }
 }
+
 
 // 更新当前歌曲信息显示
 function updateActiveSongListItem() {
@@ -1666,6 +1671,7 @@ window.addEventListener('resize',()=>{
 
 // URL参数处理相关函数
 
+
 // 检测是否为移动端设备
 function isMobileDevice() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -1697,6 +1703,7 @@ async function canAutoplay() {
         return false;
     }
 }
+
 
 // 检查URL参数并处理指定歌曲
 async function checkUrlParameters() {
@@ -1737,6 +1744,7 @@ async function checkUrlParameters() {
                 // 桌面端：直接播放（按用户要求）
                 selectSong(targetSong, targetIndex, true); // 分享链接自动播放
             }
+
         } else {
             console.log(`未找到URL指定的歌曲: ${songParam}`);
             showError(`未找到歌曲: ${songParam}`);
@@ -1745,6 +1753,7 @@ async function checkUrlParameters() {
 }
 
 // 选择歌曲但不自动播放（用于移动端URL分享）
+
 function selectSongWithoutAutoplay(song, index) {
     currentSong = song;
     currentIndex = index;
@@ -1795,6 +1804,7 @@ function showMobilePlayPrompt(songTitle) {
         }
     }, 5000);
 }
+
 
 // 更新URL以包含当前播放的歌曲
 function updateUrlWithSong(song) {
