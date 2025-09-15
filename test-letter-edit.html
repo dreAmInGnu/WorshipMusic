@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字母编辑功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .implemented {
+            background: #d4edda;
+            color: #155724;
+        }
+        .test-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-btn:hover {
+            background: #3367d6;
+        }
+        .demo-songs {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .demo-song {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        .song-title {
+            font-weight: 500;
+        }
+        .song-letter {
+            background: #4285f4;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .song-letter:hover {
+            background: #3367d6;
+        }
+        .song-letter.custom {
+            background: #dc3545;
+        }
+        .song-letter.custom:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 字母编辑功能测试页面</h1>
+    
+    <div class="test-container">
+        <h2>功能实现清单</h2>
+        <ul class="feature-list">
+            <li>✅ 点击字母编辑功能 <span class="status implemented">已实现</span></li>
+            <li>✅ 内联编辑对话框 <span class="status implemented">已实现</span></li>
+            <li>✅ A-Z字母按钮选择 <span class="status implemented">已实现</span></li>
+            <li>✅ 键盘输入支持 <span class="status implemented">已实现</span></li>
+            <li>✅ 数据持久化存储 <span class="status implemented">已实现</span></li>
+            <li>✅ 自定义字母优先级 <span class="status implemented">已实现</span></li>
+            <li>✅ 重置为自动识别 <span class="status implemented">已实现</span></li>
+            <li>✅ 自定义字母视觉标识 <span class="status implemented">已实现</span></li>
+            <li>✅ 成功消息提示 <span class="status implemented">已实现</span></li>
+            <li>✅ 管理面板（批量操作） <span class="status implemented">已实现</span></li>
+        </ul>
+    </div>
+    
+    <div class="test-container">
+        <h2>测试操作</h2>
+        <button class="test-btn" onclick="testEditLetter()">测试编辑字母</button>
+        <button class="test-btn" onclick="showCustomLettersPanel()">显示管理面板</button>
+        <button class="test-btn" onclick="resetAllCustomLetters()">重置所有自定义</button>
+        <button class="test-btn" onclick="showLocalStorage()">查看存储数据</button>
+    </div>
+    
+    <div class="test-container">
+        <h2>演示歌曲</h2>
+        <div class="demo-songs" id="demoSongs">
+            <!-- 演示歌曲将在这里显示 -->
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>使用说明</h2>
+        <ol>
+            <li>点击任意歌曲右侧的字母，打开编辑对话框</li>
+            <li>在输入框中输入新字母，或点击A-Z按钮选择</li>
+            <li>支持键盘快捷键：Enter保存，Esc取消，直接按字母键选择</li>
+            <li>自定义字母会以不同颜色显示（蓝色边框）</li>
+            <li>可以重置单个歌曲或批量重置所有自定义字母</li>
+            <li>所有设置会自动保存到浏览器本地存储</li>
+        </ol>
+    </div>
+
+    <!-- 引入主要脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
+    <script src="scripts.js"></script>
+    
+    <script>
+        // 模拟歌曲数据
+        const demoSongsData = [
+            { id: 'demo-1', title: '旷野中唯一的力量', indexLetter: 'K' },
+            { id: 'demo-2', title: '赞美中信心不断升起', indexLetter: 'Z' },
+            { id: 'demo-3', title: '神的爱', indexLetter: 'S' },
+            { id: 'demo-4', title: '主啊我爱你', indexLetter: 'Z' },
+            { id: 'demo-5', title: '耶稣是主', indexLetter: 'Y' }
+        ];
+        
+        // 渲染演示歌曲
+        function renderDemoSongs() {
+            const container = document.getElementById('demoSongs');
+            const customLetters = getCustomLetters();
+            
+            container.innerHTML = demoSongsData.map(song => {
+                const isCustom = customLetters[song.id] ? 'custom' : '';
+                const currentLetter = customLetters[song.id]?.letter || song.indexLetter;
+                
+                return `
+                    <div class="demo-song">
+                        <span class="song-title">${song.title}</span>
+                        <span class="song-letter ${isCustom}" 
+                              onclick="editSongLetter('${song.id}', '${song.title}', '${currentLetter}')"
+                              title="${isCustom ? '自定义字母 - 点击编辑' : '自动识别字母 - 点击编辑'}">
+                            ${currentLetter}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 测试编辑字母功能
+        function testEditLetter() {
+            editSongLetter('demo-1', '旷野中唯一的力量', 'K');
+        }
+        
+        // 显示本地存储数据
+        function showLocalStorage() {
+            const customLetters = getCustomLetters();
+            alert('当前自定义字母数据：\n' + JSON.stringify(customLetters, null, 2));
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎵 字母编辑功能测试页面已加载');
+            renderDemoSongs();
+            
+            // 监听存储变化，自动更新显示
+            window.addEventListener('storage', renderDemoSongs);
+        });
+        
+        // 重写保存和重置函数以更新演示界面
+        const originalSaveCustomLetter = saveCustomLetter;
+        window.saveCustomLetter = function(songId, songTitle) {
+            originalSaveCustomLetter(songId, songTitle);
+            setTimeout(renderDemoSongs, 100);
+        };
+        
+        const originalResetSongLetter = resetSongLetter;
+        window.resetSongLetter = function(songId, songTitle) {
+            originalResetSongLetter(songId, songTitle);
+            setTimeout(renderDemoSongs, 100);
+        };
+        
+        const originalResetAllCustomLetters = resetAllCustomLetters;
+        window.resetAllCustomLetters = function() {
+            if (confirm('确定要重置所有自定义字母吗？')) {
+                localStorage.removeItem('worshipMusic_customLetters');
+                renderDemoSongs();
+                showSuccessMessage('已重置所有自定义字母');
+            }
+        };
+    </script>
+</body>
+</html>
