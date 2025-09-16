@@ -1396,6 +1396,43 @@ function togglePlayMode() {
 function handleSongEnd() {
     console.log('歌曲播放结束，当前播放模式:', playMode);
     
+    // 检查是否正在从自定义播放列表播放
+    if (playingPlaylistInfo.isPlayingFromPlaylist) {
+        console.log('当前正在从自定义播放列表播放，播放列表ID:', playingPlaylistInfo.playlistId);
+        
+        // 获取当前播放列表
+        const currentCustomPlaylist = playlists[playingPlaylistInfo.playlistId];
+        if (!currentCustomPlaylist || !currentCustomPlaylist.songs || currentCustomPlaylist.songs.length === 0) {
+            console.log('自定义播放列表为空或不存在，切换到普通模式');
+            playingPlaylistInfo.isPlayingFromPlaylist = false;
+        } else {
+            // 在自定义播放列表中播放下一首
+            const nextIndex = (playingPlaylistInfo.currentIndex + 1) % currentCustomPlaylist.songs.length;
+            const nextSong = currentCustomPlaylist.songs[nextIndex];
+            
+            console.log(`从自定义播放列表播放下一首: ${nextSong.title}`);
+            
+            // 更新播放列表信息
+            playingPlaylistInfo.currentIndex = nextIndex;
+            
+            // 在全局歌曲列表中查找该歌曲的索引
+            const globalIndex = songsData.findIndex(s => s.id === nextSong.id);
+            if (globalIndex !== -1) {
+                // 选择并播放歌曲
+                selectSong(nextSong, globalIndex, true);
+                
+                // 如果播放列表模态框是打开的，更新高亮
+                if (playlistModalVisible && currentPlaylistId === playingPlaylistInfo.playlistId) {
+                    renderPlaylistItems();
+                }
+                
+                // 已经处理了歌曲结束事件，直接返回
+                return;
+            }
+        }
+    }
+    
+    // 如果不是从自定义播放列表播放，或者自定义播放列表处理失败，使用正常的播放模式逻辑
     switch(playMode) {
         case 0: // 顺序播放
             // 歌曲自然结束时切换到下一首并自动播放

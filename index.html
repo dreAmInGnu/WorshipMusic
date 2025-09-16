@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜歌曲库 - 在线播放器</title>
-    <link rel="stylesheet" href="styles.css?v=20250915_1500">
+    <link rel="stylesheet" href="styles.css?v=20250915_2000">
 </head>
 <body>
     <div class="container">
@@ -200,8 +200,18 @@
                 </div>
             </div>
             <div class="playlist-modal-footer">
-                <button id="clearPlaylistBtn" class="action-btn danger">清空列表</button>
-                <button id="playAllBtn" class="action-btn">播放全部</button>
+                <div class="playlist-controls-left">
+                    <button id="clearPlaylistBtn" class="action-btn danger">清空列表</button>
+                </div>
+                <div class="playlist-controls-right">
+                    <button id="playlistPrevBtn" class="playlist-nav-btn" title="上一首">
+                        <img src="icons/prev.png" alt="上一首" class="nav-icon">
+                    </button>
+                    <button id="playAllBtn" class="action-btn">播放全部</button>
+                    <button id="playlistNextBtn" class="playlist-nav-btn" title="下一首">
+                        <img src="icons/next.png" alt="下一首" class="nav-icon">
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -210,8 +220,8 @@
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
     <script src="libs/jszip.min.js"></script>
 
-    <script src="scripts.js?v=20250915_1500"></script>
-    <script src="playlist.js?v=20250915_1500"></script>
+    <script src="scripts.js?v=20250915_2000"></script>
+    <script src="playlist.js?v=20250915_2000"></script>
 
 </body>
 </html> 

@@ -17,6 +17,13 @@ let currentPlaylistId = 'default';
 // 播放列表模态框状态
 let playlistModalVisible = false;
 
+// 当前播放的播放列表信息
+let playingPlaylistInfo = {
+    playlistId: null,       // 当前播放的播放列表ID
+    currentIndex: -1,       // 当前播放的歌曲索引
+    isPlayingFromPlaylist: false  // 是否正在从播放列表播放
+};
+
 /**
  * 初始化播放列表功能
  * 在页面加载完成后自动调用
@@ -24,7 +31,23 @@ let playlistModalVisible = false;
 document.addEventListener('DOMContentLoaded', function() {
     loadPlaylistsFromStorage();
     updatePlaylistSelector();
+    setupPlaylistControls();
 });
+
+/**
+ * 设置播放列表控制按钮的事件监听器
+ */
+function setupPlaylistControls() {
+    // 上一首按钮
+    if (elements.playlistPrevBtn) {
+        elements.playlistPrevBtn.addEventListener('click', playPreviousFromPlaylist);
+    }
+    
+    // 下一首按钮
+    if (elements.playlistNextBtn) {
+        elements.playlistNextBtn.addEventListener('click', playNextFromPlaylist);
+    }
+}
 
 /**
  * 从localStorage加载播放列表数据
@@ -129,19 +152,35 @@ function renderPlaylistItems() {
         emptyMessage.className = 'playlist-empty-message';
         emptyMessage.textContent = '播放列表为空，请添加歌曲';
         elements.playlistItems.appendChild(emptyMessage);
+        
+        // 禁用播放控制按钮
+        updatePlaylistControlButtons(false);
         return;
     }
+    
+    // 启用播放控制按钮
+    updatePlaylistControlButtons(true);
     
     // 添加播放列表项目
     currentPlaylist.songs.forEach((song, index) => {
         const playlistItem = document.createElement('div');
         playlistItem.className = 'playlist-item';
+        
+        // 如果当前正在播放这首歌曲，添加高亮样式
+        if (playingPlaylistInfo.isPlayingFromPlaylist && 
+            playingPlaylistInfo.playlistId === currentPlaylistId && 
+            playingPlaylistInfo.currentIndex === index) {
+            playlistItem.classList.add('now-playing');
+        }
+        
         playlistItem.dataset.songId = song.id;
         playlistItem.dataset.index = index;
         
         playlistItem.innerHTML = `
             <div class="playlist-item-info">
                 <div class="playlist-item-title">${song.title}</div>
+                ${playingPlaylistInfo.currentIndex === index && playingPlaylistInfo.playlistId === currentPlaylistId ? 
+                    '<div class="now-playing-indicator">▶ 正在播放</div>' : ''}
             </div>
             <div class="playlist-item-actions">
                 <button class="playlist-item-play-btn" title="播放">▶</button>
@@ -165,8 +204,31 @@ function renderPlaylistItems() {
             });
         }
         
+        // 点击整个项目也可以播放
+        playlistItem.addEventListener('dblclick', () => {
+            playFromPlaylist(index);
+        });
+        
         elements.playlistItems.appendChild(playlistItem);
     });
+}
+
+/**
+ * 更新播放列表控制按钮状态
+ * @param {boolean} enabled 是否启用按钮
+ */
+function updatePlaylistControlButtons(enabled) {
+    if (elements.playAllBtn) {
+        elements.playAllBtn.disabled = !enabled;
+    }
+    
+    if (elements.playlistPrevBtn) {
+        elements.playlistPrevBtn.disabled = !enabled;
+    }
+    
+    if (elements.playlistNextBtn) {
+        elements.playlistNextBtn.disabled = !enabled;
+    }
 }
 
 /**
@@ -267,13 +329,83 @@ function playFromPlaylist(index) {
     // 在全局歌曲列表中查找该歌曲的索引
     const globalIndex = songsData.findIndex(s => s.id === song.id);
     if (globalIndex !== -1) {
+        // 更新播放列表信息
+        playingPlaylistInfo.playlistId = currentPlaylistId;
+        playingPlaylistInfo.currentIndex = index;
+        playingPlaylistInfo.isPlayingFromPlaylist = true;
+        
         // 选择并播放歌曲
         selectSong(song, globalIndex, true);
         
-        // 关闭播放列表模态框
-        closePlaylistModal();
+        // 更新播放列表项目高亮
+        renderPlaylistItems();
+        
+        // 不关闭播放列表模态框，让用户可以继续操作
+        // closePlaylistModal();
     } else {
         showError(`无法播放《${song.title}》，歌曲不存在于数据库中`);
+    }
+}
+
+/**
+ * 播放播放列表中的上一首歌曲
+ */
+function playPreviousFromPlaylist() {
+    if (!playingPlaylistInfo.isPlayingFromPlaylist) {
+        // 如果当前不是从播放列表播放，则从当前播放列表的最后一首开始
+        playFromPlaylist(playlists[currentPlaylistId].songs.length - 1);
+        return;
+    }
+    
+    const currentPlaylist = playlists[playingPlaylistInfo.playlistId];
+    if (!currentPlaylist || !currentPlaylist.songs || currentPlaylist.songs.length === 0) {
+        return;
+    }
+    
+    // 计算上一首索引（循环到最后一首）
+    const prevIndex = (playingPlaylistInfo.currentIndex - 1 + currentPlaylist.songs.length) % currentPlaylist.songs.length;
+    
+    // 播放上一首
+    if (currentPlaylistId === playingPlaylistInfo.playlistId) {
+        // 如果当前显示的就是正在播放的播放列表，直接播放
+        playFromPlaylist(prevIndex);
+    } else {
+        // 否则，先切换到正在播放的播放列表，再播放
+        currentPlaylistId = playingPlaylistInfo.playlistId;
+        updatePlaylistSelector();
+        renderPlaylistItems();
+        playFromPlaylist(prevIndex);
+    }
+}
+
+/**
+ * 播放播放列表中的下一首歌曲
+ */
+function playNextFromPlaylist() {
+    if (!playingPlaylistInfo.isPlayingFromPlaylist) {
+        // 如果当前不是从播放列表播放，则从当前播放列表的第一首开始
+        playFromPlaylist(0);
+        return;
+    }
+    
+    const currentPlaylist = playlists[playingPlaylistInfo.playlistId];
+    if (!currentPlaylist || !currentPlaylist.songs || currentPlaylist.songs.length === 0) {
+        return;
+    }
+    
+    // 计算下一首索引（循环到第一首）
+    const nextIndex = (playingPlaylistInfo.currentIndex + 1) % currentPlaylist.songs.length;
+    
+    // 播放下一首
+    if (currentPlaylistId === playingPlaylistInfo.playlistId) {
+        // 如果当前显示的就是正在播放的播放列表，直接播放
+        playFromPlaylist(nextIndex);
+    } else {
+        // 否则，先切换到正在播放的播放列表，再播放
+        currentPlaylistId = playingPlaylistInfo.playlistId;
+        updatePlaylistSelector();
+        renderPlaylistItems();
+        playFromPlaylist(nextIndex);
     }
 }
 
@@ -288,8 +420,68 @@ function playAllFromPlaylist() {
         return;
     }
     
+    // 设置播放模式为列表循环（模式3）
+    // 注意：这会影响全局播放模式，但用户可以随时切换回去
+    playMode = 3; // 列表循环
+    updatePlayModeUI(); // 更新播放模式UI
+    
     // 播放第一首歌曲
     playFromPlaylist(0);
+    
+    showPlaylistMessage(`正在播放"${currentPlaylist.name}"，列表循环模式`);
+}
+
+/**
+ * 更新播放模式UI
+ * 这个函数需要与scripts.js中的togglePlayMode函数保持同步
+ */
+function updatePlayModeUI() {
+    if (!elements.playModeBtn) return;
+    
+    const modeIcon = elements.playModeBtn.querySelector('.mode-icon');
+    const modeText = elements.playModeBtn.querySelector('span');
+    
+    if (!modeIcon || !modeText) return;
+    
+    // 移除所有模式类
+    elements.playModeBtn.classList.remove('random', 'repeat-one', 'repeat-all');
+    
+    switch(playMode) {
+        case 0: // 顺序播放
+            modeIcon.src = 'icons/mode-sequence.png';
+            modeIcon.alt = '顺序播放';
+            modeText.textContent = '顺序播放';
+            elements.playModeBtn.title = '当前为顺序播放模式';
+            break;
+        case 1: // 随机播放
+            modeIcon.src = 'icons/mode-random.png';
+            modeIcon.alt = '随机播放';
+            modeText.textContent = '随机播放';
+            elements.playModeBtn.classList.add('random');
+            elements.playModeBtn.title = '当前为随机播放模式';
+            break;
+        case 2: // 单曲循环
+            modeIcon.src = 'icons/mode-repeat-one.png';
+            modeIcon.alt = '单曲循环';
+            modeText.textContent = '单曲循环';
+            elements.playModeBtn.classList.add('repeat-one');
+            elements.playModeBtn.title = '当前为单曲循环模式';
+            break;
+        case 3: // 列表循环
+            modeIcon.src = 'icons/mode-sequence.png';
+            modeIcon.alt = '列表循环';
+            modeText.textContent = '列表循环';
+            elements.playModeBtn.classList.add('repeat-all');
+            elements.playModeBtn.title = '当前为列表循环模式';
+            break;
+        case 4: // 全部循环
+            modeIcon.src = 'icons/mode-sequence.png';
+            modeIcon.alt = '全部循环';
+            modeText.textContent = '全部循环';
+            elements.playModeBtn.classList.add('repeat-all');
+            elements.playModeBtn.title = '当前为全部循环模式';
+            break;
+    }
 }
 
 /**

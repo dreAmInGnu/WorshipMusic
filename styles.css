@@ -2019,6 +2019,55 @@ input:focus {
     border-top: 1px solid #e0e0e0;
 }
 
+.playlist-controls-left,
+.playlist-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.playlist-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.playlist-nav-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.playlist-nav-btn:active {
+    transform: scale(0.95);
+}
+
+.playlist-nav-btn .nav-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* 当前播放歌曲高亮样式 */
+.playlist-item.now-playing {
+    background-color: rgba(163, 183, 203, 0.2);
+    border-left: 3px solid rgb(163, 183, 203);
+}
+
+.playlist-item.now-playing .playlist-item-title {
+    font-weight: bold;
+    color: rgb(163, 183, 203);
+}
+
+.playlist-item.now-playing .playlist-item-play-btn {
+    background-color: rgb(163, 183, 203);
+    color: white;
+}
+
 .playlist-actions {
     display: flex;
     flex-direction: column;
