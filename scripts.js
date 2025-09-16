@@ -137,6 +137,9 @@ function initializeElements() {
     elements.deletePlaylistBtn = document.getElementById('deletePlaylistBtn');
     elements.clearPlaylistBtn = document.getElementById('clearPlaylistBtn');
     elements.playAllBtn = document.getElementById('playAllBtn');
+    
+    // 初始化播放列表按钮容器
+    elements.playlistButtonsContainer = document.getElementById('playlistButtonsContainer');
 }
 
 // 设置事件监听器
@@ -364,6 +367,7 @@ async function loadSongsData() {
 
         currentPlaylist = [...songsData];
         renderSongsList(currentPlaylist);
+        renderPlaylistButtons(); // 渲染播放列表快速切换按钮
         updatePlaybackControls(true); // 关键修复：加载完成后启用播放控件
         console.log('歌曲列表渲染完成');
         showLoading(false);
@@ -415,14 +419,23 @@ function renderSongsList(songs) {
         elements.songsList.appendChild(backItem);
     }
     
-    // 渲染歌单（只在显示全部歌曲时显示）
+    // 渲染服务器端歌单（只在显示全部歌曲时显示）
     if (currentPlaylistName === "全部歌曲" && playlistsData) {
         console.log('渲染歌单列表:', Object.keys(playlistsData));
-        Object.keys(playlistsData).forEach(playlistName => {
+        
+        // 获取所有播放列表名称并排序（确保"默认歌单"排在最后）
+        const playlistNames = Object.keys(playlistsData).sort((a, b) => {
+            if (a === "默认歌单") return 1;
+            if (b === "默认歌单") return -1;
+            return a.localeCompare(b);
+        });
+        
+        // 首先渲染服务器端歌单（基于文件夹结构）
+        playlistNames.forEach(playlistName => {
             if (playlistName !== "默认歌单" && playlistsData[playlistName].length > 0) {
                 console.log(`渲染歌单: ${playlistName}, 歌曲数量: ${playlistsData[playlistName].length}`);
                 const playlistItem = document.createElement('div');
-                playlistItem.className = 'song-item playlist-item';
+                playlistItem.className = 'song-item playlist-item server-playlist';
                 playlistItem.dataset.playlistName = playlistName;
                 
                 playlistItem.innerHTML = `
@@ -442,6 +455,14 @@ function renderSongsList(songs) {
                 console.log(`歌单 ${playlistName} 渲染完成，class: ${playlistItem.className}`);
             }
         });
+        
+        // 添加分隔线
+        if (playlistNames.filter(name => name !== "默认歌单").length > 0) {
+            const separator = document.createElement('div');
+            separator.className = 'playlist-separator';
+            separator.innerHTML = '<div class="separator-line"></div><div class="separator-text">所有歌曲</div><div class="separator-line"></div>';
+            elements.songsList.appendChild(separator);
+        }
     }
     
     // 渲染歌曲
@@ -532,6 +553,78 @@ function updateActiveSongListItem() {
     }
 }
 
+// 渲染播放列表快速切换按钮
+function renderPlaylistButtons() {
+    if (!elements.playlistButtonsContainer) return;
+    
+    // 清空容器
+    elements.playlistButtonsContainer.innerHTML = '';
+    
+    if (!playlistsData) return;
+    
+    // 添加"全部歌曲"按钮
+    const allSongsButton = document.createElement('div');
+    allSongsButton.className = `playlist-button ${currentPlaylistName === "全部歌曲" ? 'active' : ''}`;
+    allSongsButton.innerHTML = `
+        <span class="playlist-icon">🎵</span>
+        <span>全部歌曲</span>
+        <span class="playlist-count">${songsData.length}</span>
+    `;
+    allSongsButton.addEventListener('click', () => {
+        if (currentPlaylistName !== "全部歌曲") {
+            currentPlaylistName = "全部歌曲";
+            currentPlaylist = [...songsData];
+            renderSongsList(currentPlaylist);
+            updatePlaylistButtons();
+        }
+    });
+    elements.playlistButtonsContainer.appendChild(allSongsButton);
+    
+    // 获取所有播放列表名称并排序（确保"默认歌单"排在最后）
+    const playlistNames = Object.keys(playlistsData).sort((a, b) => {
+        if (a === "默认歌单") return 1;
+        if (b === "默认歌单") return -1;
+        return a.localeCompare(b);
+    });
+    
+    // 添加其他播放列表按钮
+    playlistNames.forEach(playlistName => {
+        if (playlistName !== "默认歌单" && playlistsData[playlistName].length > 0) {
+            const button = document.createElement('div');
+            button.className = `playlist-button ${currentPlaylistName === playlistName ? 'active' : ''}`;
+            button.innerHTML = `
+                <span class="playlist-icon">📁</span>
+                <span>${playlistName}</span>
+                <span class="playlist-count">${playlistsData[playlistName].length}</span>
+            `;
+            button.addEventListener('click', () => {
+                if (currentPlaylistName !== playlistName) {
+                    selectPlaylist(playlistName);
+                }
+            });
+            elements.playlistButtonsContainer.appendChild(button);
+        }
+    });
+}
+
+// 更新播放列表按钮状态
+function updatePlaylistButtons() {
+    if (!elements.playlistButtonsContainer) return;
+    
+    // 更新按钮激活状态
+    const buttons = elements.playlistButtonsContainer.querySelectorAll('.playlist-button');
+    buttons.forEach(button => {
+        const isAllSongs = button.querySelector('span:nth-child(2)').textContent === '全部歌曲';
+        const playlistName = isAllSongs ? '全部歌曲' : button.querySelector('span:nth-child(2)').textContent;
+        
+        if (currentPlaylistName === playlistName) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
+}
+
 // 选择歌单
 function selectPlaylist(playlistName) {
     console.log(`选择歌单: ${playlistName}`);
@@ -543,6 +636,9 @@ function selectPlaylist(playlistName) {
     
     // 渲染歌单中的歌曲
     renderSongsList(currentPlaylist);
+    
+    // 更新播放列表按钮状态
+    updatePlaylistButtons();
     
     // 如果有歌曲，默认选择第一首但不自动播放
     if (currentPlaylist.length > 0) {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜歌曲库 - 在线播放器</title>
-    <link rel="stylesheet" href="styles.css?v=20250915_1200">
+    <link rel="stylesheet" href="styles.css?v=20250915_1500">
 </head>
 <body>
     <div class="container">
@@ -22,6 +22,10 @@
                     <div class="search-input-container">
                         <input type="text" id="searchInput" placeholder="搜索歌曲...">
                         <button id="clearSearchBtn" class="clear-search-btn" title="清除搜索">×</button>
+                    </div>
+                    <!-- 播放列表快速切换按钮容器 -->
+                    <div class="playlist-buttons-container" id="playlistButtonsContainer">
+                        <!-- 播放列表按钮将通过JavaScript动态加载 -->
                     </div>
                 </div>
                 <div class="songs-list" id="songsList">
@@ -206,8 +210,8 @@
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
     <script src="libs/jszip.min.js"></script>
 
-    <script src="scripts.js?v=20250915_1200"></script>
-    <script src="playlist.js?v=20250915_1200"></script>
+    <script src="scripts.js?v=20250915_1500"></script>
+    <script src="playlist.js?v=20250915_1500"></script>
 
 </body>
 </html> 

@@ -169,6 +169,69 @@ body {
     border-color: #000000; /* Black focus border */
 }
 
+/* 播放列表快速切换按钮容器 */
+.playlist-buttons-container {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 10px 25px 5px;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+.playlist-buttons-container::-webkit-scrollbar {
+    height: 4px;
+}
+
+.playlist-buttons-container::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+.playlist-buttons-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* 播放列表按钮样式 */
+.playlist-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.playlist-button:hover {
+    background-color: #e0e0e0;
+}
+
+.playlist-button.active {
+    background-color: rgb(163, 183, 203);
+    border-color: rgb(143, 163, 183);
+    color: white;
+}
+
+.playlist-button .playlist-icon {
+    margin-right: 4px;
+    font-size: 0.9rem;
+}
+
+.playlist-button .playlist-count {
+    margin-left: 4px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 1px 6px;
+}
+
 /* 清除按钮样式 */
 .clear-search-btn {
     position: absolute;
@@ -1749,6 +1812,25 @@ input:focus {
     color: #ffffff;
 }
 
+.song-item.playlist-item.server-playlist {
+    background: rgb(143, 163, 193) !important;
+    border-color: rgb(123, 143, 173);
+    position: relative;
+}
+
+.song-item.playlist-item.server-playlist::before {
+    content: "服务器";
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
 .song-item.playlist-item:hover {
     background: rgb(143, 163, 183) !important;
     border-color: rgb(123, 143, 163);
@@ -1779,6 +1861,27 @@ input:focus {
 .song-item.back-item .song-title {
     color: #666 !important;
     font-weight: 500;
+}
+
+/* 播放列表分隔线 */
+.playlist-separator {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+    padding: 0 10px;
+}
+
+.separator-line {
+    flex-grow: 1;
+    height: 1px;
+    background-color: #ddd;
+}
+
+.separator-text {
+    padding: 0 10px;
+    color: #888;
+    font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 /* 播放列表相关样式 */
@@ -2103,6 +2206,21 @@ input:focus {
         height: 28px;
         padding: 5px 6px;
         font-size: 0.8rem;
+    }
+    
+    /* 播放列表按钮容器移动端样式 */
+    .playlist-buttons-container {
+        padding: 8px 15px 3px;
+    }
+    
+    .playlist-button {
+        padding: 4px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .playlist-button .playlist-count {
+        font-size: 0.7rem;
+        padding: 1px 4px;
     }
 }
 
