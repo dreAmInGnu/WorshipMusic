@@ -107,15 +107,65 @@ export async function onRequest(context) {
       }
     }
     
-    // 识别播放列表文件夹（包含多个MP3文件的文件夹）
+    // 识别播放列表文件夹
+    // 我们需要更智能的逻辑来区分：
+    // 1. 包含多首不同歌曲的文件夹（应该识别为播放列表）
+    // 2. 只包含一首歌的原唱和伴奏版本的文件夹（不应该识别为播放列表）
     for (const [folderName, mp3Count] of folderMp3Count.entries()) {
       if (mp3Count > 1) {
-        playlistFolders.add(folderName);
-        console.log(`Identified playlist folder: ${folderName} with ${mp3Count} MP3 files`);
+        // 获取文件夹中的所有MP3文件
+        const mp3Files = folderFiles.get(folderName)
+          .filter(f => f.fileName.endsWith('.mp3'))
+          .map(f => f.fileName);
+        
+        // 检查是否是播放列表
+        const isPlaylist = isPlaylistFolder(mp3Files, folderName);
+        
+        if (isPlaylist) {
+          playlistFolders.add(folderName);
+          console.log(`Identified playlist folder: ${folderName} with ${mp3Count} MP3 files`);
+        } else {
+          console.log(`Folder ${folderName} has ${mp3Count} MP3 files but is not a playlist (likely original+accompaniment)`);
+        }
       }
     }
     
-    console.log(`Found ${playlistFolders.size} folders with multiple MP3 files (playlists)`);
+    // 检查文件夹名称是否有[歌单名]前缀，如果有，也将其标记为播放列表
+    for (const folderName of folderFiles.keys()) {
+      const playlistMatch = folderName.match(/^\[([^\]]+)\]/);
+      if (playlistMatch) {
+        playlistFolders.add(folderName);
+        console.log(`Identified playlist folder by prefix: ${folderName}`);
+      }
+    }
+    
+    console.log(`Found ${playlistFolders.size} playlist folders`);
+    
+    // 辅助函数：判断一个文件夹是否是播放列表
+    function isPlaylistFolder(mp3Files, folderName) {
+      // 如果文件夹名称以[开头，视为播放列表
+      if (folderName.startsWith('[')) {
+        return true;
+      }
+      
+      // 如果只有两个MP3文件，检查它们是否是同一首歌的原唱和伴奏
+      if (mp3Files.length === 2) {
+        const file1 = mp3Files[0].replace(/\.mp3$/, '');
+        const file2 = mp3Files[1].replace(/\.mp3$/, '');
+        
+        // 检查两个文件名是否只有[伴奏]的差异
+        const withoutAccompaniment1 = file1.replace(/\[伴奏\]/, '').trim();
+        const withoutAccompaniment2 = file2.replace(/\[伴奏\]/, '').trim();
+        
+        // 如果去掉[伴奏]后文件名相同，则不是播放列表
+        if (withoutAccompaniment1 === withoutAccompaniment2) {
+          return false;
+        }
+      }
+      
+      // 如果有3个或以上MP3文件，或者2个文件但不是原唱+伴奏组合，视为播放列表
+      return true;
+    }
     
     // 第二步：处理所有文件，创建歌曲数据
     const songsMap = new Map(); // 存储所有歌曲
