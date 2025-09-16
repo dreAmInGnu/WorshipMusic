@@ -61,7 +61,9 @@ const elements = {
     renamePlaylistBtn: null,
     deletePlaylistBtn: null,
     clearPlaylistBtn: null,
-    playAllBtn: null
+    playAllBtn: null,
+    playlistPrevBtn: null,
+    playlistNextBtn: null
 };
 
 // 初始化应用
@@ -137,6 +139,8 @@ function initializeElements() {
     elements.deletePlaylistBtn = document.getElementById('deletePlaylistBtn');
     elements.clearPlaylistBtn = document.getElementById('clearPlaylistBtn');
     elements.playAllBtn = document.getElementById('playAllBtn');
+    elements.playlistPrevBtn = document.getElementById('playlistPrevBtn');
+    elements.playlistNextBtn = document.getElementById('playlistNextBtn');
     
     // 初始化播放列表按钮容器
     elements.playlistButtonsContainer = document.getElementById('playlistButtonsContainer');
