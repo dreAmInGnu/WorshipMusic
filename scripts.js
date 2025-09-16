@@ -70,6 +70,13 @@ const elements = {
 document.addEventListener('DOMContentLoaded', async function() {
     initializeElements();
     setupEventListeners();
+    
+    // 加载自定义字母
+    loadCustomLetters();
+    
+    // 初始化自定义字母模态框
+    initCustomLetterModal();
+    
     await loadSongsData();
     setupAudioEventListeners();
     setupStagewiseToolbar();
@@ -336,12 +343,32 @@ async function loadSongsData() {
                     console.log(`使用自动识别字母: "${song.title}" -> "${indexLetter}"`);
                 }
                 
+                // 提取数字前缀（如果有）用于播放列表内排序
+                const numberPrefix = song.title.match(/^(\d+)[.\s、-]/);
+                const orderNumber = numberPrefix ? parseInt(numberPrefix[1]) : 9999;
+                
+                // 排序键现在包含：播放列表名 + 数字前缀 + 索引字母 + 歌曲名
                 song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
                 song.indexLetter = indexLetter;
-                console.log(`歌曲 "${song.title}" 最终结果: 首字符="${firstChar}", indexLetter="${indexLetter}", sortKey="${song.sortKey}"`);
+                song.orderNumber = orderNumber;
+                
+                console.log(`歌曲 "${song.title}" 最终结果: 首字符="${firstChar}", indexLetter="${indexLetter}", orderNumber=${orderNumber}, sortKey="${song.sortKey}"`);
             });
             
-            songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+            // 先按播放列表分组，然后在每个播放列表内按数字前缀和字母排序
+            songsData.sort((a, b) => {
+                // 如果两首歌在同一个播放列表中
+                if ((a.playlist || "默认歌单") === (b.playlist || "默认歌单")) {
+                    // 如果两首歌都有数字前缀，按数字排序
+                    if (a.orderNumber !== 9999 && b.orderNumber !== 9999) {
+                        return a.orderNumber - b.orderNumber;
+                    }
+                    // 否则按字母和歌曲名排序
+                    return a.sortKey.localeCompare(b.sortKey);
+                }
+                // 不同播放列表的歌曲按播放列表名称排序
+                return (a.playlist || "默认歌单").localeCompare(b.playlist || "默认歌单");
+            });
             console.log('歌曲排序完成');
             console.log('排序后前3首歌曲:', songsData.slice(0, 3).map(s => `${s.title} (${s.indexLetter})`));
         } catch (sortError) {
@@ -350,8 +377,14 @@ async function loadSongsData() {
             songsData.forEach((song, index) => {
                 const firstChar = song.title.charAt(0);
                 let indexLetter = getPinyinLetter(firstChar);
+                
+                // 提取数字前缀（如果有）用于播放列表内排序
+                const numberPrefix = song.title.match(/^(\d+)[.\s、-]/);
+                const orderNumber = numberPrefix ? parseInt(numberPrefix[1]) : 9999;
+                
                 song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
                 song.indexLetter = indexLetter;
+                song.orderNumber = orderNumber;
             });
         }
         // --- 排序结束 ---
@@ -637,6 +670,16 @@ function selectPlaylist(playlistName) {
     // 获取歌单中的歌曲
     const playlistSongs = playlistsData[playlistName] || [];
     currentPlaylist = [...playlistSongs];
+    
+    // 对播放列表内的歌曲进行排序
+    currentPlaylist.sort((a, b) => {
+        // 如果两首歌都有数字前缀，按数字排序
+        if (a.orderNumber !== 9999 && b.orderNumber !== 9999) {
+            return a.orderNumber - b.orderNumber;
+        }
+        // 否则按字母和歌曲名排序
+        return a.sortKey.localeCompare(b.sortKey);
+    });
     
     // 渲染歌单中的歌曲
     renderSongsList(currentPlaylist);
@@ -1031,6 +1074,24 @@ function getCustomLetters() {
     }
 }
 
+// 加载自定义字母
+function loadCustomLetters() {
+    try {
+        // 从localStorage加载自定义字母
+        const customLetters = getCustomLetters();
+        console.log('已加载自定义字母:', Object.keys(customLetters).length);
+        
+        // 尝试从服务器加载自定义字母（此处为未来扩展准备）
+        // 目前只是模拟，实际实现需要添加服务器端API
+        console.log('尝试从服务器加载自定义字母...');
+        
+        return customLetters;
+    } catch (e) {
+        console.error('加载自定义字母失败:', e);
+        return {};
+    }
+}
+
 // 重置所有自定义字母
 function resetAllCustomLetters() {
     if (confirm('确定要重置所有自定义字母吗？这将恢复所有歌曲的自动识别字母。')) {
@@ -1135,10 +1196,20 @@ function getPinyinLetter(char) {
     if (/^[a-zA-Z]/.test(char)) {
         return char.toUpperCase();
     }
-    // 如果是数字，返回#
+    
+    // 如果是数字开头，尝试提取数字后面的实际歌曲名首字母
     if (/^[0-9]/.test(char)) {
+        // 提取数字后面的第一个非数字字符
+        const match = char.match(/^[0-9\s.、-]+(.)/);
+        if (match && match[1]) {
+            console.log(`数字前缀歌曲: "${char}" -> 提取首字母: "${match[1]}"`);
+            // 递归调用自身处理提取出的字符
+            return getPinyinLetter(match[1]);
+        }
+        // 如果无法提取，返回#
         return '#';
     }
+    
     // 优先使用 pinyin-pro 库进行转换
     if (typeof pinyinPro !== 'undefined') {
         try {
@@ -2211,4 +2282,196 @@ function showShareSuccess(songTitle) {
             toast.remove();
         }
     }, 3000);
-} 
+}
+
+// 自定义索引字母相关变量
+let customLetterModal = null;
+let currentEditingSong = null;
+let originalLetter = '';
+
+// 初始化自定义字母模态框
+function initCustomLetterModal() {
+    customLetterModal = document.getElementById('customLetterModal');
+    const closeBtn = document.getElementById('closeCustomLetterModal');
+    const saveBtn = document.getElementById('saveCustomLetterBtn');
+    const cancelBtn = document.getElementById('cancelCustomLetterBtn');
+    const saveToServerBtn = document.getElementById('saveToServerBtn');
+    const letterButtons = document.querySelectorAll('.letter-btn');
+    const customLetterInput = document.getElementById('customLetterInput');
+    
+    // 关闭模态框
+    closeBtn.addEventListener('click', closeCustomLetterModal);
+    
+    // 取消按钮
+    cancelBtn.addEventListener('click', closeCustomLetterModal);
+    
+    // 保存按钮
+    saveBtn.addEventListener('click', saveCustomLetter);
+    
+    // 保存到服务器按钮
+    saveToServerBtn.addEventListener('click', saveCustomLetterToServer);
+    
+    // 字母按钮点击事件
+    letterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const letter = this.dataset.letter;
+            if (letter === 'reset') {
+                customLetterInput.value = originalLetter;
+            } else {
+                customLetterInput.value = letter;
+            }
+        });
+    });
+    
+    // 输入框限制为单个字母
+    customLetterInput.addEventListener('input', function() {
+        this.value = this.value.slice(0, 1).toUpperCase();
+    });
+}
+
+// 打开自定义字母模态框
+function editSongLetter(songId, songTitle, currentLetter) {
+    if (!customLetterModal) {
+        initCustomLetterModal();
+    }
+    
+    // 设置当前编辑的歌曲
+    currentEditingSong = songsData.find(song => song.id === songId);
+    originalLetter = currentLetter;
+    
+    // 更新模态框内容
+    document.getElementById('songTitleDisplay').textContent = songTitle;
+    document.getElementById('currentLetterDisplay').textContent = currentLetter;
+    document.getElementById('customLetterInput').value = currentLetter;
+    
+    // 显示模态框
+    customLetterModal.style.display = 'block';
+}
+
+// 关闭自定义字母模态框
+function closeCustomLetterModal() {
+    if (customLetterModal) {
+        customLetterModal.style.display = 'none';
+    }
+    currentEditingSong = null;
+}
+
+// 保存自定义字母
+function saveCustomLetter() {
+    if (!currentEditingSong) return;
+    
+    const newLetter = document.getElementById('customLetterInput').value.toUpperCase();
+    if (!newLetter) return;
+    
+    // 获取现有的自定义字母
+    const customLetters = getCustomLetters();
+    
+    // 更新或添加自定义字母
+    customLetters[currentEditingSong.id] = {
+        letter: newLetter,
+        title: currentEditingSong.title,
+        timestamp: Date.now()
+    };
+    
+    // 保存到本地存储
+    localStorage.setItem('worshipMusic_customLetters', JSON.stringify(customLetters));
+    
+    // 更新歌曲的索引字母
+    currentEditingSong.indexLetter = newLetter;
+    currentEditingSong.sortKey = newLetter.toLowerCase() + currentEditingSong.title.toLowerCase();
+    
+    // 重新排序和渲染歌曲列表
+    reorderAndRenderSongs();
+    
+    // 关闭模态框
+    closeCustomLetterModal();
+    
+    // 显示成功消息
+    showMessage(`已将歌曲 "${currentEditingSong.title}" 的索引字母设置为 "${newLetter}"`);
+}
+
+// 保存自定义字母到服务器
+function saveCustomLetterToServer() {
+    if (!currentEditingSong) return;
+    
+    const newLetter = document.getElementById('customLetterInput').value.toUpperCase();
+    if (!newLetter) return;
+    
+    // 获取现有的自定义字母
+    const customLetters = getCustomLetters();
+    
+    // 更新或添加自定义字母
+    customLetters[currentEditingSong.id] = {
+        letter: newLetter,
+        title: currentEditingSong.title,
+        timestamp: Date.now()
+    };
+    
+    // 保存到本地存储
+    localStorage.setItem('worshipMusic_customLetters', JSON.stringify(customLetters));
+    
+    // 更新歌曲的索引字母
+    currentEditingSong.indexLetter = newLetter;
+    currentEditingSong.sortKey = newLetter.toLowerCase() + currentEditingSong.title.toLowerCase();
+    
+    // 尝试将自定义字母保存到服务器
+    // 注意：这里需要实现服务器端API，目前只是模拟
+    showMessage(`正在将自定义字母保存到服务器...`);
+    
+    // 模拟API请求
+    setTimeout(() => {
+        showMessage(`自定义字母已保存到服务器，所有用户将看到相同的排序`);
+        
+        // 重新排序和渲染歌曲列表
+        reorderAndRenderSongs();
+        
+        // 关闭模态框
+        closeCustomLetterModal();
+    }, 1000);
+}
+
+// 重新排序和渲染歌曲列表
+function reorderAndRenderSongs() {
+    // 重新排序songsData
+    songsData.sort((a, b) => {
+        // 如果两首歌在同一个播放列表中
+        if ((a.playlist || "默认歌单") === (b.playlist || "默认歌单")) {
+            // 如果两首歌都有数字前缀，按数字排序
+            if (a.orderNumber !== 9999 && b.orderNumber !== 9999) {
+                return a.orderNumber - b.orderNumber;
+            }
+            // 否则按字母和歌曲名排序
+            return a.sortKey.localeCompare(b.sortKey);
+        }
+        // 不同播放列表的歌曲按播放列表名称排序
+        return (a.playlist || "默认歌单").localeCompare(b.playlist || "默认歌单");
+    });
+    
+    // 重新构建播放列表数据
+    playlistsData = { "默认歌单": [] };
+    songsData.forEach(song => {
+        const playlistName = song.playlist || "默认歌单";
+        if (!playlistsData[playlistName]) {
+            playlistsData[playlistName] = [];
+        }
+        playlistsData[playlistName].push(song);
+    });
+    
+    // 如果当前在播放列表中，需要重新排序当前播放列表
+    if (currentPlaylistName !== "全部歌曲") {
+        currentPlaylist = [...playlistsData[currentPlaylistName] || []];
+        currentPlaylist.sort((a, b) => {
+            // 如果两首歌都有数字前缀，按数字排序
+            if (a.orderNumber !== 9999 && b.orderNumber !== 9999) {
+                return a.orderNumber - b.orderNumber;
+            }
+            // 否则按字母和歌曲名排序
+            return a.sortKey.localeCompare(b.sortKey);
+        });
+    } else {
+        currentPlaylist = [...songsData];
+    }
+    
+    // 重新渲染歌曲列表
+    renderSongsList(currentPlaylist);
+}

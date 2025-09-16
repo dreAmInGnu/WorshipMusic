@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜歌曲库 - 在线播放器</title>
-    <link rel="stylesheet" href="styles.css?v=20250915_2100">
+    <link rel="stylesheet" href="styles.css?v=20250915_2200">
 </head>
 <body>
     <div class="container">
@@ -216,12 +216,81 @@
         </div>
     </div>
 
+    <!-- 自定义索引字母模态框 -->
+    <div id="customLetterModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>自定义索引字母</h2>
+                <span id="closeCustomLetterModal" class="close-btn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="custom-letter-form">
+                    <div class="form-group">
+                        <label for="songTitleDisplay">歌曲名称:</label>
+                        <div id="songTitleDisplay" class="song-title-display"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="currentLetterDisplay">当前索引字母:</label>
+                        <div id="currentLetterDisplay" class="current-letter-display"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="customLetterInput">自定义索引字母:</label>
+                        <input type="text" id="customLetterInput" maxlength="1" placeholder="输入一个字母" class="custom-letter-input">
+                    </div>
+                    <div class="letter-buttons">
+                        <div class="letter-row">
+                            <button class="letter-btn" data-letter="A">A</button>
+                            <button class="letter-btn" data-letter="B">B</button>
+                            <button class="letter-btn" data-letter="C">C</button>
+                            <button class="letter-btn" data-letter="D">D</button>
+                            <button class="letter-btn" data-letter="E">E</button>
+                            <button class="letter-btn" data-letter="F">F</button>
+                            <button class="letter-btn" data-letter="G">G</button>
+                        </div>
+                        <div class="letter-row">
+                            <button class="letter-btn" data-letter="H">H</button>
+                            <button class="letter-btn" data-letter="I">I</button>
+                            <button class="letter-btn" data-letter="J">J</button>
+                            <button class="letter-btn" data-letter="K">K</button>
+                            <button class="letter-btn" data-letter="L">L</button>
+                            <button class="letter-btn" data-letter="M">M</button>
+                            <button class="letter-btn" data-letter="N">N</button>
+                        </div>
+                        <div class="letter-row">
+                            <button class="letter-btn" data-letter="O">O</button>
+                            <button class="letter-btn" data-letter="P">P</button>
+                            <button class="letter-btn" data-letter="Q">Q</button>
+                            <button class="letter-btn" data-letter="R">R</button>
+                            <button class="letter-btn" data-letter="S">S</button>
+                            <button class="letter-btn" data-letter="T">T</button>
+                            <button class="letter-btn" data-letter="U">U</button>
+                        </div>
+                        <div class="letter-row">
+                            <button class="letter-btn" data-letter="V">V</button>
+                            <button class="letter-btn" data-letter="W">W</button>
+                            <button class="letter-btn" data-letter="X">X</button>
+                            <button class="letter-btn" data-letter="Y">Y</button>
+                            <button class="letter-btn" data-letter="Z">Z</button>
+                            <button class="letter-btn" data-letter="#">#</button>
+                            <button class="letter-btn reset-btn" data-letter="reset">重置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveCustomLetterBtn" class="action-btn">保存</button>
+                <button id="cancelCustomLetterBtn" class="action-btn secondary">取消</button>
+                <button id="saveToServerBtn" class="action-btn primary">保存到服务器</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 引入库文件和脚本 -->
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
     <script src="libs/jszip.min.js"></script>
 
-    <script src="scripts.js?v=20250915_2100"></script>
-    <script src="playlist.js?v=20250915_2100"></script>
+    <script src="scripts.js?v=20250915_2200"></script>
+    <script src="playlist.js?v=20250915_2200"></script>
 
 </body>
 </html> 
