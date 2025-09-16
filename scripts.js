@@ -71,8 +71,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     initializeElements();
     setupEventListeners();
     
-    // 加载自定义字母
-    loadCustomLetters();
+    // 加载自定义字母（异步）
+    const customLetters = await loadCustomLetters();
+    console.log('加载的自定义字母总数:', Object.keys(customLetters).length);
     
     // 初始化自定义字母模态框
     initCustomLetterModal();
@@ -339,35 +340,20 @@ async function loadSongsData() {
                     indexLetter = customLetters[song.id].letter;
                     console.log(`使用自定义字母: "${song.title}" -> "${indexLetter}"`);
                 } else {
-                    indexLetter = getPinyinLetter(firstChar);
-                    console.log(`使用自动识别字母: "${song.title}" -> "${indexLetter}"`);
+                    // 使用整个歌曲名作为上下文进行更准确的拼音识别
+                    indexLetter = getPinyinLetter(firstChar, song.title);
+                    console.log(`使用自动识别字母(带上下文): "${song.title}" -> "${indexLetter}"`);
                 }
                 
-                // 提取数字前缀（如果有）用于播放列表内排序
-                const numberPrefix = song.title.match(/^(\d+)[.\s、-]/);
-                const orderNumber = numberPrefix ? parseInt(numberPrefix[1]) : 9999;
-                
-                // 排序键现在包含：播放列表名 + 数字前缀 + 索引字母 + 歌曲名
+                // 排序键只包含索引字母和歌曲名
                 song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
                 song.indexLetter = indexLetter;
-                song.orderNumber = orderNumber;
                 
-                console.log(`歌曲 "${song.title}" 最终结果: 首字符="${firstChar}", indexLetter="${indexLetter}", orderNumber=${orderNumber}, sortKey="${song.sortKey}"`);
+                console.log(`歌曲 "${song.title}" 最终结果: 首字符="${firstChar}", indexLetter="${indexLetter}", sortKey="${song.sortKey}"`);
             });
             
-            // 先按播放列表分组，然后在每个播放列表内按数字前缀和字母排序
-            songsData.sort((a, b) => {
-                // 如果两首歌在同一个播放列表中
-                if ((a.playlist || "默认歌单") === (b.playlist || "默认歌单")) {
-                    // 如果两首歌都有数字前缀，按数字排序
-                    if (a.orderNumber !== 9999 && b.orderNumber !== 9999) {
-                        return a.orderNumber - b.orderNumber;
-                    }
-                    // 否则按字母和歌曲名排序
-                    return a.sortKey.localeCompare(b.sortKey);
-                }
-                // 不同播放列表的歌曲按播放列表名称排序
-                return (a.playlist || "默认歌单").localeCompare(b.playlist || "默认歌单");
+            // 简单按照索引字母和歌曲名排序
+            songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
             });
             console.log('歌曲排序完成');
             console.log('排序后前3首歌曲:', songsData.slice(0, 3).map(s => `${s.title} (${s.indexLetter})`));
@@ -377,14 +363,8 @@ async function loadSongsData() {
             songsData.forEach((song, index) => {
                 const firstChar = song.title.charAt(0);
                 let indexLetter = getPinyinLetter(firstChar);
-                
-                // 提取数字前缀（如果有）用于播放列表内排序
-                const numberPrefix = song.title.match(/^(\d+)[.\s、-]/);
-                const orderNumber = numberPrefix ? parseInt(numberPrefix[1]) : 9999;
-                
                 song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
                 song.indexLetter = indexLetter;
-                song.orderNumber = orderNumber;
             });
         }
         // --- 排序结束 ---
@@ -502,8 +482,12 @@ function renderSongsList(songs) {
         }
     }
     
+    // 过滤掉在全部歌曲视图中不应该显示的歌曲（播放列表内的歌曲）
+    const filteredSongs = currentPlaylistName === "全部歌曲" ? 
+        songs.filter(song => !song.isPlaylistItem) : songs;
+    
     // 渲染歌曲
-    songs.forEach((song, index) => {
+    filteredSongs.forEach((song, index) => {
         const songItem = document.createElement('div');
         songItem.className = 'song-item';
         songItem.dataset.songId = song.id;
@@ -672,14 +656,7 @@ function selectPlaylist(playlistName) {
     currentPlaylist = [...playlistSongs];
     
     // 对播放列表内的歌曲进行排序
-    currentPlaylist.sort((a, b) => {
-        // 如果两首歌都有数字前缀，按数字排序
-        if (a.orderNumber !== 9999 && b.orderNumber !== 9999) {
-            return a.orderNumber - b.orderNumber;
-        }
-        // 否则按字母和歌曲名排序
-        return a.sortKey.localeCompare(b.sortKey);
-    });
+    currentPlaylist.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
     
     // 渲染歌单中的歌曲
     renderSongsList(currentPlaylist);
@@ -1075,17 +1052,39 @@ function getCustomLetters() {
 }
 
 // 加载自定义字母
-function loadCustomLetters() {
+async function loadCustomLetters() {
     try {
         // 从localStorage加载自定义字母
-        const customLetters = getCustomLetters();
-        console.log('已加载自定义字母:', Object.keys(customLetters).length);
+        const localLetters = getCustomLetters();
+        console.log('从本地加载的自定义字母:', Object.keys(localLetters).length);
         
-        // 尝试从服务器加载自定义字母（此处为未来扩展准备）
-        // 目前只是模拟，实际实现需要添加服务器端API
-        console.log('尝试从服务器加载自定义字母...');
+        // 尝试从服务器加载自定义字母
+        try {
+            console.log('尝试从服务器加载自定义字母...');
+            const response = await fetch('/api/custom-letters');
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    console.log('从服务器加载的自定义字母:', Object.keys(data.data).length);
+                    
+                    // 合并服务器和本地的自定义字母，优先使用服务器的数据
+                    const mergedLetters = { ...localLetters, ...data.data };
+                    
+                    // 更新本地存储
+                    localStorage.setItem('worshipMusic_customLetters', JSON.stringify(mergedLetters));
+                    
+                    return mergedLetters;
+                }
+            } else {
+                console.warn('从服务器加载自定义字母失败:', response.status, response.statusText);
+            }
+        } catch (serverError) {
+            console.warn('从服务器加载自定义字母时发生错误:', serverError);
+        }
         
-        return customLetters;
+        // 如果服务器加载失败，返回本地数据
+        return localLetters;
     } catch (e) {
         console.error('加载自定义字母失败:', e);
         return {};
@@ -1191,7 +1190,7 @@ function resetSongLetterById(songId) {
 }
 
 // 智能拼音字母转换函数
-function getPinyinLetter(char) {
+function getPinyinLetter(char, context = '') {
     // 如果是英文字符，直接返回大写
     if (/^[a-zA-Z]/.test(char)) {
         return char.toUpperCase();
@@ -1204,17 +1203,119 @@ function getPinyinLetter(char) {
         if (match && match[1]) {
             console.log(`数字前缀歌曲: "${char}" -> 提取首字母: "${match[1]}"`);
             // 递归调用自身处理提取出的字符
-            return getPinyinLetter(match[1]);
+            return getPinyinLetter(match[1], context);
         }
         // 如果无法提取，返回#
         return '#';
+    }
+    
+    // 特殊处理常见敬拜歌曲词汇
+    const specialTerms = {
+        '主': 'Z',
+        '神': 'S',
+        '耶稣': 'Y',
+        '基督': 'J',
+        '圣灵': 'S',
+        '哈利路亚': 'H',
+        '阿们': 'A',
+        '荣耀': 'R',
+        '赞美': 'Z',
+        '敬拜': 'J',
+        '感谢': 'G',
+        '祷告': 'D',
+        '信心': 'X',
+        '恩典': 'E',
+        '慈爱': 'C',
+        '怜悯': 'L',
+        '救恩': 'J',
+        '十架': 'S',
+        '永生': 'Y',
+        '天国': 'T',
+        '弥赛亚': 'M'
+    };
+    
+    // 检查上下文中是否包含特殊词汇
+    for (const term in specialTerms) {
+        if (context.includes(term) && term.includes(char)) {
+            console.log(`特殊词汇处理: "${context}" 中的 "${char}" -> "${specialTerms[term]}"`);
+            return specialTerms[term];
+        }
+    }
+    
+    // 多音字特殊处理
+    const multiPronounceMap = {
+        '长': { default: 'C', context: { '成长': 'Z', '长大': 'Z', '长辈': 'Z' } },
+        '乐': { default: 'L', context: { '快乐': 'Y', '音乐': 'Y' } },
+        '行': { default: 'X', context: { '行走': 'H', '行为': 'X' } },
+        '藏': { default: 'C', context: { '收藏': 'Z', '藏宝': 'Z' } },
+        '曾': { default: 'C', context: { '曾经': 'Z' } },
+        '传': { default: 'C', context: { '传道': 'Z', '传扬': 'Z' } },
+        '重': { default: 'Z', context: { '重要': 'Z', '重生': 'C' } },
+        '朝': { default: 'C', context: { '朝见': 'Z', '朝拜': 'Z' } },
+        '得': { default: 'D', context: { '得胜': 'D' } },
+        '都': { default: 'D', context: { '首都': 'D' } },
+        '发': { default: 'F', context: { '发现': 'F', '头发': 'F' } },
+        '分': { default: 'F', context: { '分享': 'F', '分钟': 'F' } },
+        '更': { default: 'G', context: { '更新': 'G' } },
+        '给': { default: 'G', context: { '给予': 'G' } },
+        '好': { default: 'H', context: { '好的': 'H', '美好': 'H' } },
+        '和': { default: 'H', context: { '和平': 'H', '和谐': 'H' } },
+        '间': { default: 'J', context: { '中间': 'J', '空间': 'J' } },
+        '将': { default: 'J', context: { '将来': 'J', '将军': 'J' } },
+        '觉': { default: 'J', context: { '感觉': 'J', '觉得': 'J' } },
+        '空': { default: 'K', context: { '空中': 'K', '空虚': 'K' } },
+        '乐': { default: 'Y', context: { '音乐': 'Y', '快乐': 'L' } },
+        '落': { default: 'L', context: { '降落': 'L', '落下': 'L' } },
+        '没': { default: 'M', context: { '没有': 'M' } },
+        '难': { default: 'N', context: { '困难': 'N', '难过': 'N' } },
+        '平': { default: 'P', context: { '平安': 'P', '和平': 'P' } },
+        '强': { default: 'Q', context: { '坚强': 'Q', '强壮': 'Q' } },
+        '且': { default: 'Q', context: { '并且': 'Q' } },
+        '亲': { default: 'Q', context: { '亲爱': 'Q', '亲近': 'Q' } },
+        '少': { default: 'S', context: { '少年': 'S', '多少': 'S' } },
+        '省': { default: 'S', context: { '省份': 'X' } },
+        '数': { default: 'S', context: { '数字': 'S', '数目': 'S' } },
+        '天': { default: 'T', context: { '天堂': 'T', '天国': 'T' } },
+        '为': { default: 'W', context: { '因为': 'W', '为了': 'W' } },
+        '系': { default: 'X', context: { '关系': 'X', '系统': 'X' } },
+        '相': { default: 'X', context: { '相信': 'X', '相爱': 'X' } },
+        '血': { default: 'X', context: { '宝血': 'X', '血液': 'X' } },
+        '一': { default: 'Y', context: { '一切': 'Y', '一生': 'Y' } },
+        '应': { default: 'Y', context: { '应当': 'Y', '回应': 'Y' } },
+        '着': { default: 'Z', context: { '穿着': 'Z', '看着': 'Z' } },
+        '种': { default: 'Z', context: { '种子': 'Z', '种类': 'Z' } },
+        '中': { default: 'Z', context: { '中间': 'Z', '中心': 'Z' } },
+        '只': { default: 'Z', context: { '只有': 'Z', '只是': 'Z' } },
+        '转': { default: 'Z', context: { '转变': 'Z', '旋转': 'Z' } },
+        '装': { default: 'Z', context: { '装饰': 'Z', '打扮': 'Z' } },
+        '子': { default: 'Z', context: { '儿子': 'Z', '种子': 'Z' } }
+    };
+    
+    // 检查是否是多音字，并根据上下文判断读音
+    if (multiPronounceMap[char]) {
+        const multiChar = multiPronounceMap[char];
+        for (const ctx in multiChar.context) {
+            if (context.includes(ctx)) {
+                console.log(`多音字处理: "${context}" 中的 "${char}" -> "${multiChar.context[ctx]}"`);
+                return multiChar.context[ctx];
+            }
+        }
+        console.log(`多音字处理(默认): "${char}" -> "${multiChar.default}"`);
+        return multiChar.default;
     }
     
     // 优先使用 pinyin-pro 库进行转换
     if (typeof pinyinPro !== 'undefined') {
         try {
             const { pinyin } = pinyinPro;
-            const pinyinResult = pinyin(char, { toneType: 'none', nonZh: 'consecutive' });
+            // 使用整个上下文进行转换，以便更准确地处理多音字
+            const pinyinResult = pinyin(char, { 
+                toneType: 'none',
+                nonZh: 'consecutive',
+                v: true, // 使用v表示ü
+                multiple: false // 不返回多音字的所有拼音
+            });
+            
             const firstLetter = pinyinResult.charAt(0).toUpperCase();
             // 确保返回的是有效的字母
             if (/^[A-Z]$/.test(firstLetter)) {
@@ -1229,8 +1330,9 @@ function getPinyinLetter(char) {
     } else {
         console.warn('pinyin-pro 库未加载，使用回退方案');
     }
-    // 回退方案：使用简单映射表
+    // 回退方案：使用扩展的汉字映射表
     const fallbackMap = {
+        // 原有的映射表
         '愿': 'Y', '一': 'Y', '义': 'Y', '有': 'Y', '要': 'Y', '耶': 'Y', '与': 'Y', '以': 'Y', '因': 'Y', '永': 'Y', '用': 'Y', '又': 'Y', '医': 'Y', '应': 'Y', '牺': 'Y', '也': 'Y', '已': 'Y', '样': 'Y', '音': 'Y', '野': 'Y',
         '阿': 'A', '爱': 'A', '安': 'A', '按': 'A', '啊': 'A',
         '不': 'B', '白': 'B', '宝': 'B', '贝': 'B', '比': 'B', '被': 'B', '本': 'B', '别': 'B', '帮': 'B', '保': 'B',
@@ -1252,7 +1354,65 @@ function getPinyinLetter(char) {
         '天': 'T', '太': 'T', '听': 'T', '他': 'T', '她': 'T', '它': 'T', '同': 'T', '团': 'T', '这': 'T', '通': 'T', '头': 'T', '投': 'T',
         '我': 'W', '为': 'W', '万': 'W', '王': 'W', '无': 'W', '唯': 'W', '文': 'W', '问': 'W', '忘': 'W', '望': 'W', '完': 'W', '外': 'W',
         '新': 'X', '心': 'X', '行': 'X', '信': 'X', '喜': 'X', '想': 'X', '希': 'X', '幸': 'X', '献': 'X', '向': 'X', '下': 'X', '小': 'X', '像': 'X', '先': 'X',
-        '在': 'Z', '主': 'Z', '真': 'Z', '只': 'Z', '知': 'Z', '中': 'Z', '住': 'Z', '最': 'Z', '自': 'Z', '尊': 'Z', '着': 'Z', '这': 'Z', '正': 'Z', '之': 'Z', '总': 'Z', '走': 'Z', '赞': 'Z'
+        '在': 'Z', '主': 'Z', '真': 'Z', '只': 'Z', '知': 'Z', '中': 'Z', '住': 'Z', '最': 'Z', '自': 'Z', '尊': 'Z', '着': 'Z', '这': 'Z', '正': 'Z', '之': 'Z', '总': 'Z', '走': 'Z', '赞': 'Z',
+        
+        // 新增的敬拜相关词汇
+        '颂': 'S', '诵': 'S', '颂赞': 'S', '颂扬': 'S',
+        '赞': 'Z', '赞美': 'Z', '赞颂': 'Z', '赞扬': 'Z',
+        '敬': 'J', '敬拜': 'J', '敬畏': 'J', '敬仰': 'J',
+        '拜': 'B', '礼拜': 'B', '朝拜': 'B', '跪拜': 'B',
+        '祷': 'D', '祷告': 'D', '祈祷': 'D', '代祷': 'D',
+        '祈': 'Q', '祈求': 'Q', '祈祷': 'Q', '祈盼': 'Q',
+        '福': 'F', '福音': 'F', '祝福': 'F', '福气': 'F',
+        '恩': 'E', '恩典': 'E', '恩惠': 'E', '恩赐': 'E',
+        '怜': 'L', '怜悯': 'L', '慈怜': 'L',
+        '慈': 'C', '慈爱': 'C', '慈悲': 'C', '慈善': 'C',
+        '爱': 'A', '慈爱': 'A', '博爱': 'A', '大爱': 'A',
+        '信': 'X', '信心': 'X', '相信': 'X', '信靠': 'X',
+        '望': 'W', '盼望': 'W', '希望': 'W', '期望': 'W',
+        '义': 'Y', '公义': 'Y', '义人': 'Y', '义行': 'Y',
+        '圣': 'S', '圣洁': 'S', '圣灵': 'S', '圣徒': 'S',
+        '灵': 'L', '圣灵': 'L', '灵魂': 'L', '灵性': 'L',
+        '救': 'J', '救主': 'J', '救恩': 'J', '救赎': 'J',
+        '恩': 'E', '恩典': 'E', '恩惠': 'E', '恩赐': 'E',
+        '赎': 'S', '救赎': 'S', '赎罪': 'S', '赎回': 'S',
+        '罪': 'Z', '罪恶': 'Z', '罪人': 'Z', '赦罪': 'Z',
+        '赦': 'S', '赦免': 'S', '饶赦': 'S', '赦罪': 'S',
+        '悔': 'H', '悔改': 'H', '后悔': 'H', '忏悔': 'H',
+        '改': 'G', '悔改': 'G', '改变': 'G', '改正': 'G',
+        '光': 'G', '光明': 'G', '荣光': 'G', '光辉': 'G',
+        '荣': 'R', '荣耀': 'R', '荣光': 'R', '荣美': 'R',
+        '耀': 'Y', '荣耀': 'Y', '辉耀': 'Y', '光耀': 'Y',
+        '美': 'M', '美好': 'M', '美丽': 'M', '荣美': 'M',
+        '善': 'S', '善良': 'S', '善行': 'S', '善意': 'S',
+        '仁': 'R', '仁爱': 'R', '仁慈': 'R', '仁义': 'R',
+        '诚': 'C', '诚实': 'C', '真诚': 'C', '诚信': 'C',
+        '谦': 'Q', '谦卑': 'Q', '谦和': 'Q', '谦逊': 'Q',
+        '卑': 'B', '谦卑': 'B', '卑微': 'B',
+        '忍': 'R', '忍耐': 'R', '忍受': 'R', '容忍': 'R',
+        '耐': 'N', '忍耐': 'N', '耐心': 'N', '耐性': 'N',
+        '盼': 'P', '盼望': 'P', '期盼': 'P', '盼顾': 'P',
+        '喜': 'X', '喜乐': 'X', '欢喜': 'X', '喜悦': 'X',
+        '乐': 'L', '喜乐': 'L', '快乐': 'L', '欢乐': 'L',
+        '欢': 'H', '欢喜': 'H', '欢乐': 'H', '欢呼': 'H',
+        '呼': 'H', '呼求': 'H', '呼喊': 'H', '欢呼': 'H',
+        '求': 'Q', '祈求': 'Q', '恳求': 'Q', '呼求': 'Q',
+        '恳': 'K', '恳求': 'K', '恳切': 'K', '诚恳': 'K',
+        '切': 'Q', '恳切': 'Q', '切实': 'Q', '亲切': 'Q',
+        '亲': 'Q', '亲近': 'Q', '亲爱': 'Q', '亲密': 'Q',
+        '近': 'J', '亲近': 'J', '接近': 'J', '靠近': 'J',
+        '靠': 'K', '依靠': 'K', '靠近': 'K', '倚靠': 'K',
+        '倚': 'Y', '倚靠': 'Y', '依倚': 'Y', '凭倚': 'Y',
+        '依': 'Y', '依靠': 'Y', '依赖': 'Y', '依附': 'Y',
+        '赖': 'L', '依赖': 'L', '赖以': 'L', '信赖': 'L',
+        '附': 'F', '依附': 'F', '附加': 'F', '附近': 'F',
+        '凭': 'P', '凭借': 'P', '凭依': 'P', '凭倚': 'P',
+        '借': 'J', '借助': 'J', '凭借': 'J', '借用': 'J',
+        '助': 'Z', '帮助': 'Z', '援助': 'Z', '助力': 'Z',
+        '援': 'Y', '援助': 'Y', '支援': 'Y', '救援': 'Y',
+        '力': 'L', '力量': 'L', '能力': 'L', '助力': 'L',
+        '能': 'N', '能力': 'N', '才能': 'N', '可能': 'N',
+        '才': 'C', '才能': 'C', '才华': 'C', '才干': 'C'
     };
     // 查找回退映射
     if (fallbackMap[char]) {
@@ -2391,7 +2551,7 @@ function saveCustomLetter() {
 }
 
 // 保存自定义字母到服务器
-function saveCustomLetterToServer() {
+async function saveCustomLetterToServer() {
     if (!currentEditingSong) return;
     
     const newLetter = document.getElementById('customLetterInput').value.toUpperCase();
@@ -2415,37 +2575,65 @@ function saveCustomLetterToServer() {
     currentEditingSong.sortKey = newLetter.toLowerCase() + currentEditingSong.title.toLowerCase();
     
     // 尝试将自定义字母保存到服务器
-    // 注意：这里需要实现服务器端API，目前只是模拟
     showMessage(`正在将自定义字母保存到服务器...`);
     
-    // 模拟API请求
-    setTimeout(() => {
-        showMessage(`自定义字母已保存到服务器，所有用户将看到相同的排序`);
+    try {
+        // 准备要发送到服务器的数据
+        const dataToSend = {
+            [currentEditingSong.id]: {
+                letter: newLetter,
+                title: currentEditingSong.title,
+                timestamp: Date.now()
+            }
+        };
         
-        // 重新排序和渲染歌曲列表
-        reorderAndRenderSongs();
+        // 获取管理员令牌（在实际应用中，这应该通过安全的方式获取）
+        const adminToken = prompt('请输入管理员令牌以保存到服务器（取消则仅保存到本地）');
         
-        // 关闭模态框
-        closeCustomLetterModal();
-    }, 1000);
+        if (adminToken) {
+            // 发送请求到服务器
+            const response = await fetch('/api/custom-letters', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${adminToken}`
+                },
+                body: JSON.stringify(dataToSend)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(`自定义字母已保存到服务器，所有用户将看到相同的排序`);
+                } else {
+                    showMessage(`保存到服务器失败: ${result.message || '未知错误'}`);
+                }
+            } else {
+                if (response.status === 401) {
+                    showMessage(`保存到服务器失败: 管理员令牌无效`);
+                } else {
+                    showMessage(`保存到服务器失败: ${response.status} ${response.statusText}`);
+                }
+            }
+        } else {
+            showMessage(`已取消保存到服务器，仅保存到本地`);
+        }
+    } catch (error) {
+        console.error('保存到服务器失败:', error);
+        showMessage(`保存到服务器失败: ${error.message || '网络错误'}`);
+    }
+    
+    // 重新排序和渲染歌曲列表
+    reorderAndRenderSongs();
+    
+    // 关闭模态框
+    closeCustomLetterModal();
 }
 
 // 重新排序和渲染歌曲列表
 function reorderAndRenderSongs() {
     // 重新排序songsData
-    songsData.sort((a, b) => {
-        // 如果两首歌在同一个播放列表中
-        if ((a.playlist || "默认歌单") === (b.playlist || "默认歌单")) {
-            // 如果两首歌都有数字前缀，按数字排序
-            if (a.orderNumber !== 9999 && b.orderNumber !== 9999) {
-                return a.orderNumber - b.orderNumber;
-            }
-            // 否则按字母和歌曲名排序
-            return a.sortKey.localeCompare(b.sortKey);
-        }
-        // 不同播放列表的歌曲按播放列表名称排序
-        return (a.playlist || "默认歌单").localeCompare(b.playlist || "默认歌单");
-    });
+    songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
     
     // 重新构建播放列表数据
     playlistsData = { "默认歌单": [] };
