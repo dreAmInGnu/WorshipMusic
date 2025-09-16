@@ -311,14 +311,35 @@ async function loadSongsData() {
         
         // The new API endpoint. This path works when deploying to Cloudflare Pages.
         // For local development, you might need to run the worker and adjust the URL.
+        console.log('开始请求API...');
         const response = await fetch('/api/songs');
+        console.log('API响应状态:', response.status, response.statusText);
+        
         if (!response.ok) {
             throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
         }
         
         console.log('API 响应成功，开始解析数据...');
-        const dynamicData = await response.json();
-        songsData = dynamicData.songs; // The API returns an object with a "songs" property
+        const responseText = await response.text();
+        console.log('API 响应内容长度:', responseText.length);
+        console.log('API 响应内容前100个字符:', responseText.substring(0, 100));
+        
+        try {
+            const dynamicData = JSON.parse(responseText);
+            console.log('JSON解析成功，数据结构:', Object.keys(dynamicData));
+            
+            if (!dynamicData.songs || !Array.isArray(dynamicData.songs)) {
+                console.error('API响应中没有songs数组:', dynamicData);
+                throw new Error('API响应格式不正确，缺少songs数组');
+            }
+            
+            songsData = dynamicData.songs; // The API returns an object with a "songs" property
+            console.log('成功获取歌曲数组，长度:', songsData.length);
+        } catch (jsonError) {
+            console.error('JSON解析失败:', jsonError);
+            console.error('响应内容:', responseText);
+            throw new Error('API响应格式不正确，无法解析JSON');
+        }
         
         console.log(`成功加载 ${songsData.length} 首歌曲`);
         
@@ -354,7 +375,6 @@ async function loadSongsData() {
             
             // 简单按照索引字母和歌曲名排序
             songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-            });
             console.log('歌曲排序完成');
             console.log('排序后前3首歌曲:', songsData.slice(0, 3).map(s => `${s.title} (${s.indexLetter})`));
         } catch (sortError) {

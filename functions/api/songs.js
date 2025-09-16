@@ -311,6 +311,33 @@ export async function onRequest(context) {
     
     console.log(`Processed ${songList.length} songs`);
     
+    // 确保每首歌曲都有必要的属性
+    songList.forEach(song => {
+      // 确保文件对象存在
+      if (!song.files) {
+        song.files = {};
+      }
+      
+      // 确保必要的属性存在
+      if (!song.id) {
+        song.id = `song_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        console.warn(`歌曲缺少ID，已自动生成: ${song.id}`);
+      }
+      
+      if (!song.title) {
+        song.title = song.folder || "未知歌曲";
+        console.warn(`歌曲缺少标题，已使用文件夹名称: ${song.title}`);
+      }
+      
+      if (!song.artist) {
+        song.artist = "未知艺术家";
+      }
+      
+      // 确保布尔属性正确
+      song.hasAccompaniment = !!song.hasAccompaniment;
+      song.isPlaylistItem = !!song.isPlaylistItem;
+    });
+    
     const data = {
       songs: songList,
       metadata: {
