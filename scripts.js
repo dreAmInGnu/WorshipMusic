@@ -66,6 +66,35 @@ const elements = {
     playlistNextBtn: null
 };
 
+// 测试API连接
+function testApiConnection() {
+    console.log('开始测试API连接...');
+    
+    // 测试custom-letters API
+    fetch('/api/custom-letters')
+        .then(response => {
+            console.log('API响应状态:', response.status, response.statusText);
+            return response.text();
+        })
+        .then(text => {
+            console.log('API响应内容长度:', text.length);
+            console.log('API响应内容前100个字符:', text.substring(0, 100));
+            
+            try {
+                const data = JSON.parse(text);
+                console.log('API响应解析成功:', data);
+                showMessage('API连接测试成功');
+            } catch (e) {
+                console.error('解析API响应失败:', e);
+                showError('API响应解析失败');
+            }
+        })
+        .catch(error => {
+            console.error('API连接测试失败:', error);
+            showError(`API连接测试失败: ${error.message}`);
+        });
+}
+
 // 初始化应用
 document.addEventListener('DOMContentLoaded', async function() {
     initializeElements();
@@ -88,6 +117,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 检查URL参数，自动播放指定歌曲
     checkUrlParameters();
+    
+    // 在开发环境中添加测试按钮
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const testButton = document.createElement('button');
+        testButton.textContent = '测试API连接';
+        testButton.style.position = 'fixed';
+        testButton.style.bottom = '10px';
+        testButton.style.right = '10px';
+        testButton.style.zIndex = '9999';
+        testButton.style.padding = '5px 10px';
+        testButton.style.backgroundColor = '#007bff';
+        testButton.style.color = 'white';
+        testButton.style.border = 'none';
+        testButton.style.borderRadius = '4px';
+        testButton.style.cursor = 'pointer';
+        
+        testButton.addEventListener('click', testApiConnection);
+        
+        document.body.appendChild(testButton);
+    }
 });
 
 // 初始化DOM元素引用
@@ -1010,7 +1059,8 @@ function resetSongLetter(songId, songTitle) {
     const song = songsData.find(s => s.id === songId);
     if (song) {
         const firstChar = song.title.charAt(0);
-        const autoLetter = getPinyinLetter(firstChar);
+        // 使用歌曲标题作为上下文参数
+        const autoLetter = getPinyinLetter(firstChar, song.title);
         song.indexLetter = autoLetter;
         song.sortKey = autoLetter.toLowerCase() + song.title.toLowerCase();
     }
@@ -1082,19 +1132,33 @@ async function loadCustomLetters() {
         try {
             console.log('尝试从服务器加载自定义字母...');
             const response = await fetch('/api/custom-letters');
+            console.log('服务器响应状态:', response.status, response.statusText);
             
             if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.data) {
-                    console.log('从服务器加载的自定义字母:', Object.keys(data.data).length);
+                const responseText = await response.text();
+                console.log('服务器响应内容长度:', responseText.length);
+                console.log('服务器响应内容前100个字符:', responseText.substring(0, 100));
+                
+                try {
+                    const data = JSON.parse(responseText);
+                    console.log('服务器响应解析结果:', data);
                     
-                    // 合并服务器和本地的自定义字母，优先使用服务器的数据
-                    const mergedLetters = { ...localLetters, ...data.data };
-                    
-                    // 更新本地存储
-                    localStorage.setItem('worshipMusic_customLetters', JSON.stringify(mergedLetters));
-                    
-                    return mergedLetters;
+                    if (data.success && data.data) {
+                        console.log('从服务器加载的自定义字母:', Object.keys(data.data).length);
+                        
+                        // 合并服务器和本地的自定义字母，优先使用服务器的数据
+                        const mergedLetters = { ...localLetters, ...data.data };
+                        
+                        // 更新本地存储
+                        localStorage.setItem('worshipMusic_customLetters', JSON.stringify(mergedLetters));
+                        
+                        return mergedLetters;
+                    } else {
+                        console.warn('服务器响应格式不正确:', data);
+                    }
+                } catch (parseError) {
+                    console.error('解析服务器响应失败:', parseError);
+                    console.error('响应内容:', responseText);
                 }
             } else {
                 console.warn('从服务器加载自定义字母失败:', response.status, response.statusText);
@@ -1192,7 +1256,8 @@ function resetSongLetterById(songId) {
         const song = songsData.find(s => s.id === songId);
         if (song) {
             const firstChar = song.title.charAt(0);
-            const autoLetter = getPinyinLetter(firstChar);
+            // 使用歌曲标题作为上下文参数
+            const autoLetter = getPinyinLetter(firstChar, song.title);
             song.indexLetter = autoLetter;
             song.sortKey = autoLetter.toLowerCase() + song.title.toLowerCase();
         }
@@ -2607,10 +2672,14 @@ async function saveCustomLetterToServer() {
             }
         };
         
+        console.log('准备发送到服务器的数据:', dataToSend);
+        
         // 获取管理员令牌（在实际应用中，这应该通过安全的方式获取）
         const adminToken = prompt('请输入管理员令牌以保存到服务器（取消则仅保存到本地）');
         
         if (adminToken) {
+            console.log('开始发送请求到服务器...');
+            
             // 发送请求到服务器
             const response = await fetch('/api/custom-letters', {
                 method: 'POST',
@@ -2621,8 +2690,21 @@ async function saveCustomLetterToServer() {
                 body: JSON.stringify(dataToSend)
             });
             
+            console.log('服务器响应状态:', response.status, response.statusText);
+            
+            const responseText = await response.text();
+            console.log('服务器响应内容:', responseText);
+            
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                console.error('解析服务器响应失败:', e);
+                showMessage(`保存到服务器失败: 无法解析服务器响应`);
+                return;
+            }
+            
             if (response.ok) {
-                const result = await response.json();
                 if (result.success) {
                     showMessage(`自定义字母已保存到服务器，所有用户将看到相同的排序`);
                 } else {

@@ -9,198 +9,78 @@
  * Authentication is required for write operations (POST, DELETE).
  */
 
-// Simple auth token for admin operations
-const ADMIN_TOKEN = 'worship-music-admin-token';
-
-// KV namespace binding name for storing custom letters
-const CUSTOM_LETTERS_KV = 'CUSTOM_LETTERS';
-
-// Key for storing custom letters in KV
-const LETTERS_KEY = 'song_index_letters';
-
 export async function onRequest(context) {
   const { request, env } = context;
-  
-  // Add CORS headers to all responses
-  const corsHeaders = {
+  const ADMIN_TOKEN = env.ADMIN_TOKEN; // 从环境变量获取管理员令牌
+
+  // CORS 预检请求
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
-  
-  // Handle OPTIONS request (CORS preflight)
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders
-    });
-  }
-  
+
   try {
-    // Check if KV namespace is available
-    if (!env[CUSTOM_LETTERS_KV]) {
-      return new Response(JSON.stringify({
-        error: 'KV namespace not configured',
-        message: 'The CUSTOM_LETTERS KV namespace is not bound to this worker.'
-      }), {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        }
-      });
-    }
-    
-    // Handle GET request - Retrieve custom letters
+    // GET 请求：获取所有自定义字母
     if (request.method === 'GET') {
-      const letters = await env[CUSTOM_LETTERS_KV].get(LETTERS_KEY, { type: 'json' }) || {};
-      
-      return new Response(JSON.stringify({
-        success: true,
-        data: letters
-      }), {
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders
+      const { keys } = await env.CUSTOM_LETTERS_KV.list();
+      const customLetters = {};
+      for (const key of keys) {
+        const value = await env.CUSTOM_LETTERS_KV.get(key.name, 'json');
+        if (value) {
+          customLetters[key.name] = value;
         }
-      });
+      }
+      return new Response(JSON.stringify({ success: true, data: customLetters }), { headers });
     }
-    
-    // Handle POST request - Save custom letters
+
+    // POST 或 DELETE 请求需要管理员权限
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ success: false, message: 'Unauthorized: Missing or invalid Authorization header' }), { status: 401, headers });
+    }
+    const token = authHeader.split(' ')[1];
+    if (token !== ADMIN_TOKEN) {
+      return new Response(JSON.stringify({ success: false, message: 'Unauthorized: Invalid admin token' }), { status: 401, headers });
+    }
+
+    // POST 请求：保存自定义字母
     if (request.method === 'POST') {
-      // Check authorization
-      const authHeader = request.headers.get('Authorization');
-      if (!authHeader || authHeader !== `Bearer ${ADMIN_TOKEN}`) {
-        return new Response(JSON.stringify({
-          error: 'Unauthorized',
-          message: 'Admin token required for this operation'
-        }), {
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        });
+      const data = await request.json();
+      for (const songId in data) {
+        await env.CUSTOM_LETTERS_KV.put(songId, JSON.stringify(data[songId]));
       }
-      
-      // Parse request body
-      const requestData = await request.json();
-      
-      // Validate request data
-      if (!requestData || typeof requestData !== 'object') {
-        return new Response(JSON.stringify({
-          error: 'Invalid data',
-          message: 'Request body must be a valid JSON object'
-        }), {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        });
-      }
-      
-      // Get existing letters
-      const existingLetters = await env[CUSTOM_LETTERS_KV].get(LETTERS_KEY, { type: 'json' }) || {};
-      
-      // Merge with new letters
-      const updatedLetters = { ...existingLetters, ...requestData };
-      
-      // Save to KV
-      await env[CUSTOM_LETTERS_KV].put(LETTERS_KEY, JSON.stringify(updatedLetters));
-      
-      return new Response(JSON.stringify({
-        success: true,
-        message: 'Custom letters saved successfully'
-      }), {
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        }
-      });
+      return new Response(JSON.stringify({ success: true, message: 'Custom letters saved' }), { headers });
     }
-    
-    // Handle DELETE request - Delete custom letters
+
+    // DELETE 请求：删除自定义字母
     if (request.method === 'DELETE') {
-      // Check authorization
-      const authHeader = request.headers.get('Authorization');
-      if (!authHeader || authHeader !== `Bearer ${ADMIN_TOKEN}`) {
-        return new Response(JSON.stringify({
-          error: 'Unauthorized',
-          message: 'Admin token required for this operation'
-        }), {
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        });
+      const url = new URL(request.url);
+      const songId = url.searchParams.get('songId');
+      if (songId) {
+        await env.CUSTOM_LETTERS_KV.delete(songId);
+        return new Response(JSON.stringify({ success: true, message: `Custom letter for ${songId} deleted` }), { headers });
+      } else {
+        return new Response(JSON.stringify({ success: false, message: 'Missing songId for DELETE request' }), { status: 400, headers });
       }
-      
-      // Parse request body to get song IDs to delete
-      const requestData = await request.json();
-      
-      // Validate request data
-      if (!requestData || !Array.isArray(requestData.songIds)) {
-        return new Response(JSON.stringify({
-          error: 'Invalid data',
-          message: 'Request body must contain a songIds array'
-        }), {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        });
-      }
-      
-      // Get existing letters
-      const existingLetters = await env[CUSTOM_LETTERS_KV].get(LETTERS_KEY, { type: 'json' }) || {};
-      
-      // Remove specified song IDs
-      const { songIds } = requestData;
-      songIds.forEach(id => {
-        delete existingLetters[id];
-      });
-      
-      // Save updated letters
-      await env[CUSTOM_LETTERS_KV].put(LETTERS_KEY, JSON.stringify(existingLetters));
-      
-      return new Response(JSON.stringify({
-        success: true,
-        message: `Deleted custom letters for ${songIds.length} songs`
-      }), {
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        }
-      });
     }
-    
-    // If we get here, the request method is not supported
-    return new Response(JSON.stringify({
-      error: 'Method not allowed',
-      message: `The ${request.method} method is not supported for this endpoint`
-    }), {
-      status: 405,
-      headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders
-      }
-    });
-    
-  } catch (error) {
-    console.error('Error handling request:', error);
-    
-    return new Response(JSON.stringify({
-      error: 'Internal server error',
-      message: error.message || 'An unexpected error occurred'
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders
-      }
-    });
+
+    return new Response(JSON.stringify({ success: false, message: 'Method Not Allowed' }), { status: 405, headers });
+
+  } catch (e) {
+    console.error('API error:', e);
+    return new Response(JSON.stringify({ success: false, message: e.message, stack: e.stack }), { status: 500, headers });
   }
 }
