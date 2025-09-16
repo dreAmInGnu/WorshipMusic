@@ -76,74 +76,147 @@ export async function onRequest(context) {
     console.log(`Found ${files.length} files in R2 bucket`);
 
     // 2. 分析文件结构，识别播放列表和歌曲
-    const songsMap = new Map(); // 存储所有歌曲
-    const folderStructure = new Map(); // 存储文件夹结构
-    const nestedFolders = new Set(); // 存储包含子文件夹的文件夹
     
-    // 第一步：分析文件结构，找出所有嵌套文件夹
+    // 第一步：统计每个文件夹中的MP3文件数量，识别播放列表
+    const folderFiles = new Map(); // 存储每个文件夹中的文件
+    const folderMp3Count = new Map(); // 存储每个文件夹中的MP3文件数量
+    const playlistFolders = new Set(); // 存储被识别为播放列表的文件夹
+    
     for (const file of files) {
       const parts = file.key.split('/');
       if (parts.length < 2) continue; // 忽略根目录文件
       
-      if (parts.length > 2) {
-        // 这是嵌套结构
-        const topFolder = parts[0];
-        nestedFolders.add(topFolder);
+      const folderName = parts[0];
+      const fileName = parts[1];
+      
+      // 初始化文件夹的文件列表
+      if (!folderFiles.has(folderName)) {
+        folderFiles.set(folderName, []);
+        folderMp3Count.set(folderName, 0);
+      }
+      
+      // 添加文件到文件夹的文件列表
+      folderFiles.get(folderName).push({
+        fileName: fileName,
+        isMP3: fileName.endsWith('.mp3')
+      });
+      
+      // 统计MP3文件数量
+      if (fileName.endsWith('.mp3')) {
+        folderMp3Count.set(folderName, folderMp3Count.get(folderName) + 1);
       }
     }
     
-    console.log(`Found ${nestedFolders.size} top-level folders with nested structure`);
+    // 识别播放列表文件夹（包含多个MP3文件的文件夹）
+    for (const [folderName, mp3Count] of folderMp3Count.entries()) {
+      if (mp3Count > 1) {
+        playlistFolders.add(folderName);
+        console.log(`Identified playlist folder: ${folderName} with ${mp3Count} MP3 files`);
+      }
+    }
     
-    // 第二步：处理所有文件
+    console.log(`Found ${playlistFolders.size} folders with multiple MP3 files (playlists)`);
+    
+    // 第二步：处理所有文件，创建歌曲数据
+    const songsMap = new Map(); // 存储所有歌曲
+    
     for (const file of files) {
       const parts = file.key.split('/');
       if (parts.length < 2) continue; // 忽略根目录文件
       
-      const topFolder = parts[0];
+      const folderName = parts[0];
+      const fileName = parts[1];
       
-      if (nestedFolders.has(topFolder)) {
+      if (playlistFolders.has(folderName)) {
         // 这是播放列表文件夹中的文件
-        if (parts.length >= 3) {
+        if (fileName.endsWith('.mp3')) {
           // 这是播放列表中的歌曲文件
-          const playlistName = topFolder;
-          const songFolder = parts[1];
-          const fileName = parts[2];
+          const isAccompaniment = fileName.includes('[伴奏]');
           
-          // 生成唯一ID
-          const songId = `${playlistName}-${songFolder}`.toLowerCase().replace(/\s+/g, '-');
+          // 从MP3文件名生成歌曲名（去掉扩展名和可能的[伴奏]标记）
+          let songTitle = fileName.replace(/\.mp3$/, '');
+          songTitle = songTitle.replace(/\[伴奏\]/, '').trim();
           
-          // 创建或更新歌曲数据
-          if (!songsMap.has(songId)) {
-            songsMap.set(songId, {
-              id: songId,
-              title: songFolder, // 使用子文件夹名作为歌曲标题
-              artist: "未知艺术家",
-              folder: `${playlistName}/${songFolder}`, // 完整路径
-              playlist: playlistName, // 归属于播放列表
-              hasAccompaniment: false,
-              files: {},
-              isInNestedFolder: true // 标记为嵌套文件夹中的歌曲
-            });
-            console.log(`Found song in playlist: ${playlistName}/${songFolder}`);
+          console.log(`Processing MP3 file: ${fileName}, isAccompaniment: ${isAccompaniment}, songTitle: ${songTitle}`);
+          
+          // 为伴奏和原唱生成相同的ID，这样它们会被识别为同一首歌的不同版本
+          const baseId = `${folderName}-${songTitle}`.toLowerCase().replace(/\s+/g, '-');
+          
+          // 如果是伴奏文件，我们尝试找到对应的原唱条目并更新它
+          if (isAccompaniment) {
+            // 查找是否已经有对应的原唱条目
+            let found = false;
+            for (const [id, song] of songsMap.entries()) {
+              if (song.folder === folderName && song.title === songTitle) {
+                // 找到对应的原唱条目，更新伴奏信息
+                song.files.accompaniment = fileName;
+                song.hasAccompaniment = true;
+                console.log(`Updated accompaniment for song: ${songTitle} in playlist: ${folderName}`);
+                found = true;
+                break;
+              }
+            }
+            
+            // 如果没有找到对应的原唱条目，创建一个新条目
+            if (!found) {
+              const songId = baseId;
+              songsMap.set(songId, {
+                id: songId,
+                title: songTitle,
+                artist: "未知艺术家",
+                folder: folderName,
+                playlist: folderName,
+                hasAccompaniment: true,
+                files: {
+                  accompaniment: fileName
+                },
+                isPlaylistItem: true
+              });
+              console.log(`Created new song entry for accompaniment: ${songTitle} in playlist: ${folderName}`);
+            }
+          } else {
+            // 这是原唱文件，直接创建或更新条目
+            const songId = baseId;
+            
+            if (!songsMap.has(songId)) {
+              // 创建新条目
+              songsMap.set(songId, {
+                id: songId,
+                title: songTitle,
+                artist: "未知艺术家",
+                folder: folderName,
+                playlist: folderName,
+                hasAccompaniment: false,
+                files: {
+                  original: fileName
+                },
+                isPlaylistItem: true
+              });
+              console.log(`Created new song entry: ${songTitle} in playlist: ${folderName}`);
+            } else {
+              // 更新现有条目
+              const songData = songsMap.get(songId);
+              songData.files.original = fileName;
+              console.log(`Updated original for song: ${songTitle} in playlist: ${folderName}`);
+            }
           }
           
-          const songData = songsMap.get(songId);
+          // 查找对应的歌谱文件
+          const sheetFiles = folderFiles.get(folderName).filter(f => 
+            (f.fileName.endsWith('.jpg') || f.fileName.endsWith('.png') || f.fileName.endsWith('.jpeg')) &&
+            f.fileName.startsWith(songTitle)
+          );
           
-          // 识别文件类型
-          if (fileName.includes('[伴奏].mp3')) {
-            songData.files.accompaniment = fileName;
-            songData.hasAccompaniment = true;
-          } else if (fileName.endsWith('.mp3')) {
-            songData.files.original = fileName;
-          } else if (fileName.endsWith('.jpg') || fileName.endsWith('.png') || fileName.endsWith('.jpeg')) {
-            songData.files.sheet = fileName;
+          if (sheetFiles.length > 0) {
+            const songId = baseId;
+            if (songsMap.has(songId)) {
+              songsMap.get(songId).files.sheet = sheetFiles[0].fileName;
+              console.log(`Added sheet music for song: ${songTitle} in playlist: ${folderName}`);
+            }
           }
         }
       } else {
-        // 这是普通歌曲文件夹
-        const folderName = parts[0];
-        const fileName = parts[1];
-        
+        // 这是普通歌曲文件夹（只有一个MP3文件）
         if (!songsMap.has(folderName)) {
           // 解析歌单前缀
           let displayTitle = folderName;
@@ -165,7 +238,7 @@ export async function onRequest(context) {
             playlist: playlistName,
             hasAccompaniment: false,
             files: {},
-            isInNestedFolder: false // 标记为非嵌套文件夹中的歌曲
+            isPlaylistItem: false // 标记为非播放列表中的歌曲
           });
         }
         
