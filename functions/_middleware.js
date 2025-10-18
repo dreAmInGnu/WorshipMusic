@@ -51,12 +51,16 @@ export async function onRequest({ request, env, next }) {
   
   try {
     // 获取Range头用于断点续传
-    const range = request.headers.get('Range') || undefined;
+    // 注意：R2 的 get() 方法期望 range 参数是 R2Range 对象或 Headers 对象
+    // 我们传入整个 request.headers，让 R2 自己处理
+    const rangeHeader = request.headers.get('Range');
     
-    console.log('[Middleware] 从R2获取对象, key:', key, 'range:', range);
+    console.log('[Middleware] 从R2获取对象, key:', key, 'range header:', rangeHeader);
     
-    // 从R2获取对象
-    const obj = await env.SONG_BUCKET.get(key, { range });
+    // 从R2获取对象 - 如果有 Range 请求，传入 request.headers
+    const obj = rangeHeader 
+      ? await env.SONG_BUCKET.get(key, { range: request.headers })
+      : await env.SONG_BUCKET.get(key);
     
     if (!obj) {
       console.error('[Middleware] R2中未找到文件:', key);
@@ -100,9 +104,10 @@ export async function onRequest({ request, env, next }) {
       headers.set('Content-Disposition', `attachment; filename="${filename}"`);
     }
     
-    // 返回响应
+    // 返回响应 - 暂时统一使用 200 状态码
+    // 不管是否有 range 请求，都返回 200（简化处理）
     return new Response(obj.body, {
-      status: obj.range ? 206 : 200, // 206 = Partial Content for range requests
+      status: 200,
       headers: headers,
     });
     
