@@ -838,6 +838,14 @@ async function playCurrentSong(type) {
     currentAudioType = type;
     const audioUrl = buildAudioUrl(currentSong, type);
     
+    console.log('=== 音频加载调试信息 ===');
+    console.log('当前域名:', window.location.origin);
+    console.log('音频URL:', audioUrl);
+    console.log('是否是相对路径:', audioUrl.startsWith('/'));
+    if (audioUrl.startsWith('/')) {
+        console.log('完整URL:', new URL(audioUrl, window.location.origin).href);
+    }
+    
     // 设置新的音频源并立即重置播放位置
     elements.audioPlayer.src = audioUrl;
     elements.audioPlayer.currentTime = 0; // 立即重置，避免竞态条件
@@ -2108,6 +2116,12 @@ function formatTime(seconds) {
 function handleAudioError(e) {
     const audio = elements.audioPlayer;
     let errorMessage = '音频文件无法播放。';
+    
+    console.error('=== 音频错误详细信息 ===');
+    console.error('错误事件:', e);
+    console.error('音频URL:', audio.src);
+    console.error('音频readyState:', audio.readyState);
+    console.error('音频networkState:', audio.networkState);
     
     if (audio.error) {
         console.error('音频播放错误对象:', audio.error);

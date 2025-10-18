@@ -11,15 +11,23 @@
 export async function onRequest({ request, env, next }) {
   // 从URL路径中提取文件键（移除开头的斜杠）
   const url = new URL(request.url);
-  const key = url.pathname.slice(1); // 移除开头的 '/'
+  // 解码URL路径以处理中文文件名
+  const key = decodeURIComponent(url.pathname.slice(1)); // 移除开头的 '/' 并解码
+  
+  console.log('[Middleware] 请求路径:', url.pathname);
+  console.log('[Middleware] 解码后的key:', key);
   
   // 如果是API请求、根路径或本地静态文件（HTML、CSS、JS、图标），继续处理
   // 只有音频等媒体文件需要通过R2代理
   if (key.startsWith('api/') || key === '' || key === 'index.html' || 
       key.endsWith('.html') || key.endsWith('.css') || key.endsWith('.js') ||
-      key.startsWith('libs/') || key.startsWith('icons/')) {
+      key.startsWith('libs/') || key.startsWith('icons/') ||
+      key.endsWith('.json') || key.endsWith('.md') || key.startsWith('_')) {
+    console.log('[Middleware] 跳过静态文件，交给next处理');
     return next();
   }
+  
+  console.log('[Middleware] 尝试从R2获取文件:', key);
   
   // 处理CORS预检请求
   if (request.method === 'OPTIONS') {
@@ -37,6 +45,7 @@ export async function onRequest({ request, env, next }) {
   
   // 检查R2绑定
   if (!env.SONG_BUCKET) {
+    console.error('[Middleware] R2 bucket未配置！');
     return new Response('R2 bucket not configured', { status: 500 });
   }
   
@@ -44,12 +53,17 @@ export async function onRequest({ request, env, next }) {
     // 获取Range头用于断点续传
     const range = request.headers.get('Range') || undefined;
     
+    console.log('[Middleware] 从R2获取对象, key:', key, 'range:', range);
+    
     // 从R2获取对象
     const obj = await env.SONG_BUCKET.get(key, { range });
     
     if (!obj) {
-      return new Response('File not found', { status: 404 });
+      console.error('[Middleware] R2中未找到文件:', key);
+      return new Response('File not found in R2: ' + key, { status: 404 });
     }
+    
+    console.log('[Middleware] R2文件找到, size:', obj.size, 'contentType:', obj.httpMetadata?.contentType);
     
     // 构建响应头
     const headers = new Headers();
