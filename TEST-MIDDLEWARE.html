@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Middleware 测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 3px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Middleware 诊断工具</h1>
+    
+    <div class="test-section">
+        <h2>测试 1: API 端点（应该返回歌曲列表）</h2>
+        <button onclick="testAPI()">测试 /api/songs</button>
+        <div id="api-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 2: 直接访问音频文件（测试 middleware）</h2>
+        <input type="text" id="audioPath" placeholder="例如: 爱，我愿意/爱，我愿意.mp3" style="width: 400px; padding: 5px;">
+        <button onclick="testAudioFile()">测试音频文件</button>
+        <div id="audio-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 3: 音频播放（完整测试）</h2>
+        <button onclick="testAudioPlayback()">测试播放</button>
+        <audio id="testAudio" controls crossorigin="anonymous" style="width: 100%; margin-top: 10px;"></audio>
+        <div id="playback-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 4: CORS 预检请求</h2>
+        <button onclick="testCORSPreflight()">测试 OPTIONS 请求</button>
+        <div id="cors-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/api/songs');
+                const data = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ API 测试成功！
+状态码: ${response.status}
+歌曲数量: ${data.songs?.length || 0}
+前3首歌曲: ${data.songs?.slice(0, 3).map(s => s.title).join(', ')}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ API 测试失败: ${error.message}`;
+            }
+        }
+        
+        async function testAudioFile() {
+            const path = document.getElementById('audioPath').value || '爱，我愿意/爱，我愿意.mp3';
+            const resultDiv = document.getElementById('audio-result');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const url = `/${path}`;
+                console.log('测试 URL:', url);
+                
+                const response = await fetch(url, {
+                    method: 'HEAD',
+                    mode: 'cors'
+                });
+                
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                resultDiv.textContent = `${response.ok ? '✅' : '❌'} Middleware 测试结果:
+URL: ${url}
+状态码: ${response.status} ${response.statusText}
+Content-Type: ${headers['content-type'] || '未设置'}
+Access-Control-Allow-Origin: ${headers['access-control-allow-origin'] || '未设置'}
+Accept-Ranges: ${headers['accept-ranges'] || '未设置'}
+
+完整响应头:
+${JSON.stringify(headers, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 测试失败: ${error.message}`;
+            }
+        }
+        
+        async function testAudioPlayback() {
+            const path = document.getElementById('audioPath').value || '爱，我愿意/爱，我愿意.mp3';
+            const resultDiv = document.getElementById('playback-result');
+            const audio = document.getElementById('testAudio');
+            
+            resultDiv.textContent = '正在测试播放...';
+            
+            try {
+                const url = `/${path}`;
+                console.log('播放测试 URL:', url);
+                
+                audio.src = url;
+                
+                audio.onerror = (e) => {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 音频加载失败:
+错误代码: ${audio.error?.code}
+错误信息: ${audio.error?.message || '未知错误'}
+URL: ${url}
+
+可能原因:
+- Middleware 没有正确返回文件
+- R2 中文件不存在
+- CORS 配置问题`;
+                };
+                
+                audio.onloadedmetadata = () => {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 音频加载成功！
+URL: ${url}
+时长: ${audio.duration.toFixed(2)} 秒
+可以播放: 是
+
+点击上方播放器测试播放`;
+                };
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 测试失败: ${error.message}`;
+            }
+        }
+        
+        async function testCORSPreflight() {
+            const path = document.getElementById('audioPath').value || '爱，我愿意/爱，我愿意.mp3';
+            const resultDiv = document.getElementById('cors-result');
+            resultDiv.textContent = '正在测试 CORS...';
+            
+            try {
+                const url = `/${path}`;
+                const response = await fetch(url, {
+                    method: 'OPTIONS'
+                });
+                
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                resultDiv.textContent = `${response.ok ? '✅' : '❌'} CORS 预检测试:
+URL: ${url}
+状态码: ${response.status}
+Access-Control-Allow-Origin: ${headers['access-control-allow-origin'] || '❌ 未设置'}
+Access-Control-Allow-Methods: ${headers['access-control-allow-methods'] || '❌ 未设置'}
+Access-Control-Allow-Headers: ${headers['access-control-allow-headers'] || '❌ 未设置'}
+
+完整响应头:
+${JSON.stringify(headers, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ CORS 测试失败: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
+

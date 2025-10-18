@@ -86,8 +86,18 @@ export async function onRequest({ request, env, next }) {
       headers.set('Content-Length', obj.size.toString());
     }
     
+    // 修复 Content-Range 头的设置
     if (obj.range) {
-      headers.set('Content-Range', obj.range);
+      // obj.range 可能是对象，需要正确处理
+      if (typeof obj.range === 'string') {
+        headers.set('Content-Range', obj.range);
+      } else if (obj.range && obj.range.offset !== undefined && obj.range.length !== undefined) {
+        // R2 range 对象格式: {offset: number, length: number}
+        const start = obj.range.offset;
+        const end = obj.range.offset + obj.range.length - 1;
+        const total = obj.size || '*';
+        headers.set('Content-Range', `bytes ${start}-${end}/${total}`);
+      }
     }
     
     // ⑤ 缓存控制 - 针对不同文件类型设置不同缓存时间
