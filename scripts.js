@@ -1474,10 +1474,11 @@ function getPinyinLetter(char, context = '') {
     return '#';
 }
 
-// 构建音频URL
+// 构建音频URL - 使用相对路径通过middleware代理访问R2
 function buildAudioUrl(song, type) {
     const fileName = type === 'original' ? song.files.original : song.files.accompaniment;
-    const audioUrl = `${R2_BASE_URL}/${song.folder}/${fileName}`;
+    // 使用相对路径，让_middleware.js代理R2访问（内置CORS支持）
+    const audioUrl = `/${song.folder}/${fileName}`;
     console.log(`构建音频URL: ${audioUrl}`);
     console.log(`歌曲信息:`, {
         title: song.title,
@@ -1891,7 +1892,8 @@ function loadSheetMusic() {
         return;
     }
     
-    const sheetUrl = `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.sheet}`;
+    // 使用相对路径通过middleware代理访问
+    const sheetUrl = `/${currentSong.folder}/${currentSong.files.sheet}`;
     elements.sheetDisplay.innerHTML = `
         <img src="${sheetUrl}" alt="${currentSong.title} 歌谱" class="sheet-image" 
              onerror="this.parentElement.innerHTML='<div class=\\'sheet-placeholder\\'><p>🎼</p><p>歌谱加载失败</p></div>'">
@@ -1908,17 +1910,17 @@ async function downloadSongZip() {
         const zip = new JSZip();
         const folder = zip.folder(currentSong.title);
         
-        // 下载原唱
-        await addFileToZip(folder, currentSong.files.original, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.original}`);
+        // 下载原唱（使用相对路径）
+        await addFileToZip(folder, currentSong.files.original, `/${currentSong.folder}/${currentSong.files.original}`);
         
         // 下载伴奏（如果有）
         if (currentSong.hasAccompaniment && currentSong.files.accompaniment) {
-            await addFileToZip(folder, currentSong.files.accompaniment, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.accompaniment}`);
+            await addFileToZip(folder, currentSong.files.accompaniment, `/${currentSong.folder}/${currentSong.files.accompaniment}`);
         }
         
         // 下载歌谱
         if (currentSong.files.sheet) {
-            await addFileToZip(folder, currentSong.files.sheet, `${R2_BASE_URL}/${currentSong.folder}/${currentSong.files.sheet}`);
+            await addFileToZip(folder, currentSong.files.sheet, `/${currentSong.folder}/${currentSong.files.sheet}`);
         }
         
         // 生成ZIP文件并下载
@@ -1942,23 +1944,23 @@ async function downloadSingleFile(type) {
 
     let fileUrl, fileName;
     const song = currentSong;
-    const baseUrl = R2_BASE_URL;
+    // 使用相对路径通过middleware代理
 
     switch (type) {
         case 'original':
             if (!song.files.original) { showError('该歌曲没有歌曲文件'); return; }
             fileName = song.files.original;
-            fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
+            fileUrl = `/${song.folder}/${fileName}`;
             break;
         case 'accompaniment':
             if (!song.hasAccompaniment || !song.files.accompaniment) { showError('该歌曲没有伴奏文件'); return; }
             fileName = song.files.accompaniment;
-            fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
+            fileUrl = `/${song.folder}/${fileName}`;
             break;
         case 'sheet':
             if (!song.files.sheet) { showError('该歌曲没有歌谱文件'); return; }
             fileName = song.files.sheet;
-            fileUrl = `${baseUrl}/${song.folder}/${fileName}`;
+            fileUrl = `/${song.folder}/${fileName}`;
 
             try {
                 showLoading(true);
