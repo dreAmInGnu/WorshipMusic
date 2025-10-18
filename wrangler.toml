@@ -23,7 +23,7 @@ binding = "SONG_BUCKET"
 bucket_name = "worship"
 
 [env.production.vars]
-R2_BASE_URL = "https://r2.windsmaker.com"
+R2_BASE_URL = "https://r2.worshipmusic.windsmaker.com"
 
 [env.preview.vars]  
-R2_BASE_URL = "https://r2.windsmaker.com" 
+R2_BASE_URL = "https://r2.worshipmusic.windsmaker.com" 

@@ -1,6 +1,6 @@
 // 全局变量
 let songsData = null;
-const R2_BASE_URL = "https://r2.windsmaker.com";
+const R2_BASE_URL = "https://r2.worshipmusic.windsmaker.com";
 let currentSong = null;
 let currentPlaylist = [];
 let currentIndex = 0;

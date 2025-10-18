@@ -934,13 +934,11 @@ function editSongLetter(songId, songTitle, currentLetter) {
     document.body.appendChild(dialog);
     
     // 聚焦到输入框
-    setTimeout(() => {
-        const input = document.getElementById('letterInput');
-        if (input) {
-            input.focus();
-            input.select();
-        }
-    }, 100);
+    const input = document.getElementById('letterInput');
+    if (input) {
+        input.focus();
+        input.select();
+    }
     
     // 添加键盘事件
     document.addEventListener('keydown', handleLetterEditKeydown);
@@ -1124,50 +1122,9 @@ function getCustomLetters() {
 // 加载自定义字母
 async function loadCustomLetters() {
     try {
-        // 从localStorage加载自定义字母
+        // 只从localStorage加载自定义字母
         const localLetters = getCustomLetters();
         console.log('从本地加载的自定义字母:', Object.keys(localLetters).length);
-        
-        // 尝试从服务器加载自定义字母
-        try {
-            console.log('尝试从服务器加载自定义字母...');
-            const response = await fetch('/api/custom-letters');
-            console.log('服务器响应状态:', response.status, response.statusText);
-            
-            if (response.ok) {
-                const responseText = await response.text();
-                console.log('服务器响应内容长度:', responseText.length);
-                console.log('服务器响应内容前100个字符:', responseText.substring(0, 100));
-                
-                try {
-                    const data = JSON.parse(responseText);
-                    console.log('服务器响应解析结果:', data);
-                    
-                    if (data.success && data.data) {
-                        console.log('从服务器加载的自定义字母:', Object.keys(data.data).length);
-                        
-                        // 合并服务器和本地的自定义字母，优先使用服务器的数据
-                        const mergedLetters = { ...localLetters, ...data.data };
-                        
-                        // 更新本地存储
-                        localStorage.setItem('worshipMusic_customLetters', JSON.stringify(mergedLetters));
-                        
-                        return mergedLetters;
-                    } else {
-                        console.warn('服务器响应格式不正确:', data);
-                    }
-                } catch (parseError) {
-                    console.error('解析服务器响应失败:', parseError);
-                    console.error('响应内容:', responseText);
-                }
-            } else {
-                console.warn('从服务器加载自定义字母失败:', response.status, response.statusText);
-            }
-        } catch (serverError) {
-            console.warn('从服务器加载自定义字母时发生错误:', serverError);
-        }
-        
-        // 如果服务器加载失败，返回本地数据
         return localLetters;
     } catch (e) {
         console.error('加载自定义字母失败:', e);
@@ -2193,11 +2150,6 @@ function showLoading(show) {
 function showError(message) {
     elements.errorMessage.textContent = message;
     elements.errorToast.style.display = 'flex';
-    
-    // 3秒后自动隐藏
-    setTimeout(() => {
-        hideError();
-    }, 3000);
 }
 
 // 隐藏错误消息
@@ -2270,14 +2222,8 @@ function setupCoverImage() {
     // 图片成功加载时的处理
     coverImage.addEventListener('load', function() {
         console.log('封面图片加载成功');
-        this.style.opacity = '0';
         this.style.display = 'block';
-        
-        // 淡入效果
-        setTimeout(() => {
-            this.style.transition = 'opacity 0.5s ease';
-            this.style.opacity = '1';
-        }, 100);
+        this.style.opacity = '1';
     });
 }
 
@@ -2459,13 +2405,12 @@ function showMobilePlayPrompt(songTitle) {
     // 添加到页面
     document.body.appendChild(prompt);
     
-    // 5秒后自动消失
+    // 3秒后自动消失
     setTimeout(() => {
         if (prompt.parentNode) {
-            prompt.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => prompt.remove(), 300);
+            prompt.remove();
         }
-    }, 5000);
+    }, 3000);
 }
 
 
@@ -2540,7 +2485,6 @@ function initCustomLetterModal() {
     const closeBtn = document.getElementById('closeCustomLetterModal');
     const saveBtn = document.getElementById('saveCustomLetterBtn');
     const cancelBtn = document.getElementById('cancelCustomLetterBtn');
-    const saveToServerBtn = document.getElementById('saveToServerBtn');
     const letterButtons = document.querySelectorAll('.letter-btn');
     const customLetterInput = document.getElementById('customLetterInput');
     
@@ -2552,9 +2496,6 @@ function initCustomLetterModal() {
     
     // 保存按钮
     saveBtn.addEventListener('click', saveCustomLetter);
-    
-    // 保存到服务器按钮
-    saveToServerBtn.addEventListener('click', saveCustomLetterToServer);
     
     // 字母按钮点击事件
     letterButtons.forEach(button => {
@@ -2635,102 +2576,7 @@ function saveCustomLetter() {
     showMessage(`已将歌曲 "${currentEditingSong.title}" 的索引字母设置为 "${newLetter}"`);
 }
 
-// 保存自定义字母到服务器
-async function saveCustomLetterToServer() {
-    if (!currentEditingSong) return;
-    
-    const newLetter = document.getElementById('customLetterInput').value.toUpperCase();
-    if (!newLetter) return;
-    
-    // 获取现有的自定义字母
-    const customLetters = getCustomLetters();
-    
-    // 更新或添加自定义字母
-    customLetters[currentEditingSong.id] = {
-        letter: newLetter,
-        title: currentEditingSong.title,
-        timestamp: Date.now()
-    };
-    
-    // 保存到本地存储
-    localStorage.setItem('worshipMusic_customLetters', JSON.stringify(customLetters));
-    
-    // 更新歌曲的索引字母
-    currentEditingSong.indexLetter = newLetter;
-    currentEditingSong.sortKey = newLetter.toLowerCase() + currentEditingSong.title.toLowerCase();
-    
-    // 尝试将自定义字母保存到服务器
-    showMessage(`正在将自定义字母保存到服务器...`);
-    
-    try {
-        // 准备要发送到服务器的数据
-        const dataToSend = {
-            [currentEditingSong.id]: {
-                letter: newLetter,
-                title: currentEditingSong.title,
-                timestamp: Date.now()
-            }
-        };
-        
-        console.log('准备发送到服务器的数据:', dataToSend);
-        
-        // 获取管理员令牌（在实际应用中，这应该通过安全的方式获取）
-        const adminToken = prompt('请输入管理员令牌以保存到服务器（取消则仅保存到本地）');
-        
-        if (adminToken) {
-            console.log('开始发送请求到服务器...');
-            
-            // 发送请求到服务器
-            const response = await fetch('/api/custom-letters', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${adminToken}`
-                },
-                body: JSON.stringify(dataToSend)
-            });
-            
-            console.log('服务器响应状态:', response.status, response.statusText);
-            
-            const responseText = await response.text();
-            console.log('服务器响应内容:', responseText);
-            
-            let result;
-            try {
-                result = JSON.parse(responseText);
-            } catch (e) {
-                console.error('解析服务器响应失败:', e);
-                showMessage(`保存到服务器失败: 无法解析服务器响应`);
-                return;
-            }
-            
-            if (response.ok) {
-                if (result.success) {
-                    showMessage(`自定义字母已保存到服务器，所有用户将看到相同的排序`);
-                } else {
-                    showMessage(`保存到服务器失败: ${result.message || '未知错误'}`);
-                }
-            } else {
-                if (response.status === 401) {
-                    showMessage(`保存到服务器失败: 管理员令牌无效`);
-                } else {
-                    showMessage(`保存到服务器失败: ${response.status} ${response.statusText}`);
-                }
-            }
-        } else {
-            showMessage(`已取消保存到服务器，仅保存到本地`);
-        }
-    } catch (error) {
-        console.error('保存到服务器失败:', error);
-        showMessage(`保存到服务器失败: ${error.message || '网络错误'}`);
-    }
-    
-    // 重新排序和渲染歌曲列表
-    reorderAndRenderSongs();
-    
-    // 关闭模态框
-    closeCustomLetterModal();
-}
+// 保存自定义字母到服务器功能已移除
 
 // 重新排序和渲染歌曲列表
 function reorderAndRenderSongs() {

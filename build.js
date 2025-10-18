@@ -111,7 +111,7 @@ function loadEnvVariables() {
     }
     
     // 回退到系统环境变量
-    env.R2_BASE_URL = env.R2_BASE_URL || process.env.R2_BASE_URL || 'https://r2.windsmaker.com';
+    env.R2_BASE_URL = env.R2_BASE_URL || process.env.R2_BASE_URL || 'https://r2.worshipmusic.windsmaker.com';
     
     return env;
 }
@@ -148,7 +148,13 @@ function build() {
         let scriptsContent = fs.readFileSync(scriptsPath, 'utf8');
         
         // 替换R2_BASE_URL为占位符（如果还没替换）
-        if (scriptsContent.includes('https://r2.windsmaker.com')) {
+        if (scriptsContent.includes('https://r2.worshipmusic.windsmaker.com')) {
+            scriptsContent = scriptsContent.replace(
+                /const R2_BASE_URL = "https:\/\/r2\.worshipmusic\.windsmaker\.com";/,
+                'const R2_BASE_URL = "{{R2_BASE_URL}}";'
+            );
+        } else if (scriptsContent.includes('https://r2.windsmaker.com')) {
+            // 兼容旧URL
             scriptsContent = scriptsContent.replace(
                 /const R2_BASE_URL = "https:\/\/r2\.windsmaker\.com";/,
                 'const R2_BASE_URL = "{{R2_BASE_URL}}";'
