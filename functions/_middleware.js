@@ -86,19 +86,9 @@ export async function onRequest({ request, env, next }) {
       headers.set('Content-Length', obj.size.toString());
     }
     
-    // 修复 Content-Range 头的设置
-    if (obj.range) {
-      // obj.range 可能是对象，需要正确处理
-      if (typeof obj.range === 'string') {
-        headers.set('Content-Range', obj.range);
-      } else if (obj.range && obj.range.offset !== undefined && obj.range.length !== undefined) {
-        // R2 range 对象格式: {offset: number, length: number}
-        const start = obj.range.offset;
-        const end = obj.range.offset + obj.range.length - 1;
-        const total = obj.size || '*';
-        headers.set('Content-Range', `bytes ${start}-${end}/${total}`);
-      }
-    }
+    // 处理 Content-Range 头（简化版本，不设置可能有问题的头）
+    // R2 的 obj.range 可能是对象，暂时跳过它的设置
+    // 浏览器通过 Content-Length 和 Accept-Ranges 也能正常工作
     
     // ⑤ 缓存控制 - 针对不同文件类型设置不同缓存时间
     const cacheControl = getCacheControl(key);
@@ -118,7 +108,16 @@ export async function onRequest({ request, env, next }) {
     
   } catch (error) {
     console.error('Error serving file from R2:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    console.error('Error stack:', error.stack);
+    console.error('Error message:', error.message);
+    console.error('Key was:', key);
+    return new Response(`Internal Server Error: ${error.message}`, { 
+      status: 500,
+      headers: {
+        'Content-Type': 'text/plain',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
   }
 }
 
