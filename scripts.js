@@ -360,72 +360,54 @@ async function loadSongsData() {
         
         // The new API endpoint. This path works when deploying to Cloudflare Pages.
         // For local development, you might need to run the worker and adjust the URL.
-        console.log('开始请求API...');
         const response = await fetch('/api/songs');
-        console.log('API响应状态:', response.status, response.statusText);
         
         if (!response.ok) {
             throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
         }
         
-        console.log('API 响应成功，开始解析数据...');
         const responseText = await response.text();
-        console.log('API 响应内容长度:', responseText.length);
-        console.log('API 响应内容前100个字符:', responseText.substring(0, 100));
         
         try {
             const dynamicData = JSON.parse(responseText);
-            console.log('JSON解析成功，数据结构:', Object.keys(dynamicData));
             
             if (!dynamicData.songs || !Array.isArray(dynamicData.songs)) {
-                console.error('API响应中没有songs数组:', dynamicData);
+                console.error('API响应中没有songs数组');
                 throw new Error('API响应格式不正确，缺少songs数组');
             }
             
             songsData = dynamicData.songs; // The API returns an object with a "songs" property
-            console.log('成功获取歌曲数组，长度:', songsData.length);
+            console.log(`成功加载 ${songsData.length} 首歌曲`);
         } catch (jsonError) {
-            console.error('JSON解析失败:', jsonError);
-            console.error('响应内容:', responseText);
+            console.error('JSON解析失败:', jsonError.message);
             throw new Error('API响应格式不正确，无法解析JSON');
         }
         
-        console.log(`成功加载 ${songsData.length} 首歌曲`);
-        
         // --- 拼音排序逻辑 ---
         try {
-            console.log('开始拼音排序处理...');
-            
             // 获取用户自定义的字母
             const customLetters = getCustomLetters();
-            console.log('加载的自定义字母:', customLetters);
             
             songsData.forEach((song, index) => {
                 const firstChar = song.title.charAt(0);
-                console.log(`处理歌曲 "${song.title}" 的首字符: "${firstChar}"`);
                 
                 // 优先使用用户自定义的字母
                 let indexLetter;
                 if (customLetters[song.id] && customLetters[song.id].letter) {
                     indexLetter = customLetters[song.id].letter;
-                    console.log(`使用自定义字母: "${song.title}" -> "${indexLetter}"`);
                 } else {
                     // 使用整个歌曲名作为上下文进行更准确的拼音识别
                     indexLetter = getPinyinLetter(firstChar, song.title);
-                    console.log(`使用自动识别字母(带上下文): "${song.title}" -> "${indexLetter}"`);
                 }
                 
                 // 排序键只包含索引字母和歌曲名
                 song.sortKey = indexLetter.toLowerCase() + song.title.toLowerCase();
                 song.indexLetter = indexLetter;
-                
-                console.log(`歌曲 "${song.title}" 最终结果: 首字符="${firstChar}", indexLetter="${indexLetter}", sortKey="${song.sortKey}"`);
             });
             
             // 简单按照索引字母和歌曲名排序
             songsData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
             console.log('歌曲排序完成');
-            console.log('排序后前3首歌曲:', songsData.slice(0, 3).map(s => `${s.title} (${s.indexLetter})`));
         } catch (sortError) {
             console.error('排序处理失败:', sortError);
             // 排序失败时使用原始顺序，但仍然设置基本属性
