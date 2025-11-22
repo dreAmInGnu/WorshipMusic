@@ -640,32 +640,29 @@ function selectSong(song, index, autoPlay = false) {
     // 更新URL以包含当前歌曲
     updateUrlWithSong(song);
     
-    // 🍎 iOS Safari修复：在移动设备上禁用自动播放
+    // 🍎 iOS Safari修复：点击歌曲是用户交互，可以自动播放
     const isIOSDevice = isIOSSafari();
-    const shouldAutoPlay = autoPlay && !isIOSDevice;
     
-    console.log(`📱 设备检测: iOS=${isIOSDevice}, autoPlay请求=${autoPlay}, 实际执行=${shouldAutoPlay}`);
+    console.log(`📱 设备检测: iOS=${isIOSDevice}, autoPlay请求=${autoPlay}`);
 
     // 根据autoPlay参数决定是否自动播放
-    if (shouldAutoPlay) {
-        console.log('▶️ 自动播放歌曲');
+    if (autoPlay) {
+        console.log('▶️ 用户点击歌曲，开始播放');
         playCurrentSong(currentAudioType);
     } else {
         // 不自动播放，但预加载音频
         console.log(`✋ 歌曲已选中: ${currentSong.title}，等待手动播放`);
         
-        // 在iOS上，预加载音频源但不播放
-        if (isIOSDevice) {
-            const audioUrl = buildAudioUrl(currentSong, currentAudioType);
-            if (audioUrl) {
-                // 🔧 修复：先重置，再设置新的src，最后调用load()
-                elements.audioPlayer.pause();
-                elements.audioPlayer.currentTime = 0;
-                elements.audioPlayer.src = audioUrl;
-                // 显式调用load()以开始加载音频
-                elements.audioPlayer.load();
-                console.log('🍎 iOS: 音频源已设置并开始加载，请点击播放按钮');
-            }
+        // 预加载音频源但不播放
+        const audioUrl = buildAudioUrl(currentSong, currentAudioType);
+        if (audioUrl) {
+            // 🔧 修复：先重置，再设置新的src，最后调用load()
+            elements.audioPlayer.pause();
+            elements.audioPlayer.currentTime = 0;
+            elements.audioPlayer.src = audioUrl;
+            // 显式调用load()以开始加载音频
+            elements.audioPlayer.load();
+            console.log('🔊 音频源已设置并开始加载，请点击播放按钮');
         }
         
         // 确保停止任何可能的加载状态
@@ -679,6 +676,10 @@ function resetAudioPlayer() {
         elements.audioPlayer.pause();
         elements.audioPlayer.currentTime = 0;
         // 不清空src，避免触发不必要的事件
+        
+        // 🔧 修复：立即更新播放按钮状态
+        updatePlayButtons();
+        
         console.log('音频播放器状态已重置');
     }
 }
@@ -977,11 +978,11 @@ async function playCurrentSong(type) {
         
         // 简化错误处理，统一显示错误消息
         if (error.name === 'NotAllowedError') {
-            console.log('⚠️ 自动播放被浏览器阻止（iOS限制）');
-            if (isIOSSafari()) {
-                showError('请点击播放按钮开始播放');
-            }
+            console.log('⚠️ 自动播放被浏览器阻止');
+            console.log('💡 这通常不会发生在点击歌曲后，可能是页面刚加载时');
             // 不显示错误提示，让用户自然地点击播放按钮
+            // 确保按钮状态正确
+            updatePlayButtons();
         } else if (error.name === 'AbortError') {
             console.log('⏸️ 播放被中断，可能是因为快速切换歌曲');
             // AbortError通常不需要显示给用户，因为它是正常的中断行为
