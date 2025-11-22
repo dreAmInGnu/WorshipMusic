@@ -95,10 +95,36 @@ function testApiConnection() {
         });
 }
 
+// 检测是否是iOS Safari
+function isIOSSafari() {
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+    return isIOS || isSafari;
+}
+
+// iOS Safari音频预加载
+function initIOSAudio() {
+    if (isIOSSafari()) {
+        console.log('🍎 检测到iOS Safari，初始化音频播放器...');
+        // 在iOS上，需要用户交互才能初始化音频
+        const audioElement = document.getElementById('audioPlayer');
+        if (audioElement) {
+            // 设置音频属性以提高兼容性
+            audioElement.setAttribute('playsinline', '');
+            audioElement.setAttribute('webkit-playsinline', '');
+            console.log('✅ iOS Safari音频播放器已配置');
+        }
+    }
+}
+
 // 初始化应用
 document.addEventListener('DOMContentLoaded', async function() {
     initializeElements();
     setupEventListeners();
+    
+    // iOS Safari特殊处理
+    initIOSAudio();
     
     // 加载自定义字母（异步）
     const customLetters = await loadCustomLetters();
@@ -337,18 +363,47 @@ function setupAudioEventListeners() {
     
     // 移除loadstart的自动加载状态，改为手动控制
     // audio.addEventListener('loadstart', () => showLoading(true));
-    audio.addEventListener('canplay', () => showLoading(false));
+    
+    audio.addEventListener('loadstart', () => {
+        console.log('🔄 loadstart: 开始加载音频');
+    });
+    
+    audio.addEventListener('loadeddata', () => {
+        console.log('📦 loadeddata: 音频数据已加载');
+    });
+    
+    audio.addEventListener('canplay', () => {
+        console.log('✅ canplay: 音频可以播放');
+        showLoading(false);
+    });
+    
+    audio.addEventListener('canplaythrough', () => {
+        console.log('✅ canplaythrough: 音频可以流畅播放');
+    });
+    
     audio.addEventListener('timeupdate', updateProgress);
     audio.addEventListener('loadedmetadata', updateDuration);
     audio.addEventListener('ended', handleSongEnd);
     audio.addEventListener('error', handleAudioError);
+    
     audio.addEventListener('play', () => {
+        console.log('▶️ play: 音频开始播放');
         isPlaying = true;
         updatePlayButtons();
     });
+    
     audio.addEventListener('pause', () => {
+        console.log('⏸️ pause: 音频暂停');
         isPlaying = false;
         updatePlayButtons();
+    });
+    
+    audio.addEventListener('waiting', () => {
+        console.log('⏳ waiting: 等待数据');
+    });
+    
+    audio.addEventListener('stalled', () => {
+        console.log('⚠️ stalled: 数据加载停滞');
     });
 }
 
@@ -810,9 +865,15 @@ function updatePlaybackControls(isEnabled) {
 
 // 播放当前歌曲
 async function playCurrentSong(type) {
-    if (!currentSong) return;
+    if (!currentSong) {
+        console.error('❌ 无法播放：currentSong为空');
+        return;
+    }
     
-    console.log(`开始播放歌曲: ${currentSong.title}, 类型: ${type}`);
+    console.log(`\n🎵 ========= 开始播放歌曲 =========`);
+    console.log(`📝 歌曲: ${currentSong.title}`);
+    console.log(`🎤 类型: ${type}`);
+    console.log(`🍎 iOS Safari: ${isIOSSafari()}`);
     
     // 先暂停并重置音频播放器状态
     elements.audioPlayer.pause();
@@ -820,18 +881,26 @@ async function playCurrentSong(type) {
     currentAudioType = type;
     const audioUrl = buildAudioUrl(currentSong, type);
     
-    console.log('=== 音频加载调试信息 ===');
-    console.log('当前域名:', window.location.origin);
-    console.log('音频URL:', audioUrl);
-    console.log('是否是相对路径:', audioUrl.startsWith('/'));
+    // 检查URL是否有效
+    if (!audioUrl || audioUrl === '/undefined/undefined' || audioUrl === '//') {
+        console.error('❌ 音频URL无效:', audioUrl);
+        showError('无法加载音频：文件路径错误');
+        return;
+    }
+    
+    console.log('\n=== 音频加载调试信息 ===');
+    console.log('🌐 当前域名:', window.location.origin);
+    console.log('🔗 音频URL:', audioUrl);
+    console.log('📍 是否是相对路径:', audioUrl.startsWith('/'));
     if (audioUrl.startsWith('/')) {
-        console.log('完整URL:', new URL(audioUrl, window.location.origin).href);
+        console.log('🔗 完整URL:', new URL(audioUrl, window.location.origin).href);
     }
     
     // 设置新的音频源并立即重置播放位置
+    console.log('⚙️ 设置audio.src...');
     elements.audioPlayer.src = audioUrl;
     elements.audioPlayer.currentTime = 0; // 立即重置，避免竞态条件
-    console.log(`设置音频源: ${audioUrl}，播放位置已重置`);
+    console.log(`✅ 音频源已设置: ${audioUrl}`);
 
     try {
         console.log('尝试播放音频...');
@@ -1467,16 +1536,27 @@ function getPinyinLetter(char, context = '') {
 // 构建音频URL - 使用相对路径通过middleware代理访问R2
 function buildAudioUrl(song, type) {
     const fileName = type === 'original' ? song.files.original : song.files.accompaniment;
+    
+    // 检查文件名是否存在
+    if (!fileName) {
+        console.error(`❌ 文件名不存在！type: ${type}, files:`, song.files);
+        return '';
+    }
+    
     // 使用相对路径，让_middleware.js代理R2访问（内置CORS支持）
     const audioUrl = `/${song.folder}/${fileName}`;
-    console.log(`构建音频URL: ${audioUrl}`);
-    console.log(`歌曲信息:`, {
-        title: song.title,
-        folder: song.folder,
-        fileName: fileName,
-        type: type,
-        files: song.files
-    });
+    
+    // 详细的调试日志
+    console.log(`🎵 构建音频URL`);
+    console.log(`  - 歌曲: ${song.title}`);
+    console.log(`  - 文件夹: ${song.folder}`);
+    console.log(`  - 文件名: ${fileName}`);
+    console.log(`  - 类型: ${type}`);
+    console.log(`  - 完整URL: ${audioUrl}`);
+    console.log(`  - 绝对URL: ${window.location.origin}${audioUrl}`);
+    console.log(`  - 用户代理: ${navigator.userAgent.substring(0, 100)}...`);
+    console.log(`  - 是否iOS: ${isIOSSafari()}`);
+    
     return audioUrl;
 }
 
@@ -2099,42 +2179,62 @@ function handleAudioError(e) {
     const audio = elements.audioPlayer;
     let errorMessage = '音频文件无法播放。';
     
-    console.error('=== 音频错误详细信息 ===');
-    console.error('错误事件:', e);
-    console.error('音频URL:', audio.src);
-    console.error('音频readyState:', audio.readyState);
-    console.error('音频networkState:', audio.networkState);
+    console.error('\n❌ ========= 音频错误详细信息 =========');
+    console.error('❌ 错误事件:', e);
+    console.error('🔗 音频URL:', audio.src);
+    console.error('📊 readyState:', audio.readyState, '(0=未加载,1=元数据,2=当前数据,3=未来数据,4=足够数据)');
+    console.error('🌐 networkState:', audio.networkState, '(0=空,1=空闲,2=加载中,3=无数据源)');
+    console.error('🍎 是否iOS Safari:', isIOSSafari());
+    console.error('🎵 当前歌曲:', currentSong ? currentSong.title : '无');
+    console.error('📁 文件夹:', currentSong ? currentSong.folder : '无');
+    console.error('📝 当前类型:', currentAudioType);
+    console.error('🔧 User Agent:', navigator.userAgent.substring(0, 150));
     
     if (audio.error) {
-        console.error('音频播放错误对象:', audio.error);
+        console.error('❌ 音频错误对象:', audio.error);
+        console.error('❌ 错误代码:', audio.error.code);
+        console.error('❌ 错误消息:', audio.error.message);
+        
         switch (audio.error.code) {
             case audio.error.MEDIA_ERR_ABORTED:
                 errorMessage = '音频加载被用户中止。';
+                console.error('   → MEDIA_ERR_ABORTED (1): 用户中止');
                 break;
             case audio.error.MEDIA_ERR_NETWORK:
-                errorMessage = '网络错误，无法加载音频文件。';
+                errorMessage = '网络错误，无法加载音频文件。请检查网络连接。';
+                console.error('   → MEDIA_ERR_NETWORK (2): 网络错误');
                 break;
             case audio.error.MEDIA_ERR_DECODE:
                 errorMessage = '音频文件解码失败，可能已损坏。';
+                console.error('   → MEDIA_ERR_DECODE (3): 解码失败');
                 break;
             case audio.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                errorMessage = '音频格式不支持或跨域访问被拒绝 (CORS)。请确认R2存储桶配置。';
+                errorMessage = '音频格式不支持或文件不存在。';
+                console.error('   → MEDIA_ERR_SRC_NOT_SUPPORTED (4): 格式不支持或文件不存在');
+                console.error('   提示: 检查文件路径是否正确');
+                console.error('   提示: 检查R2存储桶是否有该文件');
+                console.error('   提示: 检查CORS配置');
                 break;
-
             default:
                 errorMessage = `发生未知音频错误。代码: ${audio.error.code}`;
+                console.error('   → 未知错误代码:', audio.error.code);
         }
     } else if (e && e.name) {
         // 处理来自 play() promise 的拒绝
-        console.error('播放Promise错误:', e);
+        console.error('❌ 播放Promise错误:', e);
+        console.error('❌ 错误名称:', e.name);
+        console.error('❌ 错误消息:', e.message);
+        
         if (e.name === 'NotSupportedError') {
-             errorMessage = '音频格式不支持或跨域访问被拒绝 (CORS)。请确认R2存储桶配置。';
+             errorMessage = '音频格式不支持或文件不存在。';
         } else {
             errorMessage = `播放时发生错误: ${e.name}`;
         }
     }
     
-    console.error('最终错误信息:', errorMessage, 'URL:', audio.src);
+    console.error('\n💡 最终错误信息:', errorMessage);
+    console.error('💡 完整URL:', audio.src);
+    console.error('==========================================\n');
     showError(errorMessage);
     showLoading(false);
 }

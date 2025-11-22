@@ -93,8 +93,7 @@
                         <div class="audio-controls">
                             <div class="audio-player">
 
-                                <audio id="audioPlayer" preload="metadata" crossorigin="anonymous">
-
+                                <audio id="audioPlayer" preload="metadata" crossorigin="anonymous" playsinline webkit-playsinline>
                                 </audio>
                                 
                                 <div class="control-buttons">
@@ -285,7 +284,9 @@
     </div>
 
     <!-- 引入库文件和脚本 -->
-    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/pinyin-pro.umd.js"></script>
+    <!-- 使用unpkg CDN作为主源，添加error处理 -->
+    <script src="https://unpkg.com/pinyin-pro@3.19.6/dist/index.js" 
+            onerror="console.warn('pinyin-pro CDN加载失败，将使用内置fallback')"></script>
     <script src="libs/jszip.min.js"></script>
 
     <script src="scripts.js?v=20251020_1718"></script>
