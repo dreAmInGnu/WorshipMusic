@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPhone音频播放诊断</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            padding: 15px;
+            margin: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 5px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        .error { color: #f48771; }
+        .success { color: #89d185; }
+        .warning { color: #e5c07b; }
+        .info { color: #61afef; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .details {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .details dt {
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .details dd {
+            margin-left: 20px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🩺 iPhone音频播放诊断工具</h1>
+        
+        <div class="test-section">
+            <h3>📱 设备信息</h3>
+            <dl class="details" id="deviceInfo">
+                <dt>User Agent:</dt>
+                <dd id="userAgent"></dd>
+                <dt>平台:</dt>
+                <dd id="platform"></dd>
+                <dt>是否iOS:</dt>
+                <dd id="isIOS"></dd>
+            </dl>
+        </div>
+
+        <h2>步骤1: 检查R2文件结构</h2>
+        <div class="test-section">
+            <p>首先检查R2存储桶中是否有"爱是不保留"这首歌的文件</p>
+            <button onclick="checkR2Structure()">🔍 检查R2文件</button>
+            <div id="r2Log" class="log" style="display:none;"></div>
+        </div>
+
+        <h2>步骤2: 测试文件URL</h2>
+        <div class="test-section">
+            <p>测试目标URL: <code id="targetUrl">https://worshipmusic.windsmaker.com/爱是不保留/爱是不保留.mp3</code></p>
+            <button onclick="testFileUrl()">🌐 测试URL访问</button>
+            <div id="urlLog" class="log" style="display:none;"></div>
+        </div>
+
+        <h2>步骤3: 测试Audio元素</h2>
+        <div class="test-section">
+            <p>测试浏览器是否能加载和播放音频</p>
+            <button onclick="testAudioElement()">🎵 测试Audio播放</button>
+            <audio id="testAudio" controls playsinline webkit-playsinline style="width: 100%; margin: 10px 0; display: none;"></audio>
+            <div id="audioLog" class="log" style="display:none;"></div>
+        </div>
+
+        <h2>步骤4: 诊断结果</h2>
+        <div class="test-section">
+            <div id="diagnosis"></div>
+        </div>
+    </div>
+
+    <script>
+        // 显示设备信息
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('platform').textContent = navigator.platform;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        document.getElementById('isIOS').textContent = isIOS ? '✅ 是' : '❌ 否';
+
+        let r2FilesFound = false;
+        let urlAccessible = false;
+        let audioPlayable = false;
+
+        async function checkR2Structure() {
+            const log = document.getElementById('r2Log');
+            log.style.display = 'block';
+            log.innerHTML = '<span class="info">🔍 检查R2存储桶中的文件...</span>\n';
+            
+            try {
+                const response = await fetch('/api/debug-r2-list?prefix=爱是不保留&limit=10');
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || '请求失败');
+                }
+                
+                log.innerHTML += `<span class="success">✅ R2连接成功</span>\n`;
+                log.innerHTML += `<span class="info">📊 找到 ${data.count} 个文件</span>\n\n`;
+                
+                if (data.count === 0) {
+                    log.innerHTML += '<span class="error">❌ 未找到任何文件！</span>\n';
+                    log.innerHTML += '<span class="warning">⚠️ 请检查R2存储桶中是否上传了"爱是不保留"的文件</span>\n';
+                    r2FilesFound = false;
+                } else {
+                    log.innerHTML += '<span class="success">✅ 找到以下文件:</span>\n';
+                    data.files.forEach(file => {
+                        log.innerHTML += `  📄 ${file.key} (${(file.size / 1024 / 1024).toFixed(2)} MB)\n`;
+                    });
+                    r2FilesFound = true;
+                    
+                    // 显示URL编码信息
+                    if (data.examples && data.examples.length > 0) {
+                        log.innerHTML += '\n<span class="info">💡 URL编码示例:</span>\n';
+                        const example = data.examples[0];
+                        log.innerHTML += `  原始key: ${example.key}\n`;
+                        log.innerHTML += `  访问URL: /${example.key}\n`;
+                        
+                        // 更新测试URL
+                        const testUrl = `${window.location.origin}/${example.key}`;
+                        document.getElementById('targetUrl').textContent = testUrl;
+                    }
+                }
+                
+                updateDiagnosis();
+                
+            } catch (error) {
+                log.innerHTML += `<span class="error">❌ 错误: ${error.message}</span>\n`;
+                log.innerHTML += `<span class="error">${error.stack}</span>\n`;
+                r2FilesFound = false;
+                updateDiagnosis();
+            }
+        }
+
+        async function testFileUrl() {
+            const log = document.getElementById('urlLog');
+            log.style.display = 'block';
+            const testUrl = document.getElementById('targetUrl').textContent;
+            
+            log.innerHTML = '<span class="info">🌐 测试文件URL...</span>\n';
+            log.innerHTML += `<span class="info">📍 URL: ${testUrl}</span>\n\n`;
+            
+            try {
+                log.innerHTML += '<span class="info">📡 发送GET请求...</span>\n';
+                const response = await fetch(testUrl);
+                
+                log.innerHTML += `<span class="info">📊 响应状态: ${response.status} ${response.statusText}</span>\n`;
+                
+                if (response.ok) {
+                    log.innerHTML += '<span class="success">✅ 文件可访问！</span>\n\n';
+                    
+                    log.innerHTML += '<span class="info">📋 响应头:</span>\n';
+                    log.innerHTML += `  Content-Type: ${response.headers.get('Content-Type')}\n`;
+                    log.innerHTML += `  Content-Length: ${response.headers.get('Content-Length')} bytes\n`;
+                    log.innerHTML += `  Accept-Ranges: ${response.headers.get('Accept-Ranges')}\n`;
+                    log.innerHTML += `  Access-Control-Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin')}\n`;
+                    
+                    const contentType = response.headers.get('Content-Type');
+                    if (contentType && contentType.includes('audio')) {
+                        log.innerHTML += '\n<span class="success">✅ Content-Type正确 (audio/*)</span>\n';
+                        urlAccessible = true;
+                    } else {
+                        log.innerHTML += `\n<span class="error">❌ Content-Type错误: ${contentType}</span>\n`;
+                        log.innerHTML += '<span class="warning">⚠️ 应该是 audio/mpeg</span>\n';
+                        urlAccessible = false;
+                    }
+                } else if (response.status === 404) {
+                    log.innerHTML += '<span class="error">❌ 文件不存在 (404)</span>\n';
+                    try {
+                        const errorData = await response.json();
+                        log.innerHTML += `<span class="error">错误详情: ${JSON.stringify(errorData, null, 2)}</span>\n`;
+                    } catch (e) {
+                        log.innerHTML += `<span class="error">错误文本: ${await response.text()}</span>\n`;
+                    }
+                    urlAccessible = false;
+                } else {
+                    log.innerHTML += `<span class="error">❌ 访问失败: ${response.status}</span>\n`;
+                    urlAccessible = false;
+                }
+                
+                updateDiagnosis();
+                
+            } catch (error) {
+                log.innerHTML += `<span class="error">❌ 网络错误: ${error.message}</span>\n`;
+                urlAccessible = false;
+                updateDiagnosis();
+            }
+        }
+
+        function testAudioElement() {
+            const log = document.getElementById('audioLog');
+            const audio = document.getElementById('testAudio');
+            const testUrl = document.getElementById('targetUrl').textContent;
+            
+            log.style.display = 'block';
+            audio.style.display = 'block';
+            
+            log.innerHTML = '<span class="info">🎵 测试Audio元素...</span>\n';
+            log.innerHTML += `<span class="info">🔗 音频URL: ${testUrl}</span>\n\n`;
+            
+            // 清除旧的监听器
+            const newAudio = audio.cloneNode();
+            audio.parentNode.replaceChild(newAudio, audio);
+            newAudio.id = 'testAudio';
+            newAudio.controls = true;
+            newAudio.setAttribute('playsinline', '');
+            newAudio.setAttribute('webkit-playsinline', '');
+            newAudio.style.width = '100%';
+            newAudio.style.margin = '10px 0';
+            newAudio.style.display = 'block';
+            
+            // 添加所有音频事件监听
+            const events = {
+                'loadstart': () => log.innerHTML += '<span class="info">🔄 loadstart - 开始加载</span>\n',
+                'loadedmetadata': (e) => {
+                    log.innerHTML += `<span class="success">✅ loadedmetadata - 元数据加载完成 (时长: ${newAudio.duration.toFixed(2)}s)</span>\n`;
+                },
+                'loadeddata': () => log.innerHTML += '<span class="success">✅ loadeddata - 数据已加载</span>\n',
+                'canplay': () => {
+                    log.innerHTML += '<span class="success">✅ canplay - 可以开始播放</span>\n';
+                    audioPlayable = true;
+                    updateDiagnosis();
+                },
+                'canplaythrough': () => log.innerHTML += '<span class="success">✅ canplaythrough - 可以流畅播放</span>\n',
+                'playing': () => log.innerHTML += '<span class="success">▶️ playing - 正在播放</span>\n',
+                'waiting': () => log.innerHTML += '<span class="warning">⏳ waiting - 等待数据</span>\n',
+                'stalled': () => log.innerHTML += '<span class="warning">⚠️ stalled - 加载停滞</span>\n',
+                'error': (e) => {
+                    log.innerHTML += '<span class="error">❌ ERROR - 音频加载失败</span>\n';
+                    if (newAudio.error) {
+                        const errorTypes = {
+                            1: 'MEDIA_ERR_ABORTED - 用户中止',
+                            2: 'MEDIA_ERR_NETWORK - 网络错误',
+                            3: 'MEDIA_ERR_DECODE - 解码失败',
+                            4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - 不支持的源/格式'
+                        };
+                        log.innerHTML += `<span class="error">   错误代码: ${newAudio.error.code}</span>\n`;
+                        log.innerHTML += `<span class="error">   错误类型: ${errorTypes[newAudio.error.code]}</span>\n`;
+                        log.innerHTML += `<span class="error">   错误消息: ${newAudio.error.message}</span>\n`;
+                        log.innerHTML += `<span class="error">   readyState: ${newAudio.readyState}</span>\n`;
+                        log.innerHTML += `<span class="error">   networkState: ${newAudio.networkState}</span>\n`;
+                        
+                        if (newAudio.error.code === 4) {
+                            log.innerHTML += '\n<span class="warning">💡 错误代码4通常表示:</span>\n';
+                            log.innerHTML += '   1. 文件不存在或无法访问\n';
+                            log.innerHTML += '   2. Content-Type不正确\n';
+                            log.innerHTML += '   3. CORS问题\n';
+                            log.innerHTML += '   4. 文件格式不支持\n';
+                        }
+                    }
+                    audioPlayable = false;
+                    updateDiagnosis();
+                }
+            };
+            
+            Object.entries(events).forEach(([event, handler]) => {
+                newAudio.addEventListener(event, handler);
+            });
+            
+            log.innerHTML += '<span class="info">⚙️ 设置音频源...</span>\n';
+            newAudio.src = testUrl;
+            log.innerHTML += '<span class="info">✅ 音频源已设置，请等待加载或点击播放按钮</span>\n\n';
+        }
+
+        function updateDiagnosis() {
+            const diagnosis = document.getElementById('diagnosis');
+            let html = '<h3>🔍 诊断结果</h3>';
+            
+            html += '<dl class="details">';
+            html += `<dt>R2文件检查:</dt>`;
+            html += `<dd><span class="status ${r2FilesFound ? 'success' : 'error'}">${r2FilesFound ? '✅ 通过' : '❌ 失败'}</span></dd>`;
+            
+            html += `<dt>URL访问测试:</dt>`;
+            html += `<dd><span class="status ${urlAccessible ? 'success' : 'error'}">${urlAccessible ? '✅ 通过' : '❌ 失败'}</span></dd>`;
+            
+            html += `<dt>Audio播放测试:</dt>`;
+            html += `<dd><span class="status ${audioPlayable ? 'success' : 'error'}">${audioPlayable ? '✅ 通过' : '❌ 失败'}</span></dd>`;
+            html += '</dl>';
+            
+            // 提供建议
+            html += '<h4>💡 建议措施:</h4><ul>';
+            
+            if (!r2FilesFound) {
+                html += '<li>❌ <strong>R2文件未找到</strong>: 请检查R2存储桶中是否正确上传了音频文件</li>';
+            }
+            
+            if (r2FilesFound && !urlAccessible) {
+                html += '<li>⚠️ <strong>URL无法访问</strong>: 检查middleware配置，确保正确代理R2请求</li>';
+                html += '<li>检查Cloudflare Pages的Functions是否正确部署</li>';
+            }
+            
+            if (urlAccessible && !audioPlayable) {
+                html += '<li>⚠️ <strong>Audio无法播放</strong>: 可能是:</li>';
+                html += '<ul>';
+                html += '<li>Content-Type设置不正确</li>';
+                html += '<li>Range请求支持有问题（iOS需要）</li>';
+                html += '<li>文件编码格式问题</li>';
+                html += '</ul>';
+            }
+            
+            if (r2FilesFound && urlAccessible && audioPlayable) {
+                html += '<li>✅ <strong>所有测试通过！</strong> 音频文件应该可以正常播放</li>';
+                html += '<li>如果主应用仍有问题，检查JavaScript代码中的音频URL生成逻辑</li>';
+            }
+            
+            html += '</ul>';
+            
+            diagnosis.innerHTML = html;
+        }
+
+        // 初始诊断显示
+        updateDiagnosis();
+    </script>
+</body>
+</html>
+
+
+

@@ -14,8 +14,12 @@ export async function onRequest({ request, env, next }) {
   // 解码URL路径以处理中文文件名
   const key = decodeURIComponent(url.pathname.slice(1)); // 移除开头的 '/' 并解码
   
+  console.log('[Middleware] ==================');
   console.log('[Middleware] 请求路径:', url.pathname);
+  console.log('[Middleware] 原始URL:', request.url);
   console.log('[Middleware] 解码后的key:', key);
+  console.log('[Middleware] User-Agent:', request.headers.get('User-Agent')?.substring(0, 100));
+  console.log('[Middleware] Range请求:', request.headers.get('Range'));
   
   // 如果是API请求、根路径或本地静态文件（HTML、CSS、JS、图标），继续处理
   // 只有音频等媒体文件需要通过R2代理
@@ -23,11 +27,12 @@ export async function onRequest({ request, env, next }) {
       key.endsWith('.html') || key.endsWith('.css') || key.endsWith('.js') ||
       key.startsWith('libs/') || key.startsWith('icons/') ||
       key.endsWith('.json') || key.endsWith('.md') || key.startsWith('_')) {
-    console.log('[Middleware] 跳过静态文件，交给next处理');
+    console.log('[Middleware] → 跳过静态文件，交给next处理');
+    console.log('[Middleware] ==================');
     return next();
   }
   
-  console.log('[Middleware] 尝试从R2获取文件:', key);
+  console.log('[Middleware] → 尝试从R2获取文件:', key);
   
   // 处理CORS预检请求
   if (request.method === 'OPTIONS') {
@@ -63,11 +68,29 @@ export async function onRequest({ request, env, next }) {
       : await env.SONG_BUCKET.get(key);
     
     if (!obj) {
-      console.error('[Middleware] R2中未找到文件:', key);
-      return new Response('File not found in R2: ' + key, { status: 404 });
+      console.error('[Middleware] ❌ R2中未找到文件!');
+      console.error('[Middleware] ❌ 查找的key:', key);
+      console.error('[Middleware] ❌ 原始路径:', url.pathname);
+      console.error('[Middleware] ❌ 建议: 检查R2存储桶中是否有此文件');
+      console.error('[Middleware] ❌ 建议: 检查文件夹和文件名是否完全匹配（包括大小写）');
+      
+      return new Response(JSON.stringify({
+        error: 'File not found in R2',
+        key: key,
+        path: url.pathname,
+        suggestion: '请检查R2存储桶中是否存在此文件，注意文件夹和文件名必须完全匹配'
+      }, null, 2), { 
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
     }
     
-    console.log('[Middleware] R2文件找到, size:', obj.size, 'contentType:', obj.httpMetadata?.contentType);
+    console.log('[Middleware] ✅ R2文件找到!');
+    console.log('[Middleware]    size:', obj.size);
+    console.log('[Middleware]    contentType:', obj.httpMetadata?.contentType);
     
     // 构建响应头
     const headers = new Headers();
@@ -90,24 +113,38 @@ export async function onRequest({ request, env, next }) {
       headers.set('Content-Length', obj.size.toString());
     }
     
-    // 处理 Content-Range 头（简化版本，不设置可能有问题的头）
-    // R2 的 obj.range 可能是对象，暂时跳过它的设置
-    // 浏览器通过 Content-Length 和 Accept-Ranges 也能正常工作
+    // ⑤ 处理 Range 响应
+    let status = 200;
+    if (obj.range && rangeHeader) {
+      // 如果是Range请求，返回206 Partial Content
+      status = 206;
+      // 设置 Content-Range 头
+      const range = obj.range;
+      if (range.offset !== undefined && range.length !== undefined) {
+        const start = range.offset;
+        const end = range.offset + range.length - 1;
+        const total = obj.size;
+        headers.set('Content-Range', `bytes ${start}-${end}/${total}`);
+        headers.set('Content-Length', range.length.toString());
+        console.log('[Middleware] Range响应:', `${start}-${end}/${total}`);
+      }
+    }
     
-    // ⑤ 缓存控制 - 针对不同文件类型设置不同缓存时间
+    // ⑥ 缓存控制 - 针对不同文件类型设置不同缓存时间
     const cacheControl = getCacheControl(key);
     headers.set('Cache-Control', cacheControl);
     
-    // ⑥ 可选：文件下载时的文件名
+    // ⑦ 可选：文件下载时的文件名
     if (url.searchParams.get('download') === 'true') {
       const filename = key.split('/').pop() || 'download';
       headers.set('Content-Disposition', `attachment; filename="${filename}"`);
     }
     
-    // 返回响应 - 暂时统一使用 200 状态码
-    // 不管是否有 range 请求，都返回 200（简化处理）
+    console.log('[Middleware] 返回响应, status:', status, 'contentType:', contentType);
+    
+    // 返回响应 - 根据是否有Range请求返回200或206
     return new Response(obj.body, {
-      status: 200,
+      status: status,
       headers: headers,
     });
     

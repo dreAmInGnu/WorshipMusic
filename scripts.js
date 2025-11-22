@@ -640,14 +640,29 @@ function selectSong(song, index, autoPlay = false) {
     // 更新URL以包含当前歌曲
     updateUrlWithSong(song);
     
+    // 🍎 iOS Safari修复：在移动设备上禁用自动播放
+    const isIOSDevice = isIOSSafari();
+    const shouldAutoPlay = autoPlay && !isIOSDevice;
+    
+    console.log(`📱 设备检测: iOS=${isIOSDevice}, autoPlay请求=${autoPlay}, 实际执行=${shouldAutoPlay}`);
 
     // 根据autoPlay参数决定是否自动播放
-    if (autoPlay) {
-
+    if (shouldAutoPlay) {
+        console.log('▶️ 自动播放歌曲');
         playCurrentSong(currentAudioType);
     } else {
-        // 不自动播放，不设置音频源，避免触发loadstart事件
-        console.log(`歌曲已选中: ${currentSong.title}，等待手动播放`);
+        // 不自动播放，但预加载音频
+        console.log(`✋ 歌曲已选中: ${currentSong.title}，等待手动播放`);
+        
+        // 在iOS上，预加载音频源但不播放
+        if (isIOSDevice) {
+            const audioUrl = buildAudioUrl(currentSong, currentAudioType);
+            if (audioUrl) {
+                elements.audioPlayer.src = audioUrl;
+                console.log('🍎 iOS: 音频源已预加载，请点击播放按钮');
+            }
+        }
+        
         // 确保停止任何可能的加载状态
         showLoading(false);
     }
@@ -903,34 +918,53 @@ async function playCurrentSong(type) {
     console.log(`✅ 音频源已设置: ${audioUrl}`);
 
     try {
-        console.log('尝试播放音频...');
+        console.log('⚙️ 尝试播放音频...');
         showLoading(true); // 开始播放时显示加载状态
         
-        // 等待音频准备就绪
-        if (elements.audioPlayer.readyState < 2) {
-            console.log('等待音频准备就绪...');
-            await new Promise((resolve, reject) => {
-                const onCanPlay = () => {
-                    elements.audioPlayer.removeEventListener('canplay', onCanPlay);
-                    elements.audioPlayer.removeEventListener('error', onError);
-                    resolve();
-                };
-                const onError = (e) => {
-                    elements.audioPlayer.removeEventListener('canplay', onCanPlay);
-                    elements.audioPlayer.removeEventListener('error', onError);
-                    reject(e);
-                };
-                elements.audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
-                elements.audioPlayer.addEventListener('error', onError, { once: true });
-            });
+        // 🍎 iOS Safari优化：减少等待时间，直接尝试播放
+        const isIOS = isIOSSafari();
+        
+        if (isIOS) {
+            console.log('🍎 iOS设备：直接尝试播放（不等待canplay）');
+            // iOS Safari在用户交互后可以直接播放
+            await elements.audioPlayer.play();
+            console.log('✅ iOS音频播放成功');
+        } else {
+            // 非iOS设备：等待音频准备就绪
+            if (elements.audioPlayer.readyState < 2) {
+                console.log('⏳ 等待音频准备就绪...');
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        elements.audioPlayer.removeEventListener('canplay', onCanPlay);
+                        elements.audioPlayer.removeEventListener('error', onError);
+                        reject(new Error('音频加载超时'));
+                    }, 30000); // 30秒超时
+                    
+                    const onCanPlay = () => {
+                        clearTimeout(timeout);
+                        elements.audioPlayer.removeEventListener('canplay', onCanPlay);
+                        elements.audioPlayer.removeEventListener('error', onError);
+                        resolve();
+                    };
+                    const onError = (e) => {
+                        clearTimeout(timeout);
+                        elements.audioPlayer.removeEventListener('canplay', onCanPlay);
+                        elements.audioPlayer.removeEventListener('error', onError);
+                        reject(e);
+                    };
+                    elements.audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
+                    elements.audioPlayer.addEventListener('error', onError, { once: true });
+                });
+            }
+            
+            await elements.audioPlayer.play();
+            console.log('✅ 音频播放成功');
         }
         
-        await elements.audioPlayer.play();
-        console.log('音频播放成功');
         showLoading(false); // 播放成功后隐藏加载状态
         updateAudioTypeButtons(type);
     } catch (error) {
-        console.error(`播放错误: ${error.name}: ${error.message}`);
+        console.error(`❌ 播放错误: ${error.name}: ${error.message}`);
         console.error('错误详情:', error);
         
         // 确保在任何错误情况下都隐藏加载状态
@@ -938,11 +972,17 @@ async function playCurrentSong(type) {
         
         // 简化错误处理，统一显示错误消息
         if (error.name === 'NotAllowedError') {
-            console.log('自动播放被浏览器阻止，这是正常现象');
+            console.log('⚠️ 自动播放被浏览器阻止（iOS限制）');
+            if (isIOSSafari()) {
+                showError('请点击播放按钮开始播放');
+            }
             // 不显示错误提示，让用户自然地点击播放按钮
         } else if (error.name === 'AbortError') {
-            console.log('播放被中断，可能是因为快速切换歌曲');
+            console.log('⏸️ 播放被中断，可能是因为快速切换歌曲');
             // AbortError通常不需要显示给用户，因为它是正常的中断行为
+        } else if (error.message === '音频加载超时') {
+            console.error('⏱️ 音频加载超时');
+            showError('音频加载超时，请检查网络连接');
         } else {
             // 将其他播放错误传递给统一的错误处理器
             handleAudioError(error);

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频URL测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 音频URL诊断工具</h1>
+    
+    <div class="test-section">
+        <h2>测试URL:</h2>
+        <code>https://worshipmusic.windsmaker.com/%E7%88%B1%E6%98%AF%E4%B8%8D%E4%BF%9D%E7%95%99/%E7%88%B1%E6%98%AF%E4%B8%8D%E4%BF%9D%E7%95%99.mp3</code>
+    </div>
+
+    <div class="test-section">
+        <h2>测试1: 直接Fetch请求</h2>
+        <button onclick="testFetch()">开始测试</button>
+        <div id="fetchLog" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试2: Audio元素测试</h2>
+        <button onclick="testAudio()">开始测试</button>
+        <audio id="testAudio" controls style="width: 100%; margin-top: 10px;"></audio>
+        <div id="audioLog" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试3: 解码后的URL测试</h2>
+        <button onclick="testDecodedUrl()">开始测试</button>
+        <div id="decodedLog" class="log"></div>
+        <p><strong>解码后的URL:</strong><br>
+        <code id="decodedUrl"></code></p>
+    </div>
+
+    <div class="test-section">
+        <h2>测试4: 直接浏览器访问</h2>
+        <a href="https://worshipmusic.windsmaker.com/%E7%88%B1%E6%98%AF%E4%B8%8D%E4%BF%9D%E7%95%99/%E7%88%B1%E6%98%AF%E4%B8%8D%E4%BF%9D%E7%95%99.mp3" target="_blank">
+            <button>在新标签页打开</button>
+        </a>
+        <p>如果能播放或下载，说明URL本身是可访问的</p>
+    </div>
+
+    <script>
+        const testUrl = 'https://worshipmusic.windsmaker.com/%E7%88%B1%E6%98%AF%E4%B8%8D%E4%BF%9D%E7%95%99/%E7%88%B1%E6%98%AF%E4%B8%8D%E4%BF%9D%E7%95%99.mp3';
+        
+        // 显示解码后的URL
+        document.getElementById('decodedUrl').textContent = decodeURIComponent(testUrl);
+
+        async function testFetch() {
+            const log = document.getElementById('fetchLog');
+            log.innerHTML = '🔄 开始测试...\n';
+            
+            try {
+                log.innerHTML += `📡 发送请求到: ${testUrl}\n`;
+                const response = await fetch(testUrl);
+                
+                log.innerHTML += `✅ 响应状态: ${response.status} ${response.statusText}\n`;
+                log.innerHTML += `📋 响应头:\n`;
+                
+                for (const [key, value] of response.headers.entries()) {
+                    log.innerHTML += `   ${key}: ${value}\n`;
+                }
+                
+                const contentType = response.headers.get('Content-Type');
+                const contentLength = response.headers.get('Content-Length');
+                
+                log.innerHTML += `\n✅ Content-Type: ${contentType}\n`;
+                log.innerHTML += `✅ Content-Length: ${contentLength} bytes\n`;
+                
+                if (response.ok) {
+                    log.innerHTML += `\n<span class="success">✅ 文件可以访问！</span>`;
+                } else {
+                    log.innerHTML += `\n<span class="error">❌ 文件访问失败</span>`;
+                }
+                
+            } catch (error) {
+                log.innerHTML += `<span class="error">❌ 错误: ${error.message}</span>\n`;
+                log.innerHTML += `错误详情: ${error.stack}\n`;
+            }
+        }
+
+        function testAudio() {
+            const log = document.getElementById('audioLog');
+            const audio = document.getElementById('testAudio');
+            
+            log.innerHTML = '🔄 开始测试...\n';
+            
+            // 清除之前的事件监听器
+            const newAudio = audio.cloneNode();
+            audio.parentNode.replaceChild(newAudio, audio);
+            
+            newAudio.id = 'testAudio';
+            newAudio.controls = true;
+            newAudio.style.width = '100%';
+            newAudio.style.marginTop = '10px';
+            
+            // 添加事件监听器
+            newAudio.addEventListener('loadstart', () => {
+                log.innerHTML += '📦 loadstart: 开始加载\n';
+            });
+            
+            newAudio.addEventListener('loadedmetadata', () => {
+                log.innerHTML += '📊 loadedmetadata: 元数据已加载\n';
+                log.innerHTML += `   时长: ${newAudio.duration}秒\n`;
+            });
+            
+            newAudio.addEventListener('loadeddata', () => {
+                log.innerHTML += '📦 loadeddata: 数据已加载\n';
+            });
+            
+            newAudio.addEventListener('canplay', () => {
+                log.innerHTML += '<span class="success">✅ canplay: 可以播放</span>\n';
+            });
+            
+            newAudio.addEventListener('error', (e) => {
+                log.innerHTML += `<span class="error">❌ 错误事件触发</span>\n`;
+                if (newAudio.error) {
+                    log.innerHTML += `   错误代码: ${newAudio.error.code}\n`;
+                    log.innerHTML += `   错误消息: ${newAudio.error.message}\n`;
+                    log.innerHTML += `   readyState: ${newAudio.readyState}\n`;
+                    log.innerHTML += `   networkState: ${newAudio.networkState}\n`;
+                    
+                    const errorTypes = {
+                        1: 'MEDIA_ERR_ABORTED - 用户中止',
+                        2: 'MEDIA_ERR_NETWORK - 网络错误',
+                        3: 'MEDIA_ERR_DECODE - 解码失败',
+                        4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - 不支持的源'
+                    };
+                    log.innerHTML += `   类型: ${errorTypes[newAudio.error.code]}\n`;
+                }
+            });
+            
+            log.innerHTML += `🔗 设置音频源: ${testUrl}\n`;
+            newAudio.src = testUrl;
+            log.innerHTML += '✅ 音频源已设置，请查看上方播放器\n';
+        }
+
+        async function testDecodedUrl() {
+            const log = document.getElementById('decodedLog');
+            const decodedUrl = decodeURIComponent(testUrl);
+            
+            log.innerHTML = '🔄 测试解码后的URL...\n';
+            log.innerHTML += `原始URL: ${testUrl}\n`;
+            log.innerHTML += `解码后: ${decodedUrl}\n\n`;
+            
+            try {
+                log.innerHTML += '📡 发送请求到解码后的URL...\n';
+                const response = await fetch(decodedUrl);
+                
+                log.innerHTML += `✅ 响应状态: ${response.status} ${response.statusText}\n`;
+                log.innerHTML += `✅ Content-Type: ${response.headers.get('Content-Type')}\n`;
+                
+                if (response.ok) {
+                    log.innerHTML += `\n<span class="success">✅ 解码后的URL可以访问！</span>`;
+                } else {
+                    log.innerHTML += `\n<span class="error">❌ 解码后的URL访问失败</span>`;
+                }
+                
+            } catch (error) {
+                log.innerHTML += `<span class="error">❌ 错误: ${error.message}</span>\n`;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
