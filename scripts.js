@@ -658,8 +658,13 @@ function selectSong(song, index, autoPlay = false) {
         if (isIOSDevice) {
             const audioUrl = buildAudioUrl(currentSong, currentAudioType);
             if (audioUrl) {
+                // 🔧 修复：先重置，再设置新的src，最后调用load()
+                elements.audioPlayer.pause();
+                elements.audioPlayer.currentTime = 0;
                 elements.audioPlayer.src = audioUrl;
-                console.log('🍎 iOS: 音频源已预加载，请点击播放按钮');
+                // 显式调用load()以开始加载音频
+                elements.audioPlayer.load();
+                console.log('🍎 iOS: 音频源已设置并开始加载，请点击播放按钮');
             }
         }
         
@@ -1616,27 +1621,63 @@ function togglePlayPause() {
             return;
         }
         
+        // 🍎 iOS优化：如果没有src或src为空，重新加载
+        if (!elements.audioPlayer.src || elements.audioPlayer.src === '') {
+            console.log('⚠️ 音频源为空，调用playCurrentSong加载');
+            playCurrentSong(currentAudioType);
+            return;
+        }
+        
         // 检查音频是否已准备好播放
         if (elements.audioPlayer.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-            console.log('音频已准备好，直接播放');
+            console.log('✅ 音频已准备好，直接播放');
             elements.audioPlayer.play().catch(e => handleAudioError(e));
         } else {
-            console.log('音频未准备好，等待加载完成');
+            console.log(`⏳ 音频未准备好(readyState=${elements.audioPlayer.readyState})，等待加载完成`);
             showLoading(true);
+            
+            // 🔧 iOS修复：添加超时机制
+            let timeoutId;
+            let canplayTriggered = false;
             
             // 等待音频准备好再播放
             const playWhenReady = () => {
-                console.log('音频准备完成，开始播放');
+                if (canplayTriggered) return; // 防止重复触发
+                canplayTriggered = true;
+                clearTimeout(timeoutId);
+                console.log('✅ 音频准备完成(canplay)，开始播放');
                 showLoading(false);
                 elements.audioPlayer.play().catch(e => handleAudioError(e));
             };
             
             // 错误处理函数
-            const handleLoadError = () => {
-                console.log('音频加载失败');
+            const handleLoadError = (e) => {
+                canplayTriggered = true;
+                clearTimeout(timeoutId);
+                console.error('❌ 音频加载失败:', e);
                 showLoading(false);
                 showError('音频加载失败，请检查网络连接或重试');
             };
+            
+            // 🔧 超时处理：10秒后如果还没加载完成，尝试重新加载
+            timeoutId = setTimeout(() => {
+                if (!canplayTriggered) {
+                    console.warn('⚠️ 音频加载超时(10秒)，尝试重新加载');
+                    elements.audioPlayer.removeEventListener('canplay', playWhenReady);
+                    elements.audioPlayer.removeEventListener('error', handleLoadError);
+                    showLoading(false);
+                    
+                    // 重新加载音频
+                    if (isIOSSafari()) {
+                        console.log('🍎 iOS: 重新调用load()');
+                        elements.audioPlayer.load();
+                        // 再等待一次
+                        elements.audioPlayer.addEventListener('canplay', playWhenReady, { once: true });
+                    } else {
+                        showError('音频加载超时，请重试');
+                    }
+                }
+            }, 10000);
             
             // 添加事件监听器
             elements.audioPlayer.addEventListener('canplay', playWhenReady, { once: true });
