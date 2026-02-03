@@ -972,17 +972,21 @@ body {
     border-radius: 8px;
     min-height: 300px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column; /* 垂直排列 */
+    align-items: center;    /* 水平居中 */
+    justify-content: flex-start; /* 从顶部开始排列 */
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;       /* 允许垂直滚动 */
     margin: 0; /* 移除margin，让flex自动处理间距 */
     flex: 1; /* 让歌谱区域占据剩余空间 */
+    padding: 10px;          /* 添加内边距 */
+    gap: 15px;              /* 图片间距 */
 }
 
 .sheet-placeholder {
     text-align: center;
     color: #999;
+    margin: auto; /* 在 flex 容器中自动居中 */
 }
 
 .sheet-placeholder p:first-child {
@@ -992,10 +996,12 @@ body {
 
 .sheet-image {
     max-width: 100%;
-    max-height: 100%;
+    height: auto;           /* 高度自适应 */
     object-fit: contain;
     border-radius: 4px;
     cursor: pointer; /* Add pointer cursor */
+    flex-shrink: 0;         /* 防止压缩 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* 添加阴影区分多张图片 */
 }
 
 /* 加载状态 */
