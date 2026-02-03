@@ -99,7 +99,20 @@ export async function onRequest(context) {
       } else if (fileName.endsWith('.mp3')) {
         songData.files.original = fileName;
       } else if (fileName.endsWith('.jpg') || fileName.endsWith('.png') || fileName.endsWith('.jpeg')) {
-        songData.files.sheet = fileName;
+        const base = fileName.replace(/\.(jpg|jpeg|png)$/i, '');
+        const isAnnotated = base === `${songData.title} 编` || base === `${songData.title}编`;
+        
+        if (isAnnotated) {
+          if (!songData.files.sheetExtras) {
+            songData.files.sheetExtras = [];
+          }
+          songData.files.sheetExtras.push(fileName);
+        } else {
+          // 主歌谱优先使用“歌曲名.jpg”，否则回退到第一张
+          if (!songData.files.sheet || base === songData.title) {
+            songData.files.sheet = fileName;
+          }
+        }
       }
     }
 

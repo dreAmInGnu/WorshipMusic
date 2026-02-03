@@ -251,7 +251,7 @@ export async function onRequest(context) {
             }
           }
           
-          // 查找对应的歌谱文件
+          // 查找对应的歌谱文件（支持“歌曲名 编.jpg”）
           const sheetFiles = folderFiles.get(folderName).filter(f => 
             (f.fileName.endsWith('.jpg') || f.fileName.endsWith('.png') || f.fileName.endsWith('.jpeg')) &&
             f.fileName.startsWith(songTitle)
@@ -260,7 +260,27 @@ export async function onRequest(context) {
           if (sheetFiles.length > 0) {
             const songId = baseId;
             if (songsMap.has(songId)) {
-              songsMap.get(songId).files.sheet = sheetFiles[0].fileName;
+              const exactMain = sheetFiles.find(f => {
+                const lower = f.fileName.toLowerCase();
+                return lower === `${songTitle}.jpg`.toLowerCase() ||
+                       lower === `${songTitle}.png`.toLowerCase() ||
+                       lower === `${songTitle}.jpeg`.toLowerCase();
+              });
+              
+              const annotatedSheets = sheetFiles
+                .map(f => f.fileName)
+                .filter(name => {
+                  const base = name.replace(/\.(jpg|jpeg|png)$/i, '');
+                  return base === `${songTitle} 编` || base === `${songTitle}编`;
+                });
+              
+              // 主歌谱优先使用“歌曲名.jpg”，否则回退到第一张
+              songsMap.get(songId).files.sheet = (exactMain ? exactMain.fileName : sheetFiles[0].fileName);
+              // 标注歌谱（可为空）
+              if (annotatedSheets.length > 0) {
+                songsMap.get(songId).files.sheetExtras = annotatedSheets;
+              }
+              
               console.log(`Added sheet music for song: ${songTitle} in playlist: ${folderName}`);
             }
           }
@@ -301,7 +321,20 @@ export async function onRequest(context) {
         } else if (fileName.endsWith('.mp3')) {
           songData.files.original = fileName;
         } else if (fileName.endsWith('.jpg') || fileName.endsWith('.png') || fileName.endsWith('.jpeg')) {
-          songData.files.sheet = fileName;
+          const base = fileName.replace(/\.(jpg|jpeg|png)$/i, '');
+          const isAnnotated = base === `${songData.title} 编` || base === `${songData.title}编`;
+          
+          if (isAnnotated) {
+            if (!songData.files.sheetExtras) {
+              songData.files.sheetExtras = [];
+            }
+            songData.files.sheetExtras.push(fileName);
+          } else {
+            // 主歌谱优先使用“歌曲名.jpg”，否则回退到第一张
+            if (!songData.files.sheet || base === songData.title) {
+              songData.files.sheet = fileName;
+            }
+          }
         }
       }
     }

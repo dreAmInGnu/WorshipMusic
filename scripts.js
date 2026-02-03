@@ -843,7 +843,8 @@ function updateSongControls() {
         } else {
             elements.downloadAccompanimentBtn.classList.remove('missing');
         }
-        elements.downloadSheetBtn.disabled = !currentSong.files.sheet;
+        const hasSheet = !!currentSong.files.sheet || (currentSong.files.sheetExtras && currentSong.files.sheetExtras.length > 0);
+        elements.downloadSheetBtn.disabled = !hasSheet;
         
         // 启用播放列表按钮
         if (elements.addToPlaylistBtn) {
@@ -2034,7 +2035,34 @@ function clearCollapsedSearch() {
 
 // 加载歌谱
 function loadSheetMusic() {
-    if (!currentSong || !currentSong.files.sheet) {
+    if (!currentSong) {
+        elements.sheetDisplay.innerHTML = `
+            <div class="sheet-placeholder">
+                <p>🎼</p>
+                <p>暂无歌谱</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const sheetFiles = [];
+    if (currentSong.files.sheet) {
+        sheetFiles.push({
+            fileName: currentSong.files.sheet,
+            label: ''
+        });
+    }
+    
+    if (currentSong.files.sheetExtras && currentSong.files.sheetExtras.length > 0) {
+        currentSong.files.sheetExtras.forEach(fileName => {
+            sheetFiles.push({
+                fileName,
+                label: '（编）'
+            });
+        });
+    }
+    
+    if (sheetFiles.length === 0) {
         elements.sheetDisplay.innerHTML = `
             <div class="sheet-placeholder">
                 <p>🎼</p>
@@ -2045,11 +2073,14 @@ function loadSheetMusic() {
     }
     
     // 使用相对路径通过middleware代理访问
-    const sheetUrl = `/${currentSong.folder}/${currentSong.files.sheet}`;
-    elements.sheetDisplay.innerHTML = `
-        <img src="${sheetUrl}" alt="${currentSong.title} 歌谱" class="sheet-image" 
-             onerror="this.parentElement.innerHTML='<div class=\\'sheet-placeholder\\'><p>🎼</p><p>歌谱加载失败</p></div>'">
-    `;
+    elements.sheetDisplay.innerHTML = sheetFiles.map((sheet, index) => {
+        const sheetUrl = `/${currentSong.folder}/${sheet.fileName}`;
+        const label = sheet.label ? ` ${sheet.label}` : '';
+        return `
+            <img src="${sheetUrl}" alt="${currentSong.title} 歌谱${label}" class="sheet-image" 
+                 onerror="this.parentElement.innerHTML='<div class=\\'sheet-placeholder\\'><p>🎼</p><p>歌谱加载失败</p></div>'">
+        `;
+    }).join('');
 }
 
 // 下载当前歌曲所有文件 (ZIP)
@@ -2070,9 +2101,14 @@ async function downloadSongZip() {
             await addFileToZip(folder, currentSong.files.accompaniment, `/${currentSong.folder}/${currentSong.files.accompaniment}`);
         }
         
-        // 下载歌谱
+        // 下载歌谱（含标注版）
         if (currentSong.files.sheet) {
             await addFileToZip(folder, currentSong.files.sheet, `/${currentSong.folder}/${currentSong.files.sheet}`);
+        }
+        if (currentSong.files.sheetExtras && currentSong.files.sheetExtras.length > 0) {
+            for (const sheetFile of currentSong.files.sheetExtras) {
+                await addFileToZip(folder, sheetFile, `/${currentSong.folder}/${sheetFile}`);
+            }
         }
         
         // 生成ZIP文件并下载
@@ -2110,8 +2146,11 @@ async function downloadSingleFile(type) {
             fileUrl = `/${song.folder}/${fileName}`;
             break;
         case 'sheet':
-            if (!song.files.sheet) { showError('该歌曲没有歌谱文件'); return; }
-            fileName = song.files.sheet;
+            if (!song.files.sheet && !(song.files.sheetExtras && song.files.sheetExtras.length > 0)) {
+                showError('该歌曲没有歌谱文件');
+                return;
+            }
+            fileName = song.files.sheet || song.files.sheetExtras[0];
             fileUrl = `/${song.folder}/${fileName}`;
 
             try {
