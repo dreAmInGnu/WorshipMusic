@@ -75,6 +75,16 @@ export async function onRequest(context) {
 
     console.log(`Found ${files.length} files in R2 bucket`);
 
+    // 辅助函数：转义正则特殊字符
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // 辅助函数：检查文件扩展名
+    function hasImageExtension(fileName) {
+      return /\.(jpg|jpeg|png)$/i.test(fileName);
+    }
+    
     // 2. 分析文件结构，识别播放列表和歌曲
     
     // 第一步：统计每个文件夹中的MP3文件数量，识别播放列表
@@ -251,31 +261,54 @@ export async function onRequest(context) {
             }
           }
           
-          // 查找对应的歌谱文件（支持“歌曲名 编.jpg”）
+          // 查找对应的歌谱文件（支持“歌曲名 编.jpg”等变体）
           const sheetFiles = folderFiles.get(folderName).filter(f => 
-            (f.fileName.endsWith('.jpg') || f.fileName.endsWith('.png') || f.fileName.endsWith('.jpeg')) &&
+            hasImageExtension(f.fileName) &&
             f.fileName.startsWith(songTitle)
           );
           
           if (sheetFiles.length > 0) {
             const songId = baseId;
             if (songsMap.has(songId)) {
+              // 1. 查找主歌谱：文件名（去后缀）完全等于歌曲名
               const exactMain = sheetFiles.find(f => {
-                const lower = f.fileName.toLowerCase();
-                return lower === `${songTitle}.jpg`.toLowerCase() ||
-                       lower === `${songTitle}.png`.toLowerCase() ||
-                       lower === `${songTitle}.jpeg`.toLowerCase();
+                const base = f.fileName.replace(/\.(jpg|jpeg|png)$/i, '');
+                return base === songTitle;
               });
+              
+              // 2. 查找标注歌谱：文件名包含“编”，且以歌曲名开头
+              // 允许的分隔符：空格、横杠、下划线、括号等
+              const escapedTitle = escapeRegExp(songTitle);
+              const annotatedRegex = new RegExp(`^${escapedTitle}[\\s\\-_()\\[\\]]*编`, 'i');
               
               const annotatedSheets = sheetFiles
                 .map(f => f.fileName)
                 .filter(name => {
-                  const base = name.replace(/\.(jpg|jpeg|png)$/i, '');
-                  return base === `${songTitle} 编` || base === `${songTitle}编`;
+                   const base = name.replace(/\.(jpg|jpeg|png)$/i, '');
+                   // 排除主歌谱
+                   if (base === songTitle) return false;
+                   // 检查是否符合标注歌谱规则
+                   return annotatedRegex.test(base);
                 });
               
-              // 主歌谱优先使用“歌曲名.jpg”，否则回退到第一张
-              songsMap.get(songId).files.sheet = (exactMain ? exactMain.fileName : sheetFiles[0].fileName);
+              // 主歌谱优先使用“歌曲名.jpg”，否则回退到第一张（如果没有标注歌谱的话）
+              // 如果有标注歌谱但没有主歌谱，sheet 设为 null，由前端处理默认显示或第一张
+              let mainSheet = exactMain ? exactMain.fileName : null;
+              
+              // 如果没有找到严格匹配的主歌谱，且也没有标注歌谱，就用第一张作为主歌谱
+              if (!mainSheet && annotatedSheets.length === 0 && sheetFiles.length > 0) {
+                mainSheet = sheetFiles[0].fileName;
+              }
+              // 如果有标注歌谱但没有主歌谱，也尝试用不符合标注规则的第一张图作为主歌谱
+              else if (!mainSheet && sheetFiles.length > 0) {
+                 const otherSheet = sheetFiles.find(f => !annotatedRegex.test(f.fileName.replace(/\.(jpg|jpeg|png)$/i, '')));
+                 if (otherSheet) mainSheet = otherSheet.fileName;
+              }
+              
+              if (mainSheet) {
+                 songsMap.get(songId).files.sheet = mainSheet;
+              }
+              
               // 标注歌谱（可为空）
               if (annotatedSheets.length > 0) {
                 songsMap.get(songId).files.sheetExtras = annotatedSheets;
@@ -320,9 +353,13 @@ export async function onRequest(context) {
           songData.hasAccompaniment = true;
         } else if (fileName.endsWith('.mp3')) {
           songData.files.original = fileName;
-        } else if (fileName.endsWith('.jpg') || fileName.endsWith('.png') || fileName.endsWith('.jpeg')) {
+        } else if (hasImageExtension(fileName)) {
           const base = fileName.replace(/\.(jpg|jpeg|png)$/i, '');
-          const isAnnotated = base === `${songData.title} 编` || base === `${songData.title}编`;
+          
+          const escapedTitle = escapeRegExp(songData.title);
+          const annotatedRegex = new RegExp(`^${escapedTitle}[\\s\\-_()\\[\\]]*编`, 'i');
+          
+          const isAnnotated = annotatedRegex.test(base) && base !== songData.title;
           
           if (isAnnotated) {
             if (!songData.files.sheetExtras) {

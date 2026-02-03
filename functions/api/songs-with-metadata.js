@@ -3,6 +3,16 @@
  * with playlist support using a metadata file.
  */
 
+// 辅助函数：转义正则特殊字符
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// 辅助函数：检查文件扩展名
+function hasImageExtension(fileName) {
+  return /\.(jpg|jpeg|png)$/i.test(fileName);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   
@@ -98,9 +108,13 @@ export async function onRequest(context) {
         songData.hasAccompaniment = true;
       } else if (fileName.endsWith('.mp3')) {
         songData.files.original = fileName;
-      } else if (fileName.endsWith('.jpg') || fileName.endsWith('.png') || fileName.endsWith('.jpeg')) {
+      } else if (hasImageExtension(fileName)) {
         const base = fileName.replace(/\.(jpg|jpeg|png)$/i, '');
-        const isAnnotated = base === `${songData.title} 编` || base === `${songData.title}编`;
+        
+        const escapedTitle = escapeRegExp(songData.title);
+        const annotatedRegex = new RegExp(`^${escapedTitle}[\\s\\-_()\\[\\]]*编`, 'i');
+        
+        const isAnnotated = annotatedRegex.test(base) && base !== songData.title;
         
         if (isAnnotated) {
           if (!songData.files.sheetExtras) {

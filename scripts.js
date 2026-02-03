@@ -2046,6 +2046,7 @@ function loadSheetMusic() {
     }
     
     const sheetFiles = [];
+    // 主歌谱（如果有）
     if (currentSong.files.sheet) {
         sheetFiles.push({
             fileName: currentSong.files.sheet,
@@ -2053,8 +2054,11 @@ function loadSheetMusic() {
         });
     }
     
+    // 标注歌谱（如果有）
     if (currentSong.files.sheetExtras && currentSong.files.sheetExtras.length > 0) {
-        currentSong.files.sheetExtras.forEach(fileName => {
+        // 对标注歌谱排序，保证顺序一致
+        const sortedExtras = [...currentSong.files.sheetExtras].sort();
+        sortedExtras.forEach(fileName => {
             sheetFiles.push({
                 fileName,
                 label: '（编）'
@@ -2062,6 +2066,7 @@ function loadSheetMusic() {
         });
     }
     
+    // 极端情况：没有主歌谱也没有标注歌谱，显示占位符
     if (sheetFiles.length === 0) {
         elements.sheetDisplay.innerHTML = `
             <div class="sheet-placeholder">
